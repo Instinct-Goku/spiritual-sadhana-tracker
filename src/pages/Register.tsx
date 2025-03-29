@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, BookOpen } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 
 const Register = () => {
   const [displayName, setDisplayName] = useState("");

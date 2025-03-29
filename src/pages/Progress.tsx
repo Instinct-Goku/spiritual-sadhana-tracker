@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 import { getWeeklySadhana, WeeklyStats, SadhanaEntry } from "@/lib/sadhanaService";
 
 const ProgressPage = () => {
@@ -32,7 +31,6 @@ const ProgressPage = () => {
   });
   const [weekStats, setWeekStats] = useState<WeeklyStats | null>(null);
   
-  // Format date ranges for display
   const formatDateRange = () => {
     const endDate = new Date(weekStart);
     endDate.setDate(endDate.getDate() + 6);
@@ -40,7 +38,6 @@ const ProgressPage = () => {
     return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
   };
   
-  // Navigate to previous week
   const goToPreviousWeek = () => {
     setWeekStart(prevDate => {
       const newDate = new Date(prevDate);
@@ -49,12 +46,10 @@ const ProgressPage = () => {
     });
   };
   
-  // Navigate to next week
   const goToNextWeek = () => {
     const nextWeekStart = new Date(weekStart);
     nextWeekStart.setDate(nextWeekStart.getDate() + 7);
     
-    // Don't allow future weeks beyond current date
     if (nextWeekStart <= new Date()) {
       setWeekStart(nextWeekStart);
     } else {
@@ -62,7 +57,6 @@ const ProgressPage = () => {
     }
   };
   
-  // Fetch weekly data
   useEffect(() => {
     const fetchWeeklyData = async () => {
       if (!currentUser) return;
@@ -82,7 +76,6 @@ const ProgressPage = () => {
     fetchWeeklyData();
   }, [currentUser, weekStart]);
   
-  // Prepare data for charts
   const prepareChantingData = () => {
     if (!weekStats?.entries.length) return [];
     
@@ -106,7 +99,6 @@ const ProgressPage = () => {
     
     return weekStats.entries.map(entry => {
       const [hour, minute] = entry.wakeUpTime.split(':').map(Number);
-      // Convert to decimal for easier charting (e.g., 4:30 becomes 4.5)
       const timeDecimal = hour + (minute / 60);
       
       return {
@@ -133,10 +125,8 @@ const ProgressPage = () => {
     ];
   };
   
-  // Colors for charts
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
   
-  // Custom tooltip for wake-up time
   const WakeUpTimeTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -149,7 +139,6 @@ const ProgressPage = () => {
     return null;
   };
   
-  // Custom tooltip for program attendance
   const ProgramTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
@@ -184,7 +173,6 @@ const ProgressPage = () => {
         </p>
       </div>
       
-      {/* Week Navigation */}
       <div className="flex items-center justify-between mb-6">
         <Button 
           variant="outline" 
@@ -207,7 +195,6 @@ const ProgressPage = () => {
         </Button>
       </div>
       
-      {/* Weekly Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="spiritual-card">
           <CardHeader className="pb-2">
@@ -298,9 +285,7 @@ const ProgressPage = () => {
         </Card>
       </div>
       
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Chanting Chart */}
         <Card className="spiritual-card">
           <CardHeader>
             <CardTitle className="text-lg">Chanting Rounds by Day</CardTitle>
@@ -329,7 +314,6 @@ const ProgressPage = () => {
           </CardContent>
         </Card>
         
-        {/* Reading Chart */}
         <Card className="spiritual-card">
           <CardHeader>
             <CardTitle className="text-lg">Reading Minutes by Day</CardTitle>
@@ -358,7 +342,6 @@ const ProgressPage = () => {
           </CardContent>
         </Card>
         
-        {/* Wake-up Time Chart */}
         <Card className="spiritual-card">
           <CardHeader>
             <CardTitle className="text-lg">Wake-up Time Consistency</CardTitle>
@@ -394,7 +377,6 @@ const ProgressPage = () => {
           </CardContent>
         </Card>
         
-        {/* Program Attendance Chart */}
         <Card className="spiritual-card">
           <CardHeader>
             <CardTitle className="text-lg">Program Attendance</CardTitle>
@@ -428,7 +410,6 @@ const ProgressPage = () => {
         </Card>
       </div>
       
-      {/* Weekly Achievement */}
       {weekStats?.entries.length ? (
         <Card className="spiritual-card border-spiritual-gold">
           <CardContent className="flex items-center p-6">

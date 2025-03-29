@@ -16,7 +16,8 @@ import {
   CheckCircle2, 
   XCircle,
   Clock,
-  CalendarDays
+  CalendarDays,
+  User
 } from "lucide-react";
 
 const HomePage = () => {

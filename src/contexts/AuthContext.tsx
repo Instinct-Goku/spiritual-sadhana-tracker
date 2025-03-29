@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -10,7 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 
 interface AuthContextType {
   currentUser: User | null;

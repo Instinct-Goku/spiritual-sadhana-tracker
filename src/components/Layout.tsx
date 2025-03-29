@@ -1,4 +1,3 @@
-
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 
 interface LayoutProps {
   children: ReactNode;

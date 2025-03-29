@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 import { Loader2, Save, Clock, BookOpen, Sun, Moon, Music, Apple } from "lucide-react";
 import { addSadhanaEntry, getDailySadhana, SadhanaEntry, updateSadhanaEntry } from "@/lib/sadhanaService";
 

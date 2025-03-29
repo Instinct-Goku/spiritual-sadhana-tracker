@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Save, User } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/lib/toast";
 import { UserProfile } from "@/contexts/AuthContext";
 
 const ProfilePage = () => {
@@ -72,6 +71,21 @@ const ProfilePage = () => {
       .substring(0, 2);
   };
 
+  const formatJoinDate = (date: any) => {
+    if (!date) return "recently";
+    
+    try {
+      const dateObj = date instanceof Date 
+        ? date 
+        : (date.toDate ? date.toDate() : new Date(date));
+      
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "recently";
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8 text-center">
@@ -92,11 +106,7 @@ const ProfilePage = () => {
             </Avatar>
             <CardTitle className="text-2xl">{userProfile?.displayName || "Devotee"}</CardTitle>
             <CardDescription>
-              Member since {userProfile?.joinDate
-                ? new Date(userProfile.joinDate instanceof Date 
-                  ? userProfile.joinDate 
-                  : userProfile.joinDate.toDate()).toLocaleDateString()
-                : "recently"}
+              Member since {userProfile?.joinDate ? formatJoinDate(userProfile.joinDate) : "recently"}
             </CardDescription>
           </div>
         </CardHeader>
