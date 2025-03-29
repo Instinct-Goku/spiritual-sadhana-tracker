@@ -6,12 +6,12 @@ import { getStorage } from "firebase/storage";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDuhNz9sCVeUKM_YvQojyUEGdxqCOEO4os",
-  authDomain: "devotee-management-app-d2b50.firebaseapp.com",
-  projectId: "devotee-management-app-d2b50",
-  storageBucket: "devotee-management-app-d2b50.appspot.com",
-  messagingSenderId: "155559349406",
-  appId: "1:155559349406:web:1b93b3b4d6680d8bad22f5"
+  apiKey: "AIzaSyCnDq_2ncZJ3ZmjmNN24dul9BRI_zc6Jj8",
+  authDomain: "iskcon-dm.firebaseapp.com",
+  projectId: "iskcon-dm",
+  storageBucket: "iskcon-dm.firebasestorage.app",
+  messagingSenderId: "932506556805",
+  appId: "1:932506556805:web:ebdcc1ed31d2e110540cec"
 };
 
 // Initialize Firebase - use a conditional to avoid the duplicate app initialization
