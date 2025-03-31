@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDailySadhana, getWeeklySadhana } from "@/lib/sadhanaService";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   ChevronRight, 
   PenSquare, 
@@ -17,11 +18,13 @@ import {
   XCircle,
   Clock,
   CalendarDays,
-  User
+  User,
+  Headphones
 } from "lucide-react";
 
 const HomePage = () => {
   const { currentUser, userProfile } = useAuth();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [todaySadhana, setTodaySadhana] = useState<any>(null);
   const [weeklyStats, setWeeklyStats] = useState<any>(null);
@@ -107,19 +110,19 @@ const HomePage = () => {
   };
   
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto px-4">
       {/* Greeting Banner */}
-      <Card className="mb-8 bg-spiritual-purple text-white shadow-lg">
-        <CardContent className="p-8">
-          <h1 className="text-3xl font-bold mb-2">
+      <Card className="mb-6 md:mb-8 bg-spiritual-purple text-white shadow-lg">
+        <CardContent className="p-6 md:p-8">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">
             Hare Krishna, {userProfile?.displayName?.split(' ')[0] || "Devotee"}!
           </h1>
-          <p>Welcome to your spiritual sadhana tracker. Let's make spiritual progress today.</p>
+          <p className="text-sm md:text-base">Welcome to your spiritual sadhana tracker. Let's make spiritual progress today.</p>
         </CardContent>
       </Card>
       
       {/* Quick Actions Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 md:mb-8">
         <Card className="spiritual-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg">Today's Sadhana</CardTitle>
@@ -183,16 +186,16 @@ const HomePage = () => {
       
       {/* Quick Links */}
       <h2 className="text-xl font-medium mb-4">Quick Links</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <Link to="/reading" className="block">
           <Card className="spiritual-card h-full hover:shadow-md transition-shadow">
-            <CardContent className="flex items-center p-4">
-              <div className="h-10 w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-3">
-                <BookOpen className="h-5 w-5 text-spiritual-purple" />
+            <CardContent className="flex items-center p-3 md:p-4">
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-2 md:mr-3">
+                <BookOpen className="h-4 w-4 md:h-5 md:w-5 text-spiritual-purple" />
               </div>
               <div>
-                <h3 className="font-medium">Reading Log</h3>
-                <p className="text-sm text-muted-foreground">Track your study</p>
+                <h3 className="font-medium text-sm md:text-base">Reading Log</h3>
+                <p className="text-xs md:text-sm text-muted-foreground">Track your study</p>
               </div>
             </CardContent>
           </Card>
@@ -200,13 +203,13 @@ const HomePage = () => {
         
         <Link to="/calendar" className="block">
           <Card className="spiritual-card h-full hover:shadow-md transition-shadow">
-            <CardContent className="flex items-center p-4">
-              <div className="h-10 w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-3">
-                <CalendarDays className="h-5 w-5 text-spiritual-purple" />
+            <CardContent className="flex items-center p-3 md:p-4">
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-2 md:mr-3">
+                <CalendarDays className="h-4 w-4 md:h-5 md:w-5 text-spiritual-purple" />
               </div>
               <div>
-                <h3 className="font-medium">Calendar</h3>
-                <p className="text-sm text-muted-foreground">View your history</p>
+                <h3 className="font-medium text-sm md:text-base">Calendar</h3>
+                <p className="text-xs md:text-sm text-muted-foreground">View your history</p>
               </div>
             </CardContent>
           </Card>
@@ -214,13 +217,13 @@ const HomePage = () => {
         
         <Link to="/profile" className="block">
           <Card className="spiritual-card h-full hover:shadow-md transition-shadow">
-            <CardContent className="flex items-center p-4">
-              <div className="h-10 w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-3">
-                <User className="h-5 w-5 text-spiritual-purple" />
+            <CardContent className="flex items-center p-3 md:p-4">
+              <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-2 md:mr-3">
+                <User className="h-4 w-4 md:h-5 md:w-5 text-spiritual-purple" />
               </div>
               <div>
-                <h3 className="font-medium">Profile</h3>
-                <p className="text-sm text-muted-foreground">Update your info</p>
+                <h3 className="font-medium text-sm md:text-base">Profile</h3>
+                <p className="text-xs md:text-sm text-muted-foreground">Update your info</p>
               </div>
             </CardContent>
           </Card>

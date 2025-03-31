@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -18,11 +19,18 @@ export interface SadhanaEntry {
   userId: string;
   date: Date | Timestamp;
   chantingRounds: number;
+  chantingCompletionTime: string;
   readingMinutes: number;
+  hearingMinutes: number;
   wakeUpTime: string;
   sleepTime: string;
-  morningProgram: boolean;
+  daySleepDuration: number;
   mangalaArati: boolean;
+  tulsiArati: boolean;
+  narsimhaArati: boolean;
+  guruPuja: boolean;
+  bhagavatamClass: boolean;
+  morningProgram: boolean;
   eveningArati: boolean;
   spiritualClass: boolean;
   prasadam: boolean;
@@ -34,6 +42,8 @@ export interface WeeklyStats {
   averageChantingRounds: number;
   totalReadingMinutes: number;
   averageReadingMinutes: number;
+  totalHearingMinutes: number;
+  averageHearingMinutes: number;
   mangalaAratiAttendance: number; // percentage
   morningProgramAttendance: number; // percentage
   averageWakeUpHour: number;
@@ -179,6 +189,8 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       averageChantingRounds: 0,
       totalReadingMinutes: 0,
       averageReadingMinutes: 0,
+      totalHearingMinutes: 0,
+      averageHearingMinutes: 0,
       mangalaAratiAttendance: 0,
       morningProgramAttendance: 0,
       averageWakeUpHour: 0,
@@ -198,6 +210,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     entries.forEach(entry => {
       stats.totalChantingRounds += entry.chantingRounds;
       stats.totalReadingMinutes += entry.readingMinutes;
+      stats.totalHearingMinutes += entry.hearingMinutes || 0;
       
       const [hours] = entry.wakeUpTime.split(':').map(Number);
       totalWakeUpHours += hours;
@@ -209,6 +222,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     
     stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
     stats.averageReadingMinutes = Math.round(stats.totalReadingMinutes / entries.length);
+    stats.averageHearingMinutes = Math.round(stats.totalHearingMinutes / entries.length);
     stats.averageWakeUpHour = parseFloat((totalWakeUpHours / entries.length).toFixed(1));
     stats.mangalaAratiAttendance = parseFloat(((mangalaAratiCount / entries.length) * 100).toFixed(1));
     stats.morningProgramAttendance = parseFloat(((morningProgramCount / entries.length) * 100).toFixed(1));

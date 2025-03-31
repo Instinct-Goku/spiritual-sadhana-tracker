@@ -1,4 +1,5 @@
-import { ReactNode, useState } from "react";
+
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -15,6 +16,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,6 +27,12 @@ const Layout = ({ children }: LayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  // Close mobile menu when changing routes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const getInitials = (name: string) => {
     if (!name) return "DM";
@@ -148,7 +156,7 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </div>
 
-      {/* Mobile menu button */}
+      {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-b border-spiritual-purple/10">
         <div className="flex items-center justify-between p-4">
           <Link to="/" className="flex items-center">
@@ -161,6 +169,7 @@ const Layout = ({ children }: LayoutProps) => {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-md text-foreground hover:bg-spiritual-purple/10"
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -173,14 +182,14 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-20 bg-background/95 backdrop-blur-sm md:hidden pt-16">
+        <div className="fixed inset-0 z-20 bg-background/95 backdrop-blur-sm md:hidden pt-16 overflow-y-auto">
           <div className="p-4 space-y-3">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center px-3 py-3 text-base font-medium rounded-md ${
+                className={`flex items-center px-4 py-3 text-base font-medium rounded-md ${
                   location.pathname === item.path
                     ? "bg-spiritual-purple text-white"
                     : "text-foreground hover:bg-spiritual-purple/10"
@@ -191,7 +200,22 @@ const Layout = ({ children }: LayoutProps) => {
               </Link>
             ))}
             
-            <div className="pt-4 border-t border-spiritual-purple/10 mt-4">
+            <div className="pt-4 border-t border-spiritual-purple/10 mt-6">
+              <div className="flex items-center mb-3 px-4">
+                <Avatar className="h-10 w-10 mr-3 border border-spiritual-purple/20">
+                  <AvatarImage src={userProfile?.photoURL || ""} />
+                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                    {getInitials(userProfile?.displayName || "")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{userProfile?.displayName || "Devotee"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {userProfile?.email || currentUser.email}
+                  </p>
+                </div>
+              </div>
+              
               <Button 
                 onClick={handleLogout}
                 variant="outline" 
@@ -207,7 +231,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Main content */}
       <div className="md:ml-64 w-full">
-        <main className="p-4 md:p-8 pt-16 md:pt-8 min-h-screen">
+        <main className="p-4 md:p-8 pt-20 md:pt-8 min-h-screen">
           {children}
         </main>
       </div>
