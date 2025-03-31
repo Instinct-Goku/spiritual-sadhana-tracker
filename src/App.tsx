@@ -16,6 +16,7 @@ import Sadhana from "./pages/Sadhana";
 import Progress from "./pages/Progress";
 import Reading from "./pages/Reading";
 import Calendar from "./pages/Calendar";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -128,6 +129,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <Layout>
               <Calendar />
+            </Layout>
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Admin />
             </Layout>
           </ProtectedRoute>
         } 

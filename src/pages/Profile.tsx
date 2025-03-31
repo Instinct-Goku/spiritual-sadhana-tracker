@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Save, User } from "lucide-react";
+import { Loader2, Save, User, Calendar as CalendarIcon, MapPin, Building, Briefcase } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { UserProfile } from "@/contexts/AuthContext";
 
@@ -16,9 +17,14 @@ const ProfilePage = () => {
   const [formData, setFormData] = useState<Partial<UserProfile>>({
     displayName: "",
     spiritualName: "",
-    initiationLevel: "",
     phoneNumber: "",
     location: "",
+    address: "",
+    city: "",
+    pinCode: "",
+    dateOfBirth: "",
+    occupation: "",
+    batch: "",
   });
 
   useEffect(() => {
@@ -26,9 +32,14 @@ const ProfilePage = () => {
       setFormData({
         displayName: userProfile.displayName || "",
         spiritualName: userProfile.spiritualName || "",
-        initiationLevel: userProfile.initiationLevel || "",
         phoneNumber: userProfile.phoneNumber || "",
         location: userProfile.location || "",
+        address: userProfile.address || "",
+        city: userProfile.city || "",
+        pinCode: userProfile.pinCode || "",
+        dateOfBirth: userProfile.dateOfBirth || "",
+        occupation: userProfile.occupation || "",
+        batch: userProfile.batch || "",
       });
     }
   }, [userProfile]);
@@ -56,6 +67,7 @@ const ProfilePage = () => {
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -87,7 +99,7 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto px-4">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-spiritual-purple">Devotee Profile</h1>
         <p className="text-muted-foreground">
@@ -112,45 +124,77 @@ const ProfilePage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Full Name</Label>
-              <Input
-                id="displayName"
-                name="displayName"
-                value={formData.displayName}
-                onChange={handleChange}
-                className="spiritual-input"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Full Name</Label>
+                <Input
+                  id="displayName"
+                  name="displayName"
+                  value={formData.displayName}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="spiritualName">Spiritual Name (if any)</Label>
+                <Input
+                  id="spiritualName"
+                  name="spiritualName"
+                  value={formData.spiritualName}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="spiritualName">Spiritual Name (if any)</Label>
-              <Input
-                id="spiritualName"
-                name="spiritualName"
-                value={formData.spiritualName}
-                onChange={handleChange}
-                className="spiritual-input"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="initiationLevel">Initiation Level</Label>
+              <Label htmlFor="batch">Batch</Label>
               <Select
-                value={formData.initiationLevel}
-                onValueChange={(value) => handleSelectChange("initiationLevel", value)}
+                value={formData.batch}
+                onValueChange={(value) => handleSelectChange("batch", value)}
               >
                 <SelectTrigger className="spiritual-input">
-                  <SelectValue placeholder="Select your initiation level" />
+                  <SelectValue placeholder="Select your batch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No Initiation Yet</SelectItem>
-                  <SelectItem value="first">First Initiation</SelectItem>
-                  <SelectItem value="second">Second Initiation</SelectItem>
-                  <SelectItem value="sannyasa">Sannyasa</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="sahadev">Sahadev</SelectItem>
+                  <SelectItem value="nakula">Nakula</SelectItem>
+                  <SelectItem value="arjuna">Arjuna</SelectItem>
+                  <SelectItem value="yudhisthir">Yudhisthir</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth" className="flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-1" />
+                  Date of Birth
+                </Label>
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
+            
+              <div className="space-y-2">
+                <Label htmlFor="occupation" className="flex items-center">
+                  <Briefcase className="h-4 w-4 mr-1" />
+                  Occupation
+                </Label>
+                <Input
+                  id="occupation"
+                  name="occupation"
+                  value={formData.occupation}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
@@ -165,7 +209,48 @@ const ProfilePage = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="location">Location/Temple</Label>
+              <Label htmlFor="address" className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                Address
+              </Label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                className="spiritual-input"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city" className="flex items-center">
+                  <Building className="h-4 w-4 mr-1" />
+                  City
+                </Label>
+                <Input
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="pinCode">PIN Code</Label>
+                <Input
+                  id="pinCode"
+                  name="pinCode"
+                  value={formData.pinCode}
+                  onChange={handleChange}
+                  className="spiritual-input"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="location">Temple/Center</Label>
               <Input
                 id="location"
                 name="location"

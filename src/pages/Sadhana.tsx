@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,6 @@ import {
   Sun, 
   Moon, 
   Music, 
-  Apple, 
   Headphones,
   BedDouble,
   Calendar
@@ -59,8 +59,6 @@ const SadhanaPage = () => {
   const [narsimhaArati, setNarsimhaArati] = useState(false);
   const [guruPuja, setGuruPuja] = useState(false);
   const [bhagavatamClass, setBhagavatamClass] = useState(false);
-  const [eveningArati, setEveningArati] = useState(false);
-  const [spiritualClass, setSpiritualClass] = useState(false);
   const [prasadam, setPrasadam] = useState(true);
   const [notes, setNotes] = useState("");
   
@@ -94,8 +92,6 @@ const SadhanaPage = () => {
           setNarsimhaArati(entry.narsimhaArati || false);
           setGuruPuja(entry.guruPuja || false);
           setBhagavatamClass(entry.bhagavatamClass || false);
-          setEveningArati(entry.eveningArati);
-          setSpiritualClass(entry.spiritualClass);
           setPrasadam(entry.prasadam);
           setNotes(entry.notes || "");
         } else {
@@ -114,8 +110,6 @@ const SadhanaPage = () => {
           setNarsimhaArati(false);
           setGuruPuja(false);
           setBhagavatamClass(false);
-          setEveningArati(false);
-          setSpiritualClass(false);
           setPrasadam(true);
           setNotes("");
         }
@@ -161,8 +155,8 @@ const SadhanaPage = () => {
         narsimhaArati,
         guruPuja,
         bhagavatamClass,
-        eveningArati,
-        spiritualClass,
+        eveningArati: false,
+        spiritualClass: false,
         prasadam,
         notes,
       };
@@ -356,7 +350,7 @@ const SadhanaPage = () => {
                   <Sun className="h-4 w-4 mr-2" />
                   Morning Program
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-spiritual-purple/5 rounded-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="mangala-arati" 
@@ -401,33 +395,6 @@ const SadhanaPage = () => {
                     />
                     <Label htmlFor="bhagavatam-class">Bhagavatam Class</Label>
                   </div>
-                </div>
-              </div>
-              
-              {/* Other Activities */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Other Activities
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-spiritual-purple/5 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="evening-arati" 
-                      checked={eveningArati}
-                      onCheckedChange={(checked) => setEveningArati(checked === true)}
-                    />
-                    <Label htmlFor="evening-arati">Evening Arati</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="spiritual-class" 
-                      checked={spiritualClass}
-                      onCheckedChange={(checked) => setSpiritualClass(checked === true)}
-                    />
-                    <Label htmlFor="spiritual-class">Spiritual Class</Label>
-                  </div>
                   
                   <div className="flex items-center space-x-2">
                     <Checkbox 
@@ -435,10 +402,7 @@ const SadhanaPage = () => {
                       checked={prasadam}
                       onCheckedChange={(checked) => setPrasadam(checked === true)}
                     />
-                    <div className="flex items-center">
-                      <Apple className="h-4 w-4 mr-1 text-spiritual-purple" />
-                      <Label htmlFor="prasadam">Maintained Prasadam</Label>
-                    </div>
+                    <Label htmlFor="prasadam">Maintained Prasadam</Label>
                   </div>
                 </div>
               </div>
