@@ -29,6 +29,7 @@ export interface DevoteeGroup {
 
 export interface DevoteeWithProfile extends UserProfile {
   id: string;
+  joinDate?: Date;
 }
 
 export interface GroupMembership {

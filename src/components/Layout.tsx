@@ -11,7 +11,8 @@ import {
   X, 
   BarChart3,
   Home,
-  PenSquare
+  PenSquare,
+  ShieldCheck
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -86,9 +87,13 @@ const Layout = ({ children }: LayoutProps) => {
     },
   ];
 
-  // Only render the layout with navigation for authenticated users
-  if (!currentUser) {
-    return <div className="min-h-screen bg-background">{children}</div>;
+  // Add Admin link if user is an admin
+  if (userProfile?.isAdmin) {
+    navItems.push({
+      name: "Admin",
+      path: "/admin",
+      icon: <ShieldCheck className="h-5 w-5 mr-2" />
+    });
   }
 
   return (

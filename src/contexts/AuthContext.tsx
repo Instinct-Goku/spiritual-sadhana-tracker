@@ -25,11 +25,17 @@ export interface UserProfile {
   displayName: string;
   email: string;
   photoURL?: string;
-  initiationLevel?: string;
   spiritualName?: string;
   joinDate?: Date;
   phoneNumber?: string;
   location?: string;
+  address?: string;
+  city?: string;
+  pinCode?: string;
+  dateOfBirth?: Date | string;
+  occupation?: string;
+  batch?: string;
+  isAdmin?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,13 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Register a new user
   async function register(email: string, password: string, displayName: string) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
       
-      // Create user profile in Firestore
       const userProfile: UserProfile = {
         displayName,
         email,
@@ -68,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Login user
   async function login(email: string, password: string) {
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -79,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Logout user
   async function logout() {
     try {
       await signOut(auth);
@@ -90,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Update user profile
   async function updateUserProfile(data: Partial<UserProfile>) {
     if (!currentUser) throw new Error("No user is logged in");
     
@@ -98,7 +99,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userRef = doc(db, "users", currentUser.uid);
       await updateDoc(userRef, { ...data });
       
-      // Update local state
       setUserProfile(prev => prev ? { ...prev, ...data } : null);
       
       if (data.displayName) {
@@ -112,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Fetch user profile from Firestore when user changes
   useEffect(() => {
     async function fetchUserProfile(user: User) {
       try {
@@ -121,7 +120,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userDoc.exists()) {
           setUserProfile(userDoc.data() as UserProfile);
         } else {
-          // Create profile if it doesn't exist
           const newProfile: UserProfile = {
             displayName: user.displayName || "",
             email: user.email || "",

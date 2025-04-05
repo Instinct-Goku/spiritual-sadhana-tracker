@@ -1,5 +1,6 @@
+
 import { useAuth } from "@/contexts/AuthContext";
-import JoinGroup from "@/components/JoinGroup";
+import JoinGroupButton from "@/components/JoinGroupButton";
 
 const Home = () => {
   const { userProfile } = useAuth();
@@ -14,7 +15,7 @@ const Home = () => {
         Track your spiritual practices and connect with other devotees
       </p>
       
-      <JoinGroup />
+      <JoinGroupButton />
       
     </div>
   );
