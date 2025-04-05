@@ -1,39 +1,50 @@
-
-import { ReactNode, useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  BookOpen, 
-  Calendar, 
-  User, 
-  LogOut, 
-  Menu, 
-  X, 
-  BarChart3,
-  Home,
-  PenSquare,
-  ShieldCheck
-} from "lucide-react";
+import React from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "@/lib/toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Home,
+  User,
+  BookOpen,
+  Calendar,
+  BarChart3,
+  Menu,
+  LogOut,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 
 interface LayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const Layout = ({ children }: LayoutProps) => {
-  const { currentUser, logout, userProfile } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { currentUser, userProfile, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
-  // Close mobile menu when changing routes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
+  };
 
   const getInitials = (name: string) => {
     if (!name) return "DM";
@@ -45,199 +56,219 @@ const Layout = ({ children }: LayoutProps) => {
       .substring(0, 2);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      toast.error("Failed to logout");
-    }
-  };
-
   const navItems = [
     {
       name: "Home",
       path: "/",
-      icon: <Home className="h-5 w-5 mr-2" />,
-    },
-    {
-      name: "Sadhana Card",
-      path: "/sadhana",
-      icon: <PenSquare className="h-5 w-5 mr-2" />,
-    },
-    {
-      name: "Progress",
-      path: "/progress",
-      icon: <BarChart3 className="h-5 w-5 mr-2" />,
-    },
-    {
-      name: "Reading Log",
-      path: "/reading",
-      icon: <BookOpen className="h-5 w-5 mr-2" />,
-    },
-    {
-      name: "Calendar",
-      path: "/calendar",
-      icon: <Calendar className="h-5 w-5 mr-2" />,
+      icon: <Home className="h-5 w-5" />,
     },
     {
       name: "Profile",
       path: "/profile",
-      icon: <User className="h-5 w-5 mr-2" />,
+      icon: <User className="h-5 w-5" />,
+    },
+    {
+      name: "Sadhana",
+      path: "/sadhana",
+      icon: <BookOpen className="h-5 w-5" />,
+    },
+    {
+      name: "Progress",
+      path: "/progress",
+      icon: <BarChart3 className="h-5 w-5" />,
+    },
+    {
+      name: "Calendar",
+      path: "/calendar",
+      icon: <Calendar className="h-5 w-5" />,
     },
   ];
 
-  // Add Admin link if user is an admin
-  if (userProfile?.isAdmin) {
-    navItems.push({
-      name: "Admin",
-      path: "/admin",
-      icon: <ShieldCheck className="h-5 w-5 mr-2" />
-    });
-  }
-
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-        <div className="flex flex-col flex-grow pt-5 bg-spiritual-purple/5 backdrop-blur-sm overflow-y-auto border-r border-spiritual-purple/20">
-          <div className="flex items-center justify-center px-4 mb-8">
-            <Link to="/" className="flex items-center">
-              <div className="h-12 w-12 bg-spiritual-purple/10 rounded-full flex items-center justify-center mr-3">
-                <BookOpen className="h-6 w-6 text-spiritual-purple" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-semibold text-spiritual-purple">Devotee</span>
-                <span className="text-xs text-muted-foreground">Management</span>
-              </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Mobile Header */}
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:hidden">
+        <div className="container flex h-14 items-center">
+          <div className="mr-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+                <SheetHeader className="border-b pb-4 mb-4">
+                  <SheetTitle className="text-spiritual-purple">Devotee Manager</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-2">
+                  {navItems.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `${
+                          isActive ? "bg-spiritual-purple/10 text-spiritual-purple" : "text-muted-foreground hover:bg-muted"
+                        } flex items-center gap-3 rounded-lg px-3 py-2 transition-all`
+                      }
+                    >
+                      {item.icon}
+                      <span className="text-sm font-medium">{item.name}</span>
+                    </NavLink>
+                  ))}
+                  
+                  {userProfile?.isAdmin && (
+                    <NavLink
+                      to="/admin"
+                      className={({ isActive }) =>
+                        `${
+                          isActive ? "bg-spiritual-purple/10 text-spiritual-purple" : "text-muted-foreground hover:bg-muted"
+                        } flex items-center gap-3 rounded-lg px-3 py-2 transition-all`
+                      }
+                    >
+                      <ShieldCheck className="h-5 w-5" />
+                      <span className="text-sm font-medium">Admin</span>
+                    </NavLink>
+                  )}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="font-bold text-xl text-spiritual-purple">Devotee Manager</span>
+          </Link>
+          <div className="flex-1"></div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={currentUser?.photoURL || ""} alt={currentUser?.displayName || ""} />
+                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                    {getInitials(currentUser?.displayName || "")}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{currentUser?.displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{currentUser?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/profile" className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings" className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      {/* Desktop Layout */}
+      <div className="flex-1 flex">
+        {/* Sidebar */}
+        <aside className="hidden lg:flex w-64 flex-col border-r bg-background fixed inset-y-0">
+          <div className="flex h-14 items-center border-b px-4">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="font-bold text-xl text-spiritual-purple">Devotee Manager</span>
             </Link>
           </div>
-          
-          <div className="mt-6 px-3 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  location.pathname === item.path
-                    ? "bg-spiritual-purple text-white"
-                    : "text-foreground hover:bg-spiritual-purple/10"
-                }`}
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
-          </div>
-          
-          <div className="mt-auto p-4">
-            <div className="p-2 bg-spiritual-purple/5 rounded-lg mb-4">
-              <div className="flex items-center mb-1">
-                <Avatar className="h-10 w-10 mr-2 border border-spiritual-purple/20">
-                  <AvatarImage src={userProfile?.photoURL || ""} />
-                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
-                    {getInitials(userProfile?.displayName || "")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{userProfile?.displayName || "Devotee"}</p>
-                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                    {userProfile?.email || currentUser.email}
-                  </p>
-                </div>
-              </div>
+          <nav className="flex-1 overflow-auto py-4 px-2">
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `${
+                      isActive ? "bg-spiritual-purple/10 text-spiritual-purple" : "text-muted-foreground hover:bg-muted"
+                    } flex items-center gap-3 rounded-lg px-3 py-2 transition-all`
+                  }
+                >
+                  {item.icon}
+                  <span className="text-sm font-medium">{item.name}</span>
+                </NavLink>
+              ))}
               
-              <Button 
-                onClick={handleLogout}
-                variant="outline" 
-                size="sm" 
-                className="w-full mt-2 border-spiritual-purple/20 hover:bg-spiritual-purple/10"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                <span>Logout</span>
-              </Button>
+              {userProfile?.isAdmin && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `${
+                      isActive ? "bg-spiritual-purple/10 text-spiritual-purple" : "text-muted-foreground hover:bg-muted"
+                    } flex items-center gap-3 rounded-lg px-3 py-2 transition-all`
+                  }
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  <span className="text-sm font-medium">Admin</span>
+                </NavLink>
+              )}
             </div>
+          </nav>
+          <div className="border-t p-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarImage src={currentUser?.photoURL || ""} alt={currentUser?.displayName || ""} />
+                    <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                      {getInitials(currentUser?.displayName || "")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium">{currentUser?.displayName}</span>
+                    <span className="text-xs text-muted-foreground">{userProfile?.spiritualName}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{currentUser?.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{currentUser?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-      </div>
+        </aside>
 
-      {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-b border-spiritual-purple/10">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center">
-            <div className="h-8 w-8 bg-spiritual-purple/10 rounded-full flex items-center justify-center mr-2">
-              <BookOpen className="h-4 w-4 text-spiritual-purple" />
-            </div>
-            <span className="text-lg font-semibold text-spiritual-purple">Devotee</span>
-          </Link>
-          
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-md text-foreground hover:bg-spiritual-purple/10"
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-20 bg-background/95 backdrop-blur-sm md:hidden pt-16 overflow-y-auto">
-          <div className="p-4 space-y-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center px-4 py-3 text-base font-medium rounded-md ${
-                  location.pathname === item.path
-                    ? "bg-spiritual-purple text-white"
-                    : "text-foreground hover:bg-spiritual-purple/10"
-                }`}
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
-            
-            <div className="pt-4 border-t border-spiritual-purple/10 mt-6">
-              <div className="flex items-center mb-3 px-4">
-                <Avatar className="h-10 w-10 mr-3 border border-spiritual-purple/20">
-                  <AvatarImage src={userProfile?.photoURL || ""} />
-                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
-                    {getInitials(userProfile?.displayName || "")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{userProfile?.displayName || "Devotee"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {userProfile?.email || currentUser.email}
-                  </p>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={handleLogout}
-                variant="outline" 
-                className="w-full border-spiritual-purple/20 hover:bg-spiritual-purple/10"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main content */}
-      <div className="md:ml-64 w-full">
-        <main className="p-4 md:p-8 pt-20 md:pt-8 min-h-screen">
-          {children}
+        {/* Main Content */}
+        <main className="flex-1 lg:pl-64">
+          <div className="py-6">{children}</div>
         </main>
       </div>
     </div>

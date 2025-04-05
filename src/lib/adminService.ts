@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -59,8 +58,7 @@ export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]>
   try {
     const q = query(
       collection(db, "devoteeGroups"),
-      where("adminId", "==", adminId),
-      orderBy("createdAt", "desc")
+      where("adminId", "==", adminId)
     );
     
     const snapshot = await getDocs(q);
@@ -87,7 +85,11 @@ export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]>
       });
     }
     
-    return groups;
+    return groups.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+      return dateB.getTime() - dateA.getTime(); // Descending (newest first)
+    });
   } catch (error) {
     console.error("Error getting devotee groups:", error);
     throw error;
@@ -132,43 +134,11 @@ export const getDevoteesInGroup = async (groupId: string): Promise<DevoteeWithPr
   }
 };
 
-// Join a devotee group
-export const joinDevoteeGroup = async (userId: string, groupId: string): Promise<string> => {
-  try {
-    // Check if user is already in the group
-    const existingQuery = query(
-      collection(db, "groupMemberships"),
-      where("userId", "==", userId),
-      where("groupId", "==", groupId)
-    );
-    
-    const existingSnapshot = await getDocs(existingQuery);
-    
-    if (!existingSnapshot.empty) {
-      throw new Error("You're already a member of this group");
-    }
-    
-    // Add user to group
-    const membershipData: GroupMembership = {
-      userId,
-      groupId,
-      joinedAt: Timestamp.now()
-    };
-    
-    const docRef = await addDoc(collection(db, "groupMemberships"), membershipData);
-    return docRef.id;
-  } catch (error) {
-    console.error("Error joining devotee group:", error);
-    throw error;
-  }
-};
-
 // Get all available groups for a devotee to join
 export const getAvailableGroups = async (): Promise<DevoteeGroup[]> => {
   try {
     const q = query(
-      collection(db, "devoteeGroups"),
-      orderBy("createdAt", "desc")
+      collection(db, "devoteeGroups")
     );
     
     const snapshot = await getDocs(q);
@@ -186,7 +156,11 @@ export const getAvailableGroups = async (): Promise<DevoteeGroup[]> => {
       });
     }
     
-    return groups;
+    return groups.sort((a, b) => {
+      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
+      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
+      return dateB.getTime() - dateA.getTime(); // Descending (newest first)
+    });
   } catch (error) {
     console.error("Error getting available groups:", error);
     throw error;

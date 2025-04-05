@@ -1,6 +1,9 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import JoinGroupButton from "@/components/JoinGroupButton";
+import JoinGroup from "@/components/JoinGroup";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ShieldCheck } from "lucide-react";
 
 const Home = () => {
   const { userProfile } = useAuth();
@@ -15,7 +18,18 @@ const Home = () => {
         Track your spiritual practices and connect with other devotees
       </p>
       
-      <JoinGroupButton />
+      {userProfile?.isAdmin && (
+        <div className="mb-6">
+          <Link to="/admin">
+            <Button variant="outline" className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Open Admin Dashboard
+            </Button>
+          </Link>
+        </div>
+      )}
+      
+      <JoinGroup />
       
     </div>
   );

@@ -1,20 +1,21 @@
-
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Save, User, Calendar as CalendarIcon, MapPin, Building, Briefcase } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format, parse } from "date-fns";
+import { Loader2, Mail, Phone, MapPin, BriefcaseBusiness, SquareUserRound } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { UserProfile } from "@/contexts/AuthContext";
 
-const ProfilePage = () => {
+const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<UserProfile>>({
+  const [formData, setFormData] = useState({
     displayName: "",
     spiritualName: "",
     phoneNumber: "",
@@ -24,7 +25,7 @@ const ProfilePage = () => {
     pinCode: "",
     dateOfBirth: "",
     occupation: "",
-    batch: "",
+    batch: ""
   });
 
   useEffect(() => {
@@ -37,16 +38,20 @@ const ProfilePage = () => {
         address: userProfile.address || "",
         city: userProfile.city || "",
         pinCode: userProfile.pinCode || "",
-        dateOfBirth: userProfile.dateOfBirth || "",
+        dateOfBirth: userProfile.dateOfBirth 
+          ? typeof userProfile.dateOfBirth === "string" 
+            ? userProfile.dateOfBirth 
+            : format(userProfile.dateOfBirth, "yyyy-MM-dd")
+          : "",
         occupation: userProfile.occupation || "",
-        batch: userProfile.batch || "",
+        batch: userProfile.batch || ""
       });
     }
   }, [userProfile]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -55,19 +60,15 @@ const ProfilePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!currentUser) {
-      toast.error("You must be logged in");
-      return;
-    }
-    
+    setLoading(true);
+
     try {
-      setLoading(true);
-      await updateUserProfile(formData);
-      toast.success("Profile updated successfully");
+      await updateUserProfile({
+        ...formData,
+        dateOfBirth: formData.dateOfBirth || undefined
+      });
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,7 @@ const ProfilePage = () => {
                   id="displayName"
                   name="displayName"
                   value={formData.displayName}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -142,7 +143,7 @@ const ProfilePage = () => {
                   id="spiritualName"
                   name="spiritualName"
                   value={formData.spiritualName}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -177,7 +178,7 @@ const ProfilePage = () => {
                   name="dateOfBirth"
                   type="date"
                   value={formData.dateOfBirth}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -191,7 +192,7 @@ const ProfilePage = () => {
                   id="occupation"
                   name="occupation"
                   value={formData.occupation}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -203,7 +204,7 @@ const ProfilePage = () => {
                 id="phoneNumber"
                 name="phoneNumber"
                 value={formData.phoneNumber}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 className="spiritual-input"
               />
             </div>
@@ -217,7 +218,7 @@ const ProfilePage = () => {
                 id="address"
                 name="address"
                 value={formData.address}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 className="spiritual-input"
               />
             </div>
@@ -232,7 +233,7 @@ const ProfilePage = () => {
                   id="city"
                   name="city"
                   value={formData.city}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -243,7 +244,7 @@ const ProfilePage = () => {
                   id="pinCode"
                   name="pinCode"
                   value={formData.pinCode}
-                  onChange={handleChange}
+                  onChange={handleInputChange}
                   className="spiritual-input"
                 />
               </div>
@@ -255,7 +256,7 @@ const ProfilePage = () => {
                 id="location"
                 name="location"
                 value={formData.location}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 className="spiritual-input"
               />
             </div>
@@ -285,4 +286,4 @@ const ProfilePage = () => {
   );
 };
 
-export default ProfilePage;
+export default Profile;
