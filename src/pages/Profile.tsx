@@ -1,76 +1,116 @@
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, parse } from "date-fns";
-import { Loader2, Mail, Phone, MapPin, BriefcaseBusiness, SquareUserRound } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { UserProfile } from "@/contexts/AuthContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, Building2, Save as SaveIcon, Briefcase as BriefcaseIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
+
+// Define the schema for form validation
+const profileSchema = z.object({
+  displayName: z.string().min(2, "Display name must be at least 2 characters."),
+  spiritualName: z.string().optional(),
+  email: z.string().email("Invalid email address.").optional(),
+  bio: z.string().max(300, "Bio must be less than 300 characters.").optional(),
+  occupation: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  pinCode: z.string().optional(),
+  batch: z.string().optional(),
+});
+
+// Define a type for our profile form values
+type ProfileFormValues = z.infer<typeof profileSchema> & {
+  dateOfBirth?: Date;
+};
 
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    displayName: "",
-    spiritualName: "",
-    phoneNumber: "",
-    location: "",
-    address: "",
-    city: "",
-    pinCode: "",
-    dateOfBirth: "",
-    occupation: "",
-    batch: ""
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
+
+  // Initialize the form with react-hook-form
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      displayName: "",
+      spiritualName: "",
+      email: "",
+      bio: "",
+      occupation: "",
+      address: "",
+      city: "",
+      pinCode: "",
+      batch: "",
+    },
   });
 
+  // Populate form with user data when available
   useEffect(() => {
     if (userProfile) {
-      setFormData({
-        displayName: userProfile.displayName || "",
+      form.reset({
+        displayName: currentUser?.displayName || "",
         spiritualName: userProfile.spiritualName || "",
-        phoneNumber: userProfile.phoneNumber || "",
-        location: userProfile.location || "",
+        email: currentUser?.email || "",
+        bio: userProfile.bio || "",
+        occupation: userProfile.occupation || "",
         address: userProfile.address || "",
         city: userProfile.city || "",
         pinCode: userProfile.pinCode || "",
-        dateOfBirth: userProfile.dateOfBirth 
-          ? typeof userProfile.dateOfBirth === "string" 
-            ? userProfile.dateOfBirth 
-            : format(userProfile.dateOfBirth, "yyyy-MM-dd")
-          : "",
-        occupation: userProfile.occupation || "",
-        batch: userProfile.batch || ""
+        batch: userProfile.batch || "",
       });
+
+      // Set date of birth if it exists
+      if (userProfile.dateOfBirth) {
+        const dobDate = userProfile.dateOfBirth instanceof Date
+          ? userProfile.dateOfBirth
+          : new Date(userProfile.dateOfBirth);
+        setDateOfBirth(dobDate);
+      }
     }
-  }, [userProfile]);
+  }, [userProfile, currentUser, form]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Handle form submission
+  const onSubmit = async (values: ProfileFormValues) => {
+    if (!currentUser) return;
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+    setIsSubmitting(true);
     try {
+      // Update the user profile with form values
       await updateUserProfile({
-        ...formData,
-        dateOfBirth: formData.dateOfBirth || undefined
+        ...values,
+        dateOfBirth: dateOfBirth,
       });
-    } catch (error) {
-      console.error("Error updating profile:", error);
+
+      toast.success("Profile updated successfully!");
+    } catch (error: any) {
+      console.error("Failed to update profile:", error);
+      toast.error(error.message || "Failed to update profile");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -84,204 +124,230 @@ const Profile = () => {
       .substring(0, 2);
   };
 
-  const formatJoinDate = (date: any) => {
-    if (!date) return "recently";
-    
-    try {
-      const dateObj = date instanceof Date 
-        ? date 
-        : (date.toDate ? date.toDate() : new Date(date));
-      
-      return dateObj.toLocaleDateString();
-    } catch (error) {
-      console.error("Error formatting date:", error);
-      return "recently";
-    }
-  };
-
   return (
-    <div className="max-w-2xl mx-auto px-4">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-spiritual-purple">Devotee Profile</h1>
-        <p className="text-muted-foreground">
-          Manage your spiritual journey information
-        </p>
-      </div>
-      
-      <Card className="spiritual-card">
-        <CardHeader>
-          <div className="flex flex-col items-center">
-            <Avatar className="h-24 w-24 mb-4 border-4 border-spiritual-purple/20">
-              <AvatarImage src={userProfile?.photoURL || ""} />
-              <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple text-2xl">
-                {getInitials(userProfile?.displayName || "")}
-              </AvatarFallback>
-            </Avatar>
-            <CardTitle className="text-2xl">{userProfile?.displayName || "Devotee"}</CardTitle>
-            <CardDescription>
-              Member since {userProfile?.joinDate ? formatJoinDate(userProfile.joinDate) : "recently"}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Full Name</Label>
-                <Input
-                  id="displayName"
-                  name="displayName"
-                  value={formData.displayName}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="spiritualName">Spiritual Name (if any)</Label>
-                <Input
-                  id="spiritualName"
-                  name="spiritualName"
-                  value={formData.spiritualName}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="batch">Batch</Label>
-              <Select
-                value={formData.batch}
-                onValueChange={(value) => handleSelectChange("batch", value)}
-              >
-                <SelectTrigger className="spiritual-input">
-                  <SelectValue placeholder="Select your batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sahadev">Sahadev</SelectItem>
-                  <SelectItem value="nakula">Nakula</SelectItem>
-                  <SelectItem value="arjuna">Arjuna</SelectItem>
-                  <SelectItem value="yudhisthir">Yudhisthir</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dateOfBirth" className="flex items-center">
-                  <CalendarIcon className="h-4 w-4 mr-1" />
-                  Date of Birth
-                </Label>
-                <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-            
-              <div className="space-y-2">
-                <Label htmlFor="occupation" className="flex items-center">
-                  <Briefcase className="h-4 w-4 mr-1" />
-                  Occupation
-                </Label>
-                <Input
-                  id="occupation"
-                  name="occupation"
-                  value={formData.occupation}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleInputChange}
-                className="spiritual-input"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center">
-                <MapPin className="h-4 w-4 mr-1" />
-                Address
-              </Label>
-              <Input
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="spiritual-input"
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="city" className="flex items-center">
-                  <Building className="h-4 w-4 mr-1" />
-                  City
-                </Label>
-                <Input
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="pinCode">PIN Code</Label>
-                <Input
-                  id="pinCode"
-                  name="pinCode"
-                  value={formData.pinCode}
-                  onChange={handleInputChange}
-                  className="spiritual-input"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="location">Temple/Center</Label>
-              <Input
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className="spiritual-input"
-              />
-            </div>
-          </form>
-        </CardContent>
-        <CardFooter>
-          <Button 
-            onClick={handleSubmit}
-            className="w-full bg-spiritual-purple hover:bg-spiritual-purple/90 text-white"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Save Profile
-              </>
+    <div className="container max-w-4xl mx-auto px-4 py-6">
+      <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Profile Avatar Section */}
+        <div className="col-span-1 flex flex-col items-center space-y-4">
+          <Avatar className="h-40 w-40">
+            <AvatarImage src={currentUser?.photoURL || ""} alt={currentUser?.displayName || ""} />
+            <AvatarFallback className="text-4xl bg-spiritual-purple/20 text-spiritual-purple">
+              {getInitials(currentUser?.displayName || "")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-center">
+            <h2 className="text-xl font-semibold">{currentUser?.displayName}</h2>
+            {userProfile?.spiritualName && (
+              <p className="text-muted-foreground">{userProfile.spiritualName}</p>
             )}
-          </Button>
-        </CardFooter>
-      </Card>
+          </div>
+        </div>
+
+        {/* Profile Form Section */}
+        <div className="col-span-1 md:col-span-2">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Names */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Display Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="spiritualName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Spiritual Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Spiritual name (if initiated)" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your email" {...field} readOnly />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Date of Birth */}
+              <FormItem className="flex flex-col">
+                <FormLabel>Date of Birth</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start text-left font-normal ${
+                        !dateOfBirth && "text-muted-foreground"
+                      }`}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {dateOfBirth ? format(dateOfBirth, "PPP") : "Select a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dateOfBirth}
+                      onSelect={setDateOfBirth}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </FormItem>
+
+              {/* Occupation */}
+              <FormField
+                control={form.control}
+                name="occupation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <BriefcaseIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input className="pl-10" placeholder="Your occupation" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Address */}
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Textarea className="pl-10 min-h-[80px]" placeholder="Your address" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* City and Pin Code */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your city" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="pinCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PIN Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your PIN code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Batch Selection */}
+              <FormField
+                control={form.control}
+                name="batch"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Batch</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your batch" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="sahadev">Sahadev</SelectItem>
+                        <SelectItem value="nakula">Nakula</SelectItem>
+                        <SelectItem value="arjuna">Arjuna</SelectItem>
+                        <SelectItem value="yudhisthir">Yudhisthir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Bio */}
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell us a bit about yourself"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Submit Button */}
+              <Button type="submit" disabled={isSubmitting} className="w-full">
+                {isSubmitting ? (
+                  <>Saving...</>
+                ) : (
+                  <>
+                    <SaveIcon className="mr-2 h-4 w-4" />
+                    Save Profile
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+        </div>
+      </div>
     </div>
   );
 };

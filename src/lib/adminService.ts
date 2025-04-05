@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -5,13 +6,13 @@ import {
   query, 
   where, 
   Timestamp, 
-  orderBy,
   updateDoc,
   doc,
   getDoc,
   deleteDoc,
   DocumentReference,
-  DocumentData
+  DocumentData,
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile } from "@/contexts/AuthContext";
@@ -28,7 +29,7 @@ export interface DevoteeGroup {
 
 export interface DevoteeWithProfile extends UserProfile {
   id: string;
-  joinDate?: Date;
+  joinDate?: Date | Timestamp;
 }
 
 export interface GroupMembership {
@@ -85,6 +86,7 @@ export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]>
       });
     }
     
+    // Sort in memory instead of using orderBy to avoid index issues
     return groups.sort((a, b) => {
       const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
       const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
@@ -120,9 +122,7 @@ export const getDevoteesInGroup = async (groupId: string): Promise<DevoteeWithPr
         devotees.push({
           id: membershipData.userId,
           ...userData,
-          joinDate: userData.joinDate instanceof Timestamp ? 
-            userData.joinDate.toDate() : 
-            userData.joinDate
+          joinDate: membershipData.joinedAt
         });
       }
     }
@@ -156,6 +156,7 @@ export const getAvailableGroups = async (): Promise<DevoteeGroup[]> => {
       });
     }
     
+    // Sort in memory instead of using orderBy to avoid index issues
     return groups.sort((a, b) => {
       const dateA = a.createdAt instanceof Date ? a.createdAt : new Date();
       const dateB = b.createdAt instanceof Date ? b.createdAt : new Date();
@@ -202,6 +203,34 @@ export const getUserGroups = async (userId: string): Promise<DevoteeGroup[]> => 
     return groups;
   } catch (error) {
     console.error("Error getting user groups:", error);
+    throw error;
+  }
+};
+
+// Join a devotee group
+export const joinDevoteeGroup = async (userId: string, groupId: string): Promise<void> => {
+  try {
+    // Check if user is already in the group
+    const membershipQuery = query(
+      collection(db, "groupMemberships"),
+      where("userId", "==", userId),
+      where("groupId", "==", groupId)
+    );
+    
+    const membershipSnapshot = await getDocs(membershipQuery);
+    
+    if (!membershipSnapshot.empty) {
+      throw new Error("You are already a member of this group");
+    }
+    
+    // Add user to group
+    await addDoc(collection(db, "groupMemberships"), {
+      userId,
+      groupId,
+      joinedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error joining group:", error);
     throw error;
   }
 };
