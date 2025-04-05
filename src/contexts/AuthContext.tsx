@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -36,6 +37,7 @@ export interface UserProfile {
   occupation?: string;
   batch?: string;
   isAdmin?: boolean;
+  bio?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    async function fetchUserProfile(user: User) {
+    const fetchUserProfile = async (user: User) => {
       try {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         
@@ -133,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Error fetching user profile:", error);
       }
-    }
+    };
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);

@@ -27,7 +27,7 @@ export interface DevoteeGroup {
   devoteeCount?: number;
 }
 
-export interface DevoteeWithProfile extends UserProfile {
+export interface DevoteeWithProfile extends Omit<UserProfile, 'joinDate'> {
   id: string;
   joinDate?: Date | Timestamp;
 }
