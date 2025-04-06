@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -50,7 +49,7 @@ export interface WeeklyStats {
 }
 
 // Helper function to safely convert date types
-const safeConvertToDate = (input: any): Date | null => {
+export const safeConvertToDate = (input: any): Date | null => {
   if (input instanceof Date && !isNaN(input.getTime())) {
     return input;
   }
@@ -246,9 +245,12 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       stats.totalHearingMinutes += entry.hearingMinutes || 0;
       
       try {
-        const [hours] = entry.wakeUpTime.split(':').map(Number);
-        if (!isNaN(hours)) {
-          totalWakeUpHours += hours;
+        // Safely parse wake-up time
+        if (entry.wakeUpTime && typeof entry.wakeUpTime === 'string') {
+          const [hours] = entry.wakeUpTime.split(':').map(Number);
+          if (!isNaN(hours)) {
+            totalWakeUpHours += hours;
+          }
         }
       } catch (error) {
         console.warn("Error processing wakeUpTime:", error);

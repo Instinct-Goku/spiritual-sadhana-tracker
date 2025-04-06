@@ -331,10 +331,23 @@ export const getDevoteeDetails = async (userId: string): Promise<UserProfile | n
 };
 
 // Get the sadhana progress for all devotees in a group
-export const getGroupSadhanaProgress = async (groupId: string): Promise<DevoteeSadhanaProgress[]> => {
+export const getGroupSadhanaProgress = async (
+  groupId: string, 
+  searchQuery: string = ""
+): Promise<DevoteeSadhanaProgress[]> => {
   try {
     // First get all devotees in the group
     const devotees = await getDevoteesInGroup(groupId);
+    
+    // Filter devotees by search query if provided
+    const filteredDevotees = searchQuery 
+      ? devotees.filter(devotee => {
+          const nameMatch = devotee.displayName?.toLowerCase().includes(searchQuery.toLowerCase());
+          const spiritualNameMatch = devotee.spiritualName?.toLowerCase().includes(searchQuery.toLowerCase());
+          const phoneMatch = devotee.phoneNumber?.includes(searchQuery);
+          return nameMatch || spiritualNameMatch || phoneMatch;
+        })
+      : devotees;
     
     // Get today's date
     const today = new Date();
@@ -344,7 +357,7 @@ export const getGroupSadhanaProgress = async (groupId: string): Promise<DevoteeS
     startDate.setDate(today.getDate() - 6);
     
     // For each devotee, get their weekly stats
-    const progressPromises = devotees.map(async (devotee) => {
+    const progressPromises = filteredDevotees.map(async (devotee) => {
       try {
         const weeklyStats = await getWeeklySadhana(devotee.id, startDate);
         
@@ -362,6 +375,64 @@ export const getGroupSadhanaProgress = async (groupId: string): Promise<DevoteeS
     return progressData;
   } catch (error) {
     console.error("Error getting group sadhana progress:", error);
+    throw error;
+  }
+};
+
+// Search devotees across all groups (for admin)
+export const searchDevotees = async (
+  adminId: string,
+  searchQuery: string
+): Promise<DevoteeSadhanaProgress[]> => {
+  try {
+    // Get all groups for this admin
+    const groups = await getDevoteeGroups(adminId);
+    
+    // Get all devotees from all groups
+    const allDevoteesPromises = groups.map(group => getDevoteesInGroup(group.id));
+    const allDevoteesArrays = await Promise.all(allDevoteesPromises);
+    
+    // Flatten the array and remove duplicates
+    const allDevotees = Array.from(
+      new Map(
+        allDevoteesArrays.flat().map(devotee => [devotee.id, devotee])
+      ).values()
+    );
+    
+    // Filter devotees by search query
+    const filteredDevotees = allDevotees.filter(devotee => {
+      const nameMatch = devotee.displayName?.toLowerCase().includes(searchQuery.toLowerCase());
+      const spiritualNameMatch = devotee.spiritualName?.toLowerCase().includes(searchQuery.toLowerCase());
+      const phoneMatch = devotee.phoneNumber?.includes(searchQuery);
+      return nameMatch || spiritualNameMatch || phoneMatch;
+    });
+    
+    // Get today's date
+    const today = new Date();
+    
+    // Start date is 7 days ago
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 6);
+    
+    // For each devotee, get their weekly stats
+    const progressPromises = filteredDevotees.map(async (devotee) => {
+      try {
+        const weeklyStats = await getWeeklySadhana(devotee.id, startDate);
+        
+        return {
+          ...devotee,
+          weeklyStats
+        };
+      } catch (error) {
+        console.error(`Error getting stats for devotee ${devotee.id}:`, error);
+        return devotee; // Return devotee without stats if there's an error
+      }
+    });
+    
+    const progressData = await Promise.all(progressPromises);
+    return progressData;
+  } catch (error) {
+    console.error("Error searching devotees:", error);
     throw error;
   }
 };

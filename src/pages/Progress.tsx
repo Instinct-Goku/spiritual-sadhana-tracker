@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,12 +17,17 @@ import {
   Cell,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award, Search, X } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getWeeklySadhana, WeeklyStats, SadhanaEntry } from "@/lib/sadhanaService";
+import { searchDevotees, DevoteeSadhanaProgress } from "@/lib/adminService";
 
 const ProgressPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [weekStart, setWeekStart] = useState(() => {
     const date = new Date();
@@ -30,6 +36,11 @@ const ProgressPage = () => {
     return date;
   });
   const [weekStats, setWeekStats] = useState<WeeklyStats | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<DevoteeSadhanaProgress[]>([]);
+  const [selectedDevotee, setSelectedDevotee] = useState<DevoteeSadhanaProgress | null>(null);
+  const [showingDevoteeProgress, setShowingDevoteeProgress] = useState(false);
   
   const formatDateRange = () => {
     const endDate = new Date(weekStart);
@@ -61,20 +72,90 @@ const ProgressPage = () => {
     const fetchWeeklyData = async () => {
       if (!currentUser) return;
       
-      try {
-        setLoading(true);
-        const stats = await getWeeklySadhana(currentUser.uid, weekStart);
-        setWeekStats(stats);
-      } catch (error) {
-        console.error("Error fetching weekly stats:", error);
-        toast.error("Failed to load weekly statistics");
-      } finally {
-        setLoading(false);
+      if (showingDevoteeProgress && selectedDevotee) {
+        try {
+          setLoading(true);
+          const stats = await getWeeklySadhana(selectedDevotee.id, weekStart);
+          setWeekStats(stats);
+        } catch (error) {
+          console.error("Error fetching weekly stats for devotee:", error);
+          toast.error("Failed to load devotee's statistics");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        try {
+          setLoading(true);
+          const stats = await getWeeklySadhana(currentUser.uid, weekStart);
+          setWeekStats(stats);
+        } catch (error) {
+          console.error("Error fetching weekly stats:", error);
+          toast.error("Failed to load weekly statistics");
+        } finally {
+          setLoading(false);
+        }
       }
     };
     
     fetchWeeklyData();
-  }, [currentUser, weekStart]);
+  }, [currentUser, weekStart, showingDevoteeProgress, selectedDevotee]);
+  
+  const handleSearch = async () => {
+    if (!currentUser || !userProfile?.isAdmin) return;
+    if (!searchQuery.trim()) {
+      toast.error("Please enter a search term");
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const results = await searchDevotees(currentUser.uid, searchQuery);
+      setSearchResults(results);
+      if (results.length === 0) {
+        toast.info("No devotees found with that search term");
+      }
+    } catch (error) {
+      console.error("Error searching devotees:", error);
+      toast.error("Failed to search devotees");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+  
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    if (showingDevoteeProgress) {
+      setShowingDevoteeProgress(false);
+      setSelectedDevotee(null);
+    }
+  };
+  
+  const viewDevoteeProgress = (devotee: DevoteeSadhanaProgress) => {
+    setSelectedDevotee(devotee);
+    setShowingDevoteeProgress(true);
+    // Reset to current week
+    const date = new Date();
+    date.setDate(date.getDate() - date.getDay()); // Set to Sunday
+    date.setHours(0, 0, 0, 0);
+    setWeekStart(date);
+  };
+  
+  const getInitials = (name: string) => {
+    if (!name) return "DM";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
   
   const prepareChantingData = () => {
     if (!weekStats?.entries.length) return [];
@@ -167,11 +248,182 @@ const ProgressPage = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-spiritual-purple">Spiritual Progress</h1>
+        <h1 className="text-3xl font-bold text-spiritual-purple">
+          {showingDevoteeProgress && selectedDevotee 
+            ? `${selectedDevotee.displayName}'s Spiritual Progress` 
+            : "Spiritual Progress"}
+        </h1>
         <p className="text-muted-foreground">
-          Track your spiritual growth and sadhana consistency
+          {showingDevoteeProgress && selectedDevotee
+            ? `Viewing sadhana statistics for ${selectedDevotee.spiritualName || selectedDevotee.displayName}`
+            : "Track your spiritual growth and sadhana consistency"}
         </p>
       </div>
+      
+      {userProfile?.isAdmin && (
+        <div className="mb-6">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search devotees by name or phone number..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="pl-8 pr-10 w-full spiritual-input"
+              />
+              {searchQuery && (
+                <button 
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={clearSearch}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Button 
+              onClick={handleSearch} 
+              disabled={isSearching || !searchQuery.trim()}
+              className="bg-spiritual-purple hover:bg-spiritual-purple/90"
+            >
+              {isSearching ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Searching...
+                </>
+              ) : (
+                "Search"
+              )}
+            </Button>
+          </div>
+          
+          {searchResults.length > 0 && !showingDevoteeProgress && (
+            <Card className="mt-4 spiritual-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Search Results</CardTitle>
+                <CardDescription>
+                  Found {searchResults.length} devotees matching your search
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Devotee</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Chanting</TableHead>
+                        <TableHead>Reading</TableHead>
+                        <TableHead>Programs</TableHead>
+                        <TableHead className="text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {searchResults.map(devotee => (
+                        <TableRow key={devotee.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={devotee.photoURL || ""} />
+                                <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                                  {getInitials(devotee.displayName || "")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{devotee.displayName}</div>
+                                {devotee.spiritualName && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {devotee.spiritualName}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{devotee.phoneNumber || "-"}</TableCell>
+                          <TableCell>
+                            {devotee.weeklyStats ? (
+                              <div className="font-medium">
+                                {devotee.weeklyStats.averageChantingRounds} rounds/day
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">No data</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {devotee.weeklyStats ? (
+                              <div className="font-medium">
+                                {devotee.weeklyStats.averageReadingMinutes} min/day
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">No data</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {devotee.weeklyStats ? (
+                              <div>
+                                <Progress 
+                                  value={devotee.weeklyStats.mangalaAratiAttendance} 
+                                  className="h-2 w-24" 
+                                />
+                                <div className="text-xs mt-1">
+                                  Mangala Arati: {devotee.weeklyStats.mangalaAratiAttendance}%
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">No data</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => viewDevoteeProgress(devotee)}
+                              className="border-spiritual-purple/20 hover:bg-spiritual-purple/10 text-spiritual-purple"
+                            >
+                              View Progress
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {showingDevoteeProgress && selectedDevotee && (
+            <div className="mt-4 mb-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedDevotee.photoURL || ""} />
+                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                    {getInitials(selectedDevotee.displayName || "")}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium">{selectedDevotee.displayName}</div>
+                  {selectedDevotee.spiritualName && (
+                    <div className="text-xs text-muted-foreground">
+                      {selectedDevotee.spiritualName}
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <Button 
+                variant="outline"
+                onClick={clearSearch}
+                className="border-spiritual-purple/20 hover:bg-spiritual-purple/10"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Return to My Progress
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
       
       <div className="flex items-center justify-between mb-6">
         <Button 
