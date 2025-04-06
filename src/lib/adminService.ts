@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -26,7 +27,8 @@ export interface DevoteeGroup {
   devoteeCount?: number;
 }
 
-export interface DevoteeWithProfile extends UserProfile {
+// Fix the interface to make joinDate optional and match UserProfile
+export interface DevoteeWithProfile extends Omit<UserProfile, 'joinDate'> {
   id: string;
   joinDate?: Date | Timestamp;
 }

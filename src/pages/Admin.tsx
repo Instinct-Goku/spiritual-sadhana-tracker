@@ -37,8 +37,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import format from "date-fns/format";
+import { format } from "date-fns";
 import { UserProfile } from "@/contexts/AuthContext";
+import { Timestamp } from "firebase/firestore";
 
 const AdminPage = () => {
   const { currentUser, userProfile } = useAuth();
