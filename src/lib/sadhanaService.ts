@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -33,7 +32,6 @@ export interface SadhanaEntry {
   morningProgram: boolean;
   eveningArati: boolean;
   spiritualClass: boolean;
-  // Removed: prasadam: boolean;
   notes?: string;
 }
 
@@ -47,7 +45,6 @@ export interface WeeklyStats {
   mangalaAratiAttendance: number; // percentage
   morningProgramAttendance: number; // percentage
   averageWakeUpHour: number;
-  // Removed: prasadamMaintained: number; // percentage
   entries: SadhanaEntry[];
 }
 
@@ -165,7 +162,25 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     
     const filteredDocs = snapshot.docs.filter(doc => {
       const data = doc.data();
-      const entryDate = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+      let entryDate: Date;
+      
+      if (data.date instanceof Timestamp) {
+        entryDate = data.date.toDate();
+      } else if (data.date instanceof Date) {
+        entryDate = data.date;
+      } else {
+        try {
+          entryDate = new Date(data.date);
+          if (isNaN(entryDate.getTime())) {
+            console.error("Invalid date in sadhana entry:", data.date);
+            return false;
+          }
+        } catch (error) {
+          console.error("Error parsing date:", error);
+          return false;
+        }
+      }
+      
       return entryDate >= startDate && entryDate <= endDate;
     });
     
@@ -177,10 +192,29 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     
     const entries: SadhanaEntry[] = filteredDocs.map(doc => {
       const data = doc.data() as Omit<SadhanaEntry, 'id'>;
+      let convertedDate: Date;
+      
+      if (data.date instanceof Timestamp) {
+        convertedDate = data.date.toDate();
+      } else if (data.date instanceof Date) {
+        convertedDate = data.date;
+      } else {
+        try {
+          convertedDate = new Date(data.date);
+          if (isNaN(convertedDate.getTime())) {
+            console.error("Invalid date in sadhana entry being mapped:", data.date);
+            convertedDate = new Date(); // Fallback to current date
+          }
+        } catch (error) {
+          console.error("Error parsing date during mapping:", error);
+          convertedDate = new Date(); // Fallback to current date
+        }
+      }
+      
       return {
         id: doc.id,
         ...data,
-        date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+        date: convertedDate
       };
     });
     
@@ -194,7 +228,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       mangalaAratiAttendance: 0,
       morningProgramAttendance: 0,
       averageWakeUpHour: 0,
-      // Removed: prasadamMaintained: 0,
       entries: entries
     };
     
@@ -205,7 +238,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     let totalWakeUpHours = 0;
     let mangalaAratiCount = 0;
     let morningProgramCount = 0;
-    // Removed: let prasadamCount = 0;
     
     entries.forEach(entry => {
       stats.totalChantingRounds += entry.chantingRounds;
@@ -217,7 +249,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;
-      // Removed: if (entry.prasadam) prasadamCount++;
     });
     
     stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
@@ -226,7 +257,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     stats.averageWakeUpHour = parseFloat((totalWakeUpHours / entries.length).toFixed(1));
     stats.mangalaAratiAttendance = parseFloat(((mangalaAratiCount / entries.length) * 100).toFixed(1));
     stats.morningProgramAttendance = parseFloat(((morningProgramCount / entries.length) * 100).toFixed(1));
-    // Removed: stats.prasadamMaintained = parseFloat(((prasadamCount / entries.length) * 100).toFixed(1));
     
     return stats;
   } catch (error) {

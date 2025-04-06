@@ -220,21 +220,30 @@ const AdminPage = () => {
       .substring(0, 2);
   };
   
-  const formatDate = (date: Date | Timestamp | undefined | string) => {
+  const formatDate = (date: Date | Timestamp | undefined | string | null) => {
     if (!date) return "N/A";
     
     try {
+      let dateObject: Date;
+      
       if (typeof date === 'string') {
-        return format(new Date(date), 'PPP');
+        dateObject = new Date(date);
+      } else if (date instanceof Timestamp) {
+        dateObject = date.toDate();
+      } else if (date instanceof Date) {
+        dateObject = date;
+      } else {
+        return "N/A";
       }
       
-      if (date instanceof Timestamp) {
-        return format(date.toDate(), 'PPP');
+      if (isNaN(dateObject.getTime())) {
+        console.error("Invalid date detected:", date);
+        return "Invalid date";
       }
       
-      return format(date, 'PPP');
+      return format(dateObject, 'PPP');
     } catch (error) {
-      console.error("Error formatting date:", error);
+      console.error("Error formatting date:", error, "Date value:", date);
       return "Invalid date";
     }
   };

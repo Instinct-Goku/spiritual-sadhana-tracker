@@ -302,17 +302,28 @@ export const deleteDevoteeGroup = async (groupId: string, adminId: string): Prom
   }
 };
 
-// Get detailed profile of a devotee
-export const getDevoteeDetails = async (devoteeId: string): Promise<UserProfile | null> => {
+// Make sure the getDevoteeDetails function properly handles dates
+export const getDevoteeDetails = async (userId: string): Promise<UserProfile | null> => {
   try {
-    const userRef = doc(db, "users", devoteeId);
-    const userDoc = await getDoc(userRef);
+    const docRef = doc(db, "users", userId);
+    const docSnap = await getDoc(docRef);
     
-    if (!userDoc.exists()) {
-      return null;
+    if (docSnap.exists()) {
+      const userData = docSnap.data() as UserProfile;
+      
+      // Ensure date fields are properly converted from Timestamps to Dates
+      if (userData.dateOfBirth && userData.dateOfBirth instanceof Timestamp) {
+        userData.dateOfBirth = userData.dateOfBirth.toDate();
+      }
+      
+      if (userData.joinDate && userData.joinDate instanceof Timestamp) {
+        userData.joinDate = userData.joinDate.toDate();
+      }
+      
+      return userData;
     }
     
-    return userDoc.data() as UserProfile;
+    return null;
   } catch (error) {
     console.error("Error getting devotee details:", error);
     throw error;
