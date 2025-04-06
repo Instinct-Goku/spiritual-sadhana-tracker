@@ -295,7 +295,8 @@ const Profile = () => {
                     <FormLabel>Batch</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""} // Ensure the value is set correctly
+                      defaultValue={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
-import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X } from "lucide-react";
+import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X, BarChart } from "lucide-react";
 import { 
   createDevoteeGroup, 
   getDevoteeGroups, 
@@ -16,7 +17,9 @@ import {
   DevoteeGroup, 
   DevoteeWithProfile,
   deleteDevoteeGroup,
-  getDevoteeDetails
+  getDevoteeDetails,
+  getGroupSadhanaProgress,
+  DevoteeSadhanaProgress
 } from "@/lib/adminService";
 import {
   AlertDialog,
@@ -40,6 +43,10 @@ import {
 import { format } from "date-fns";
 import { UserProfile } from "@/contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
+import {
+  Badge,
+  Progress
+} from "@/components/ui";
 
 const AdminPage = () => {
   const { currentUser, userProfile } = useAuth();
@@ -55,6 +62,9 @@ const AdminPage = () => {
   const [devoteeDetails, setDevoteeDetails] = useState<UserProfile | null>(null);
   const [showDevoteeDetails, setShowDevoteeDetails] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [viewTab, setViewTab] = useState<"members" | "progress">("members");
+  const [progressData, setProgressData] = useState<DevoteeSadhanaProgress[]>([]);
+  const [loadingProgress, setLoadingProgress] = useState(false);
   
   useEffect(() => {
     const loadGroups = async () => {
@@ -97,6 +107,27 @@ const AdminPage = () => {
     
     loadGroupMembers();
   }, [selectedGroup]);
+  
+  const loadProgressData = async () => {
+    if (!selectedGroup) return;
+    
+    try {
+      setLoadingProgress(true);
+      const progress = await getGroupSadhanaProgress(selectedGroup);
+      setProgressData(progress);
+    } catch (error) {
+      console.error("Error loading progress data:", error);
+      toast.error("Failed to load spiritual progress data");
+    } finally {
+      setLoadingProgress(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (viewTab === "progress" && selectedGroup && progressData.length === 0) {
+      loadProgressData();
+    }
+  }, [viewTab, selectedGroup]);
   
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -332,7 +363,7 @@ const AdminPage = () => {
             </Card>
             
             <Card className="md:col-span-2">
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <CardTitle>
                   {groups.find(g => g.id === selectedGroup)?.name || "Group Members"}
                 </CardTitle>
@@ -343,6 +374,29 @@ const AdminPage = () => {
                     "Select a group to view members"
                   )}
                 </CardDescription>
+                
+                {selectedGroup && (
+                  <div className="flex space-x-2 mt-4">
+                    <Button 
+                      variant={viewTab === "members" ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setViewTab("members")}
+                      className={viewTab === "members" ? "bg-spiritual-purple hover:bg-spiritual-purple/90" : ""}
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Members
+                    </Button>
+                    <Button 
+                      variant={viewTab === "progress" ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setViewTab("progress")}
+                      className={viewTab === "progress" ? "bg-spiritual-purple hover:bg-spiritual-purple/90" : ""}
+                    >
+                      <BarChart className="h-4 w-4 mr-2" />
+                      Spiritual Progress
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
                 {loading && selectedGroup ? (
@@ -353,24 +407,96 @@ const AdminPage = () => {
                   <p className="text-center py-8 text-muted-foreground">
                     Select a group from the left panel to view its members
                   </p>
-                ) : groupMembers.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No devotees have joined this group yet
-                  </p>
+                ) : viewTab === "members" ? (
+                  groupMembers.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">
+                      No devotees have joined this group yet
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Devotee</TableHead>
+                            <TableHead>Contact</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Batch</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {groupMembers.map(devotee => (
+                            <TableRow key={devotee.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-8 w-8">
+                                    <AvatarImage src={devotee.photoURL || ""} />
+                                    <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple">
+                                      {getInitials(devotee.displayName || "")}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="font-medium">{devotee.displayName}</div>
+                                    {devotee.spiritualName && (
+                                      <div className="text-xs text-muted-foreground">
+                                        {devotee.spiritualName}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{devotee.phoneNumber || "-"}</TableCell>
+                              <TableCell>{devotee.city || devotee.location || "-"}</TableCell>
+                              <TableCell>
+                                {devotee.batch ? (
+                                  <span className="capitalize">{devotee.batch}</span>
+                                ) : "-"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                  onClick={() => viewDevoteeDetails(devotee)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )
+                ) : loadingProgress ? (
+                  <div className="flex justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-spiritual-purple" />
+                  </div>
+                ) : progressData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      No spiritual progress data available for this group
+                    </p>
+                    <Button onClick={loadProgressData}>
+                      <Loader2 className="mr-2 h-4 w-4" />
+                      Refresh Data
+                    </Button>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Devotee</TableHead>
-                          <TableHead>Contact</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Batch</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead>Chanting</TableHead>
+                          <TableHead>Reading</TableHead>
+                          <TableHead>Mangala Arati</TableHead>
+                          <TableHead>Morning Program</TableHead>
+                          <TableHead className="text-right">Details</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {groupMembers.map(devotee => (
+                        {progressData.map(devotee => (
                           <TableRow key={devotee.id}>
                             <TableCell>
                               <div className="flex items-center gap-3">
@@ -390,12 +516,63 @@ const AdminPage = () => {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>{devotee.phoneNumber || "-"}</TableCell>
-                            <TableCell>{devotee.city || devotee.location || "-"}</TableCell>
                             <TableCell>
-                              {devotee.batch ? (
-                                <span className="capitalize">{devotee.batch}</span>
-                              ) : "-"}
+                              {devotee.weeklyStats ? (
+                                <div>
+                                  <div className="font-medium">
+                                    {devotee.weeklyStats.averageChantingRounds} rounds/day
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {devotee.weeklyStats.totalChantingRounds} total rounds
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">No data</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {devotee.weeklyStats ? (
+                                <div>
+                                  <div className="font-medium">
+                                    {devotee.weeklyStats.averageReadingMinutes} min/day
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {devotee.weeklyStats.totalReadingMinutes} total minutes
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">No data</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {devotee.weeklyStats ? (
+                                <div>
+                                  <Progress 
+                                    value={devotee.weeklyStats.mangalaAratiAttendance} 
+                                    className="h-2 w-24" 
+                                  />
+                                  <div className="text-xs mt-1">
+                                    {devotee.weeklyStats.mangalaAratiAttendance}%
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">No data</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {devotee.weeklyStats ? (
+                                <div>
+                                  <Progress 
+                                    value={devotee.weeklyStats.morningProgramAttendance} 
+                                    className="h-2 w-24" 
+                                  />
+                                  <div className="text-xs mt-1">
+                                    {devotee.weeklyStats.morningProgramAttendance}%
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">No data</span>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button 

@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -16,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { UserProfile } from "@/contexts/AuthContext";
+import { SadhanaEntry, WeeklyStats, getWeeklySadhana } from "./sadhanaService";
 
 // Types
 export interface DevoteeGroup {
@@ -38,6 +38,10 @@ export interface GroupMembership {
   userId: string;
   groupId: string;
   joinedAt: Date | Timestamp;
+}
+
+export interface DevoteeSadhanaProgress extends DevoteeWithProfile {
+  weeklyStats?: WeeklyStats;
 }
 
 // Creating a new devotee group
@@ -311,6 +315,42 @@ export const getDevoteeDetails = async (devoteeId: string): Promise<UserProfile 
     return userDoc.data() as UserProfile;
   } catch (error) {
     console.error("Error getting devotee details:", error);
+    throw error;
+  }
+};
+
+// Get the sadhana progress for all devotees in a group
+export const getGroupSadhanaProgress = async (groupId: string): Promise<DevoteeSadhanaProgress[]> => {
+  try {
+    // First get all devotees in the group
+    const devotees = await getDevoteesInGroup(groupId);
+    
+    // Get today's date
+    const today = new Date();
+    
+    // Start date is 7 days ago
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 6);
+    
+    // For each devotee, get their weekly stats
+    const progressPromises = devotees.map(async (devotee) => {
+      try {
+        const weeklyStats = await getWeeklySadhana(devotee.id, startDate);
+        
+        return {
+          ...devotee,
+          weeklyStats
+        };
+      } catch (error) {
+        console.error(`Error getting stats for devotee ${devotee.id}:`, error);
+        return devotee; // Return devotee without stats if there's an error
+      }
+    });
+    
+    const progressData = await Promise.all(progressPromises);
+    return progressData;
+  } catch (error) {
+    console.error("Error getting group sadhana progress:", error);
     throw error;
   }
 };

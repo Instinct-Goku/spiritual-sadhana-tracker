@@ -33,7 +33,7 @@ export interface SadhanaEntry {
   morningProgram: boolean;
   eveningArati: boolean;
   spiritualClass: boolean;
-  prasadam: boolean;
+  // Removed: prasadam: boolean;
   notes?: string;
 }
 
@@ -47,7 +47,7 @@ export interface WeeklyStats {
   mangalaAratiAttendance: number; // percentage
   morningProgramAttendance: number; // percentage
   averageWakeUpHour: number;
-  prasadamMaintained: number; // percentage
+  // Removed: prasadamMaintained: number; // percentage
   entries: SadhanaEntry[];
 }
 
@@ -194,7 +194,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       mangalaAratiAttendance: 0,
       morningProgramAttendance: 0,
       averageWakeUpHour: 0,
-      prasadamMaintained: 0,
+      // Removed: prasadamMaintained: 0,
       entries: entries
     };
     
@@ -205,7 +205,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     let totalWakeUpHours = 0;
     let mangalaAratiCount = 0;
     let morningProgramCount = 0;
-    let prasadamCount = 0;
+    // Removed: let prasadamCount = 0;
     
     entries.forEach(entry => {
       stats.totalChantingRounds += entry.chantingRounds;
@@ -217,7 +217,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;
-      if (entry.prasadam) prasadamCount++;
+      // Removed: if (entry.prasadam) prasadamCount++;
     });
     
     stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
@@ -226,7 +226,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     stats.averageWakeUpHour = parseFloat((totalWakeUpHours / entries.length).toFixed(1));
     stats.mangalaAratiAttendance = parseFloat(((mangalaAratiCount / entries.length) * 100).toFixed(1));
     stats.morningProgramAttendance = parseFloat(((morningProgramCount / entries.length) * 100).toFixed(1));
-    stats.prasadamMaintained = parseFloat(((prasadamCount / entries.length) * 100).toFixed(1));
+    // Removed: stats.prasadamMaintained = parseFloat(((prasadamCount / entries.length) * 100).toFixed(1));
     
     return stats;
   } catch (error) {
