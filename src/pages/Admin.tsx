@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/lib/toast";
 import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X, BarChart } from "lucide-react";
 import { 
@@ -43,10 +44,6 @@ import {
 import { format } from "date-fns";
 import { UserProfile } from "@/contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
-import {
-  Badge,
-  Progress
-} from "@/components/ui";
 
 const AdminPage = () => {
   const { currentUser, userProfile } = useAuth();

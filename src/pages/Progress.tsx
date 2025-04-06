@@ -278,7 +278,7 @@ const ProgressPage = () => {
               </span>
               <span className="text-sm text-muted-foreground">Average Hour</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{weekStats?.prasadamMaintained || 0}%</span> Prasadam Maintained
+                <span className="font-medium">Wake up consistency</span>
               </span>
             </div>
           </CardContent>

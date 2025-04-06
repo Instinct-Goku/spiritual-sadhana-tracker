@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +58,6 @@ const SadhanaPage = () => {
   const [narsimhaArati, setNarsimhaArati] = useState(false);
   const [guruPuja, setGuruPuja] = useState(false);
   const [bhagavatamClass, setBhagavatamClass] = useState(false);
-  const [prasadam, setPrasadam] = useState(true);
   const [notes, setNotes] = useState("");
   
   // Format date for input field
@@ -92,7 +90,6 @@ const SadhanaPage = () => {
           setNarsimhaArati(entry.narsimhaArati || false);
           setGuruPuja(entry.guruPuja || false);
           setBhagavatamClass(entry.bhagavatamClass || false);
-          setPrasadam(entry.prasadam);
           setNotes(entry.notes || "");
         } else {
           // Reset form for new entry
@@ -110,7 +107,6 @@ const SadhanaPage = () => {
           setNarsimhaArati(false);
           setGuruPuja(false);
           setBhagavatamClass(false);
-          setPrasadam(true);
           setNotes("");
         }
       } catch (error) {
@@ -157,7 +153,6 @@ const SadhanaPage = () => {
         bhagavatamClass,
         eveningArati: false,
         spiritualClass: false,
-        prasadam,
         notes,
       };
       
@@ -394,15 +389,6 @@ const SadhanaPage = () => {
                       onCheckedChange={(checked) => setBhagavatamClass(checked === true)}
                     />
                     <Label htmlFor="bhagavatam-class">Bhagavatam Class</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="prasadam" 
-                      checked={prasadam}
-                      onCheckedChange={(checked) => setPrasadam(checked === true)}
-                    />
-                    <Label htmlFor="prasadam">Maintained Prasadam</Label>
                   </div>
                 </div>
               </div>
