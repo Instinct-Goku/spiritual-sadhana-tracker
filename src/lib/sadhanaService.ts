@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -48,6 +49,21 @@ export interface WeeklyStats {
   entries: SadhanaEntry[];
 }
 
+// Helper function to safely convert date types
+const safeConvertToDate = (input: any): Date | null => {
+  if (input instanceof Date && !isNaN(input.getTime())) {
+    return input;
+  }
+  if (input instanceof Timestamp) {
+    return input.toDate();
+  }
+  if (typeof input === 'string' || typeof input === 'number') {
+    const date = new Date(input);
+    return !isNaN(date.getTime()) ? date : null;
+  }
+  return null;
+};
+
 export const addSadhanaEntry = async (entry: Omit<SadhanaEntry, 'id'>) => {
   try {
     const formattedEntry = {
@@ -93,10 +109,15 @@ export const getSadhanaEntry = async (id: string) => {
     const docSnap = await getDoc(doc(db, "sadhana", id));
     if (docSnap.exists()) {
       const data = docSnap.data() as Omit<SadhanaEntry, 'id'>;
+      const dateValue = data.date instanceof Timestamp ? data.date.toDate() : data.date;
+      
+      // Ensure date is valid
+      const safeDate = safeConvertToDate(dateValue) || new Date();
+      
       return { 
         id: docSnap.id, 
         ...data,
-        date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+        date: safeDate
       };
     }
     return null;
@@ -123,18 +144,25 @@ export const getDailySadhana = async (userId: string, date: Date) => {
     
     const results = snapshot.docs.filter(doc => {
       const data = doc.data();
-      const entryDate = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
+      let entryDate = safeConvertToDate(data.date);
+      
+      if (!entryDate) {
+        console.warn("Invalid date in sadhana entry, skipping:", data);
+        return false;
+      }
+      
       return entryDate >= startDate && entryDate <= endDate;
     });
     
     if (results.length > 0) {
       const doc = results[0];
       const data = doc.data() as Omit<SadhanaEntry, 'id'>;
+      const safeDate = safeConvertToDate(data.date) || new Date();
       
       return {
         id: doc.id,
         ...data,
-        date: data.date instanceof Timestamp ? data.date.toDate() : data.date
+        date: safeDate
       };
     }
     
@@ -147,11 +175,13 @@ export const getDailySadhana = async (userId: string, date: Date) => {
 
 export const getWeeklySadhana = async (userId: string, startDate: Date): Promise<WeeklyStats> => {
   try {
-    const endDate = new Date(startDate);
+    // Create a safe copy of the startDate to avoid mutation issues
+    const startDateCopy = new Date(startDate);
+    startDateCopy.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(startDateCopy);
     endDate.setDate(endDate.getDate() + 6);
     endDate.setHours(23, 59, 59, 999);
-    
-    startDate.setHours(0, 0, 0, 0);
     
     const q = query(
       collection(db, "sadhana"),
@@ -162,59 +192,30 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
     
     const filteredDocs = snapshot.docs.filter(doc => {
       const data = doc.data();
-      let entryDate: Date;
+      const entryDate = safeConvertToDate(data.date);
       
-      if (data.date instanceof Timestamp) {
-        entryDate = data.date.toDate();
-      } else if (data.date instanceof Date) {
-        entryDate = data.date;
-      } else {
-        try {
-          entryDate = new Date(data.date);
-          if (isNaN(entryDate.getTime())) {
-            console.error("Invalid date in sadhana entry:", data.date);
-            return false;
-          }
-        } catch (error) {
-          console.error("Error parsing date:", error);
-          return false;
-        }
+      if (!entryDate) {
+        console.warn("Invalid date in sadhana entry during filtering, skipping:", data);
+        return false;
       }
       
-      return entryDate >= startDate && entryDate <= endDate;
+      return entryDate >= startDateCopy && entryDate <= endDate;
     });
     
     filteredDocs.sort((a, b) => {
-      const dateA = a.data().date instanceof Timestamp ? a.data().date.toDate() : new Date(a.data().date);
-      const dateB = b.data().date instanceof Timestamp ? b.data().date.toDate() : new Date(b.data().date);
+      const dateA = safeConvertToDate(a.data().date) || new Date();
+      const dateB = safeConvertToDate(b.data().date) || new Date();
       return dateA.getTime() - dateB.getTime();
     });
     
     const entries: SadhanaEntry[] = filteredDocs.map(doc => {
       const data = doc.data() as Omit<SadhanaEntry, 'id'>;
-      let convertedDate: Date;
-      
-      if (data.date instanceof Timestamp) {
-        convertedDate = data.date.toDate();
-      } else if (data.date instanceof Date) {
-        convertedDate = data.date;
-      } else {
-        try {
-          convertedDate = new Date(data.date);
-          if (isNaN(convertedDate.getTime())) {
-            console.error("Invalid date in sadhana entry being mapped:", data.date);
-            convertedDate = new Date(); // Fallback to current date
-          }
-        } catch (error) {
-          console.error("Error parsing date during mapping:", error);
-          convertedDate = new Date(); // Fallback to current date
-        }
-      }
+      const safeDate = safeConvertToDate(data.date) || new Date();
       
       return {
         id: doc.id,
         ...data,
-        date: convertedDate
+        date: safeDate
       };
     });
     
@@ -244,8 +245,14 @@ export const getWeeklySadhana = async (userId: string, startDate: Date): Promise
       stats.totalReadingMinutes += entry.readingMinutes;
       stats.totalHearingMinutes += entry.hearingMinutes || 0;
       
-      const [hours] = entry.wakeUpTime.split(':').map(Number);
-      totalWakeUpHours += hours;
+      try {
+        const [hours] = entry.wakeUpTime.split(':').map(Number);
+        if (!isNaN(hours)) {
+          totalWakeUpHours += hours;
+        }
+      } catch (error) {
+        console.warn("Error processing wakeUpTime:", error);
+      }
       
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;

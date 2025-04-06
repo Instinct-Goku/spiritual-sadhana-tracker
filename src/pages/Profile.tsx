@@ -47,6 +47,22 @@ type ProfileFormValues = z.infer<typeof profileSchema> & {
   dateOfBirth?: Date;
 };
 
+// Helper function to validate a date
+const isValidDate = (date: any): boolean => {
+  if (!date) return false;
+  
+  // If it's already a Date object and valid
+  if (date instanceof Date && !isNaN(date.getTime())) return true;
+  
+  // Try to convert string to Date
+  if (typeof date === 'string') {
+    const parsedDate = new Date(date);
+    return !isNaN(parsedDate.getTime());
+  }
+  
+  return false;
+};
+
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,12 +99,25 @@ const Profile = () => {
         batch: userProfile.batch || "",
       });
 
-      // Set date of birth if it exists
+      // Set date of birth if it exists and is valid
       if (userProfile.dateOfBirth) {
-        const dobDate = userProfile.dateOfBirth instanceof Date
-          ? userProfile.dateOfBirth
-          : new Date(userProfile.dateOfBirth);
-        setDateOfBirth(dobDate);
+        try {
+          let dobDate: Date | undefined;
+          
+          if (userProfile.dateOfBirth instanceof Date) {
+            dobDate = userProfile.dateOfBirth;
+          } else if (typeof userProfile.dateOfBirth === 'string') {
+            dobDate = new Date(userProfile.dateOfBirth);
+          }
+          
+          // Ensure the date is valid before setting it
+          if (dobDate && !isNaN(dobDate.getTime())) {
+            setDateOfBirth(dobDate);
+          }
+        } catch (error) {
+          console.error("Error parsing date of birth:", error);
+          // Don't set an invalid date
+        }
       }
     }
   }, [userProfile, currentUser, form]);
@@ -206,7 +235,7 @@ const Profile = () => {
                       }`}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      {dateOfBirth ? format(dateOfBirth, "PPP") : "Select a date"}
+                      {dateOfBirth && isValidDate(dateOfBirth) ? format(dateOfBirth, "PPP") : "Select a date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -295,7 +324,7 @@ const Profile = () => {
                     <FormLabel>Batch</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value || ""} // Ensure the value is set correctly
+                      value={field.value || ""} 
                       defaultValue={field.value || ""}
                     >
                       <FormControl>
