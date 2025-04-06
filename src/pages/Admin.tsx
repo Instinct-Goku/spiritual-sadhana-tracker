@@ -1,23 +1,44 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
-import { Loader2, Plus, Users, User, UsersRound, UserPlus } from "lucide-react";
+import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X } from "lucide-react";
 import { 
   createDevoteeGroup, 
   getDevoteeGroups, 
   getDevoteesInGroup,
   DevoteeGroup, 
-  DevoteeWithProfile 
+  DevoteeWithProfile,
+  deleteDevoteeGroup,
+  getDevoteeDetails
 } from "@/lib/adminService";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import format from "date-fns/format";
+import { UserProfile } from "@/contexts/AuthContext";
 
 const AdminPage = () => {
   const { currentUser, userProfile } = useAuth();
@@ -29,8 +50,11 @@ const AdminPage = () => {
     name: "",
     description: ""
   });
+  const [selectedDevotee, setSelectedDevotee] = useState<DevoteeWithProfile | null>(null);
+  const [devoteeDetails, setDevoteeDetails] = useState<UserProfile | null>(null);
+  const [showDevoteeDetails, setShowDevoteeDetails] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  // Load groups on initial render
   useEffect(() => {
     const loadGroups = async () => {
       if (!currentUser) return;
@@ -54,7 +78,6 @@ const AdminPage = () => {
     loadGroups();
   }, [currentUser]);
   
-  // Load members when a group is selected
   useEffect(() => {
     const loadGroupMembers = async () => {
       if (!selectedGroup) return;
@@ -98,12 +121,10 @@ const AdminPage = () => {
       
       toast.success(`Group "${newGroup.name}" created successfully`);
       
-      // Reset form and refresh groups
       setNewGroup({ name: "", description: "" });
       const updatedGroups = await getDevoteeGroups(currentUser.uid);
       setGroups(updatedGroups);
       
-      // Select the newly created group
       setSelectedGroup(groupId);
       
     } catch (error) {
@@ -111,6 +132,52 @@ const AdminPage = () => {
       toast.error("Failed to create group");
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!currentUser) {
+      toast.error("You must be logged in as an admin");
+      return;
+    }
+    
+    try {
+      setIsDeleting(true);
+      await deleteDevoteeGroup(groupId, currentUser.uid);
+      
+      const updatedGroups = groups.filter(group => group.id !== groupId);
+      setGroups(updatedGroups);
+      
+      if (updatedGroups.length > 0) {
+        setSelectedGroup(updatedGroups[0].id);
+      } else {
+        setSelectedGroup("");
+        setGroupMembers([]);
+      }
+      
+      toast.success("Group deleted successfully");
+    } catch (error: any) {
+      console.error("Error deleting group:", error);
+      toast.error(error.message || "Failed to delete group");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  
+  const viewDevoteeDetails = async (devotee: DevoteeWithProfile) => {
+    setSelectedDevotee(devotee);
+    
+    try {
+      const details = await getDevoteeDetails(devotee.id);
+      if (details) {
+        setDevoteeDetails(details);
+        setShowDevoteeDetails(true);
+      } else {
+        toast.error("Failed to load devotee details");
+      }
+    } catch (error) {
+      console.error("Error loading devotee details:", error);
+      toast.error("Failed to load devotee details");
     }
   };
   
@@ -122,6 +189,25 @@ const AdminPage = () => {
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+  
+  const formatDate = (date: Date | Timestamp | undefined | string) => {
+    if (!date) return "N/A";
+    
+    try {
+      if (typeof date === 'string') {
+        return format(new Date(date), 'PPP');
+      }
+      
+      if (date instanceof Timestamp) {
+        return format(date.toDate(), 'PPP');
+      }
+      
+      return format(date, 'PPP');
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
   };
   
   if (!userProfile?.isAdmin) {
@@ -184,21 +270,59 @@ const AdminPage = () => {
                     {groups.map(group => (
                       <div 
                         key={group.id} 
-                        className={`p-3 rounded-md cursor-pointer transition-colors ${
-                          selectedGroup === group.id 
-                            ? "bg-spiritual-purple text-white" 
-                            : "hover:bg-spiritual-purple/10"
-                        }`}
-                        onClick={() => setSelectedGroup(group.id)}
+                        className="flex items-center justify-between p-3 rounded-md hover:bg-spiritual-purple/10"
                       >
-                        <div className="font-medium">{group.name}</div>
-                        <div className={`text-xs ${
-                          selectedGroup === group.id 
-                            ? "text-white/80" 
-                            : "text-muted-foreground"
-                        }`}>
-                          {group.devoteeCount || 0} devotees
+                        <div 
+                          className={`flex-1 cursor-pointer ${
+                            selectedGroup === group.id 
+                              ? "text-spiritual-purple font-medium" 
+                              : ""
+                          }`}
+                          onClick={() => setSelectedGroup(group.id)}
+                        >
+                          <div className="font-medium">{group.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {group.devoteeCount || 0} devotees
+                          </div>
                         </div>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Group</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{group.name}"? This action
+                                cannot be undone, and all members will be removed from the group.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                disabled={isDeleting}
+                                onClick={() => handleDeleteGroup(group.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                {isDeleting ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  "Delete Group"
+                                )}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     ))}
                   </div>
@@ -241,6 +365,7 @@ const AdminPage = () => {
                           <TableHead>Contact</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Batch</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -270,6 +395,16 @@ const AdminPage = () => {
                               {devotee.batch ? (
                                 <span className="capitalize">{devotee.batch}</span>
                               ) : "-"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => viewDevoteeDetails(devotee)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -339,6 +474,94 @@ const AdminPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <Dialog open={showDevoteeDetails} onOpenChange={setShowDevoteeDetails}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Devotee Details</DialogTitle>
+            <DialogDescription>
+              Detailed profile information for {selectedDevotee?.displayName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {devoteeDetails ? (
+            <div className="grid gap-4 py-4">
+              <div className="flex justify-center mb-2">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={devoteeDetails.photoURL || ""} />
+                  <AvatarFallback className="bg-spiritual-purple/20 text-spiritual-purple text-xl">
+                    {getInitials(devoteeDetails.displayName || "")}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-bold">{devoteeDetails.displayName}</h3>
+                {devoteeDetails.spiritualName && (
+                  <p className="text-muted-foreground">{devoteeDetails.spiritualName}</p>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p>{devoteeDetails.email}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                  <p>{devoteeDetails.phoneNumber || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Location</p>
+                  <p>{devoteeDetails.city || devoteeDetails.location || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Batch</p>
+                  <p className="capitalize">{devoteeDetails.batch || "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
+                  <p>{devoteeDetails.dateOfBirth ? formatDate(devoteeDetails.dateOfBirth) : "Not provided"}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Joined On</p>
+                  <p>{devoteeDetails.joinDate ? formatDate(devoteeDetails.joinDate) : "Not provided"}</p>
+                </div>
+                
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <p>{devoteeDetails.address || "Not provided"}</p>
+                </div>
+                
+                {devoteeDetails.bio && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Bio</p>
+                    <p>{devoteeDetails.bio}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-spiritual-purple" />
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDevoteeDetails(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

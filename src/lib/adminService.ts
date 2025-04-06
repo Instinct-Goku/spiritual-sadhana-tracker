@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -27,7 +26,7 @@ export interface DevoteeGroup {
   devoteeCount?: number;
 }
 
-export interface DevoteeWithProfile extends Omit<UserProfile, 'joinDate'> {
+export interface DevoteeWithProfile extends UserProfile {
   id: string;
   joinDate?: Date | Timestamp;
 }
@@ -254,6 +253,62 @@ export const leaveGroup = async (userId: string, groupId: string): Promise<boole
     return true;
   } catch (error) {
     console.error("Error leaving group:", error);
+    throw error;
+  }
+};
+
+// Delete a group - new function
+export const deleteDevoteeGroup = async (groupId: string, adminId: string): Promise<boolean> => {
+  try {
+    // First check if the current user is the admin of this group
+    const groupRef = doc(db, "devoteeGroups", groupId);
+    const groupSnap = await getDoc(groupRef);
+    
+    if (!groupSnap.exists()) {
+      throw new Error("Group not found");
+    }
+    
+    const groupData = groupSnap.data() as DevoteeGroup;
+    
+    if (groupData.adminId !== adminId) {
+      throw new Error("You don't have permission to delete this group");
+    }
+    
+    // Get all memberships for this group to delete them
+    const membershipQuery = query(
+      collection(db, "groupMemberships"),
+      where("groupId", "==", groupId)
+    );
+    
+    const membershipSnapshot = await getDocs(membershipQuery);
+    
+    // Delete all memberships in a batch-like approach
+    const deleteMemberships = membershipSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deleteMemberships);
+    
+    // Now delete the group itself
+    await deleteDoc(groupRef);
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    throw error;
+  }
+};
+
+// Get detailed profile of a devotee
+export const getDevoteeDetails = async (devoteeId: string): Promise<UserProfile | null> => {
+  try {
+    const userRef = doc(db, "users", devoteeId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      return null;
+    }
+    
+    return userDoc.data() as UserProfile;
+  } catch (error) {
+    console.error("Error getting devotee details:", error);
     throw error;
   }
 };
