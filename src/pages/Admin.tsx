@@ -193,11 +193,12 @@ const AdminPage = () => {
     }
   };
   
-  const viewDevoteeDetails = async (devotee: DevoteeWithProfile) => {
-    setSelectedDevotee(devotee);
+  const viewDevoteeDetails = async (devotee: DevoteeWithProfile | DevoteeSadhanaProgress) => {
+    const devoteeId = 'uid' in devotee ? devotee.uid : devotee.id;
+    setSelectedDevotee(devotee as DevoteeWithProfile);
     
     try {
-      const details = await getDevoteeDetails(devotee.id);
+      const details = await getDevoteeDetails(devoteeId);
       if (details) {
         setDevoteeDetails(details);
         setShowDevoteeDetails(true);
@@ -432,7 +433,7 @@ const AdminPage = () => {
                         </TableHeader>
                         <TableBody>
                           {groupMembers.map(devotee => (
-                            <TableRow key={devotee.id}>
+                            <TableRow key={devotee.uid}>
                               <TableCell>
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-8 w-8">
@@ -454,8 +455,8 @@ const AdminPage = () => {
                               <TableCell>{devotee.phoneNumber || "-"}</TableCell>
                               <TableCell>{devotee.city || devotee.location || "-"}</TableCell>
                               <TableCell>
-                                {devotee.batch ? (
-                                  <span className="capitalize">{devotee.batch}</span>
+                                {devotee.batchName || devotee.batch ? (
+                                  <span className="capitalize">{devotee.batchName || devotee.batch}</span>
                                 ) : "-"}
                               </TableCell>
                               <TableCell className="text-right">
@@ -704,7 +705,7 @@ const AdminPage = () => {
                 
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Batch</p>
-                  <p className="capitalize">{devoteeDetails.batch || "Not provided"}</p>
+                  <p className="capitalize">{devoteeDetails.batchName || devoteeDetails.batch || "Not provided"}</p>
                 </div>
                 
                 <div>

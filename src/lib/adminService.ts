@@ -20,17 +20,23 @@ import { getWeeklySadhana } from "./sadhanaService";
 
 export interface DevoteeSadhanaProgress {
   id: string;
+  uid?: string; // Added uid for compatibility with DevoteeWithProfile
   displayName: string;
   spiritualName?: string;
   phoneNumber?: string;
   photoURL?: string;
   email?: string;
   batchName?: string;
+  batch?: string; // Added for compatibility with Admin.tsx references
+  city?: string; // Added for compatibility
+  location?: string; // Added for compatibility
   weeklyStats?: {
     averageChantingRounds: number;
     averageReadingMinutes: number;
     mangalaAratiAttendance: number;
     morningProgramAttendance: number;
+    totalChantingRounds: number; // Added missing property
+    totalReadingMinutes: number; // Added missing property
   };
 }
 
@@ -41,22 +47,27 @@ export interface DevoteeGroup {
   createdBy: string;
   createdAt: Date;
   devoteeIds: string[];
+  devoteeCount?: number; // Added missing property
 }
 
 export interface DevoteeWithProfile {
   uid: string;
+  id?: string; // Added id for compatibility
   displayName: string;
   spiritualName?: string;
   email: string;
   phoneNumber?: string;
   photoURL?: string;
   batchName?: string;
+  batch?: string; // Added for compatibility
+  city?: string; // Added for compatibility
+  location?: string; // Added for compatibility
 }
 
 // Search devotees function
 export const searchDevotees = async (
-  adminId: string,
-  searchTerm: string
+  searchTerm: string,
+  adminId?: string
 ): Promise<DevoteeSadhanaProgress[]> => {
   try {
     // Validate search term
@@ -91,12 +102,16 @@ export const searchDevotees = async (
       const data = doc.data();
       const devotee: DevoteeSadhanaProgress = {
         id: doc.id,
+        uid: doc.id, // Add uid for compatibility
         displayName: data.displayName || "N/A",
         spiritualName: data.spiritualName || "",
         phoneNumber: data.phoneNumber || "",
         photoURL: data.photoURL || "",
         email: data.email || "",
         batchName: data.batchName || "",
+        batch: data.batch || "", // Added for compatibility
+        city: data.city || "", // Added for compatibility
+        location: data.location || "", // Added for compatibility
       };
       resultsMap[doc.id] = devotee;
     });
@@ -107,12 +122,16 @@ export const searchDevotees = async (
         const data = doc.data();
         const devotee: DevoteeSadhanaProgress = {
           id: doc.id,
+          uid: doc.id, // Add uid for compatibility
           displayName: data.displayName || "N/A",
           spiritualName: data.spiritualName || "",
           phoneNumber: data.phoneNumber || "",
           photoURL: data.photoURL || "",
           email: data.email || "",
           batchName: data.batchName || "",
+          batch: data.batch || "", // Added for compatibility
+          city: data.city || "", // Added for compatibility
+          location: data.location || "", // Added for compatibility
         };
         resultsMap[doc.id] = devotee;
       }
@@ -137,6 +156,8 @@ export const searchDevotees = async (
               averageReadingMinutes: weeklyStats.averageReadingMinutes,
               mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
               morningProgramAttendance: weeklyStats.morningProgramAttendance,
+              totalChantingRounds: weeklyStats.totalChantingRounds || 0, // Added missing property
+              totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Added missing property
             },
           };
         } catch (error) {
@@ -170,6 +191,7 @@ export const getAvailableGroups = async (): Promise<DevoteeGroup[]> => {
         createdBy: data.createdBy,
         createdAt: data.createdAt.toDate(),
         devoteeIds: data.devoteeIds || [],
+        devoteeCount: (data.devoteeIds || []).length, // Calculate devotee count
       });
     });
     
@@ -233,13 +255,15 @@ export const getUserGroups = async (userId: string): Promise<DevoteeGroup[]> => 
       
       if (groupDoc.exists()) {
         const data = groupDoc.data();
+        const devoteeIds = data.devoteeIds || [];
         return {
           id: groupDoc.id,
           name: data.name,
           description: data.description,
           createdBy: data.createdBy,
           createdAt: data.createdAt.toDate(),
-          devoteeIds: data.devoteeIds || [],
+          devoteeIds,
+          devoteeCount: devoteeIds.length, // Calculate devotee count
         };
       }
       
@@ -278,16 +302,17 @@ export const leaveGroup = async (devoteeId: string, groupId: string): Promise<vo
 };
 
 // Function to create a new devotee group (admin only)
-export const createDevoteeGroup = async (
-  adminId: string, 
-  groupName: string, 
-  description?: string
-): Promise<string> => {
+export const createDevoteeGroup = async (groupData: {
+  name: string;
+  description?: string;
+  adminId: string;
+  createdAt: Date;
+}): Promise<string> => {
   try {
     const newGroup = {
-      name: groupName,
-      description: description || "",
-      createdBy: adminId,
+      name: groupData.name,
+      description: groupData.description || "",
+      createdBy: groupData.adminId,
       createdAt: Timestamp.now(),
       devoteeIds: [],
     };
@@ -312,13 +337,15 @@ export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]>
     
     snapshot.forEach((doc) => {
       const data = doc.data();
+      const devoteeIds = data.devoteeIds || [];
       groups.push({
         id: doc.id,
         name: data.name,
         description: data.description,
         createdBy: data.createdBy,
         createdAt: data.createdAt.toDate(),
-        devoteeIds: data.devoteeIds || [],
+        devoteeIds,
+        devoteeCount: devoteeIds.length, // Calculate devotee count
       });
     });
     
@@ -354,12 +381,16 @@ export const getDevoteesInGroup = async (groupId: string): Promise<DevoteeWithPr
         const data = userDoc.data();
         return {
           uid: userDoc.id,
+          id: userDoc.id, // Add id for compatibility
           displayName: data.displayName || "",
           spiritualName: data.spiritualName || "",
           email: data.email || "",
           phoneNumber: data.phoneNumber || "",
           photoURL: data.photoURL || "",
           batchName: data.batchName || "",
+          batch: data.batch || "", // Added for compatibility
+          city: data.city || "", // Added for compatibility
+          location: data.location || "", // Added for compatibility
         };
       }
       
@@ -376,7 +407,7 @@ export const getDevoteesInGroup = async (groupId: string): Promise<DevoteeWithPr
 };
 
 // Function to delete a devotee group
-export const deleteDevoteeGroup = async (groupId: string): Promise<void> => {
+export const deleteDevoteeGroup = async (groupId: string, adminId: string): Promise<void> => {
   try {
     // Get the group to check devoteeIds
     const groupRef = doc(db, "devoteeGroups", groupId);
@@ -387,6 +418,12 @@ export const deleteDevoteeGroup = async (groupId: string): Promise<void> => {
     }
     
     const groupData = groupDoc.data();
+
+    // Check if the user is the admin of this group
+    if (groupData.createdBy !== adminId) {
+      throw new Error("Only the group creator can delete this group");
+    }
+    
     const devoteeIds = groupData.devoteeIds || [];
     
     // If there are devotees in the group, we need to update their profiles
@@ -427,12 +464,16 @@ export const getDevoteeDetails = async (devoteeId: string): Promise<DevoteeWithP
     const data = userDoc.data();
     return {
       uid: userDoc.id,
+      id: userDoc.id, // Add id for compatibility
       displayName: data.displayName || "",
       spiritualName: data.spiritualName || "",
       email: data.email || "",
       phoneNumber: data.phoneNumber || "",
       photoURL: data.photoURL || "",
       batchName: data.batchName || "",
+      batch: data.batch || "", // Added for compatibility
+      city: data.city || "", // Added for compatibility
+      location: data.location || "", // Added for compatibility
     };
     
   } catch (error) {
@@ -443,8 +484,8 @@ export const getDevoteeDetails = async (devoteeId: string): Promise<DevoteeWithP
 
 // Function to get sadhana progress for an entire group
 export const getGroupSadhanaProgress = async (
-  groupId: string, 
-  startDate: Date
+  groupId: string,
+  startDate: Date = new Date()
 ): Promise<DevoteeSadhanaProgress[]> => {
   try {
     // First get all devotees in the group
@@ -461,29 +502,39 @@ export const getGroupSadhanaProgress = async (
         
         return {
           id: devotee.uid,
+          uid: devotee.uid, // Add uid for compatibility
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
+          batch: devotee.batch, // Added for compatibility
+          city: devotee.city, // Added for compatibility
+          location: devotee.location, // Added for compatibility
           weeklyStats: {
             averageChantingRounds: weeklyStats.averageChantingRounds,
             averageReadingMinutes: weeklyStats.averageReadingMinutes,
             mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
             morningProgramAttendance: weeklyStats.morningProgramAttendance,
+            totalChantingRounds: weeklyStats.totalChantingRounds || 0, // Added missing property
+            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Added missing property
           },
         };
       } catch (error) {
         console.error(`Failed to fetch weekly stats for devotee ${devotee.uid}:`, error);
         return {
           id: devotee.uid,
+          uid: devotee.uid, // Add uid for compatibility
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
+          batch: devotee.batch, // Added for compatibility
+          city: devotee.city, // Added for compatibility
+          location: devotee.location, // Added for compatibility
         };
       }
     });

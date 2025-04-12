@@ -34,16 +34,16 @@ export interface UserProfile {
   isAdmin?: boolean;
   joinDate?: Date;
   batchName?: string;
+  batch?: string;
   groupIds?: string[];
   
   bio?: string;
   occupation?: string;
   address?: string;
   city?: string;
-  pinCode?: string;
-  batch?: string;
-  dateOfBirth?: Date;
   location?: string;
+  pinCode?: string;
+  dateOfBirth?: Date;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
