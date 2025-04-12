@@ -15,16 +15,29 @@ import {
   PieChart,
   Pie,
   Cell,
+  ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award, Search, X, Info } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getWeeklySadhana, WeeklyStats, SadhanaEntry } from "@/lib/sadhanaService";
 import { searchDevotees, DevoteeSadhanaProgress } from "@/lib/adminService";
+import { getBatchCriteriaDescription, DEFAULT_BATCHES } from "@/lib/scoringService";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const ProgressPage = () => {
   const { currentUser, userProfile } = useAuth();
@@ -41,6 +54,7 @@ const ProgressPage = () => {
   const [searchResults, setSearchResults] = useState<DevoteeSadhanaProgress[]>([]);
   const [selectedDevotee, setSelectedDevotee] = useState<DevoteeSadhanaProgress | null>(null);
   const [showingDevoteeProgress, setShowingDevoteeProgress] = useState(false);
+  const [batchCriteria, setBatchCriteria] = useState<Record<string, string[]> | null>(null);
   
   const formatDateRange = () => {
     const endDate = new Date(weekStart);
@@ -75,8 +89,21 @@ const ProgressPage = () => {
       if (showingDevoteeProgress && selectedDevotee) {
         try {
           setLoading(true);
-          const stats = await getWeeklySadhana(selectedDevotee.id, weekStart);
+          // Use batch name for score calculation if available
+          const stats = await getWeeklySadhana(
+            selectedDevotee.id, 
+            weekStart, 
+            selectedDevotee.batchName?.toLowerCase()
+          );
           setWeekStats(stats);
+          
+          // Set batch criteria for the selected devotee
+          if (selectedDevotee.batchName) {
+            const criteria = getBatchCriteriaDescription(selectedDevotee.batchName.toLowerCase());
+            setBatchCriteria(criteria);
+          } else {
+            setBatchCriteria(null);
+          }
         } catch (error) {
           console.error("Error fetching weekly stats for devotee:", error);
           toast.error("Failed to load devotee's statistics");
@@ -86,8 +113,21 @@ const ProgressPage = () => {
       } else {
         try {
           setLoading(true);
-          const stats = await getWeeklySadhana(currentUser.uid, weekStart);
+          // Use user's batch name for score calculation if available
+          const stats = await getWeeklySadhana(
+            currentUser.uid, 
+            weekStart, 
+            userProfile?.batchName?.toLowerCase()
+          );
           setWeekStats(stats);
+          
+          // Set batch criteria for the current user
+          if (userProfile?.batchName) {
+            const criteria = getBatchCriteriaDescription(userProfile.batchName.toLowerCase());
+            setBatchCriteria(criteria);
+          } else {
+            setBatchCriteria(null);
+          }
         } catch (error) {
           console.error("Error fetching weekly stats:", error);
           toast.error("Failed to load weekly statistics");
@@ -98,7 +138,7 @@ const ProgressPage = () => {
     };
     
     fetchWeeklyData();
-  }, [currentUser, weekStart, showingDevoteeProgress, selectedDevotee]);
+  }, [currentUser, weekStart, showingDevoteeProgress, selectedDevotee, userProfile]);
   
   const handleSearch = async () => {
     if (!currentUser || !userProfile?.isAdmin) return;
@@ -175,6 +215,11 @@ const ProgressPage = () => {
     }));
   };
   
+  const prepareScoreData = () => {
+    if (!weekStats?.dailyScores?.length) return [];
+    return weekStats.dailyScores;
+  };
+  
   const prepareWakeUpTimeData = () => {
     if (!weekStats?.entries.length) return [];
     
@@ -236,6 +281,33 @@ const ProgressPage = () => {
     return null;
   };
   
+  const ScoreTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
+          <p className="font-medium">Day: {payload[0].payload.day}</p>
+          <p>Score: {payload[0].payload.score}</p>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+  
+  const getBatchName = () => {
+    if (showingDevoteeProgress && selectedDevotee) {
+      return selectedDevotee.batchName || "Default";
+    }
+    return userProfile?.batchName || "Default";
+  };
+  
+  const getReadingMinimumForBatch = (batchName: string) => {
+    const lowerBatchName = batchName.toLowerCase();
+    const batch = DEFAULT_BATCHES[lowerBatchName];
+    if (!batch) return 0;
+    return batch.readingMinimum;
+  };
+  
   if (loading) {
     return (
       <div className="min-h-[40vh] flex flex-col items-center justify-center">
@@ -255,8 +327,8 @@ const ProgressPage = () => {
         </h1>
         <p className="text-muted-foreground">
           {showingDevoteeProgress && selectedDevotee
-            ? `Viewing sadhana statistics for ${selectedDevotee.spiritualName || selectedDevotee.displayName}`
-            : "Track your spiritual growth and sadhana consistency"}
+            ? `Viewing sadhana statistics for ${selectedDevotee.spiritualName || selectedDevotee.displayName} (${selectedDevotee.batchName || "No Batch"})`
+            : `Track your spiritual growth and sadhana consistency (${userProfile?.batchName || "No Batch"})`}
         </p>
       </div>
       
@@ -313,6 +385,7 @@ const ProgressPage = () => {
                       <TableRow>
                         <TableHead>Devotee</TableHead>
                         <TableHead>Contact</TableHead>
+                        <TableHead>Batch</TableHead>
                         <TableHead>Chanting</TableHead>
                         <TableHead>Reading</TableHead>
                         <TableHead>Programs</TableHead>
@@ -341,6 +414,11 @@ const ProgressPage = () => {
                             </div>
                           </TableCell>
                           <TableCell>{devotee.phoneNumber || "-"}</TableCell>
+                          <TableCell>
+                            <span className="text-spiritual-purple font-medium">
+                              {devotee.batchName || "No Batch"}
+                            </span>
+                          </TableCell>
                           <TableCell>
                             {devotee.weeklyStats ? (
                               <div className="font-medium">
@@ -487,6 +565,22 @@ const ProgressPage = () => {
               <span className="text-sm text-muted-foreground">Total Minutes</span>
               <span className="text-md mt-2">
                 <span className="font-medium">{weekStats?.averageReadingMinutes || 0}</span> min/day avg.
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="ml-1 text-muted-foreground">
+                      <Info className="h-3.5 w-3.5 inline" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Reading Minimum</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {getBatchName()} batch: {getReadingMinimumForBatch(getBatchName())} minutes per day
+                        ({getReadingMinimumForBatch(getBatchName()) / 60} hours)
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </span>
             </div>
           </CardContent>
@@ -518,19 +612,19 @@ const ProgressPage = () => {
           <CardHeader className="pb-2">
             <div className="flex items-center">
               <div className="h-8 w-8 rounded-full bg-spiritual-purple/10 flex items-center justify-center mr-2">
-                <Clock className="h-4 w-4 text-spiritual-purple" />
+                <Award className="h-4 w-4 text-spiritual-purple" />
               </div>
-              <CardTitle className="text-lg">Wake-up</CardTitle>
+              <CardTitle className="text-lg">Sadhana Score</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col">
               <span className="text-3xl font-bold">
-                {weekStats?.averageWakeUpHour.toFixed(1) || "N/A"}
+                {weekStats?.averageScore || 0}
               </span>
-              <span className="text-sm text-muted-foreground">Average Hour</span>
+              <span className="text-sm text-muted-foreground">Average Score/Day</span>
               <span className="text-md mt-2">
-                <span className="font-medium">Wake up consistency</span>
+                <span className="font-medium">{weekStats?.totalScore || 0}</span> total points
               </span>
             </div>
           </CardContent>
@@ -583,6 +677,19 @@ const ProgressPage = () => {
                     <YAxis />
                     <Tooltip />
                     <Bar dataKey="minutes" fill="#D4AF37" />
+                    {getBatchName() && (
+                      <ReferenceLine 
+                        y={getReadingMinimumForBatch(getBatchName())} 
+                        stroke="#E57373" 
+                        strokeDasharray="3 3"
+                        label={{ 
+                          value: 'Minimum', 
+                          position: 'insideTopRight',
+                          fill: '#E57373',
+                          fontSize: 12 
+                        }} 
+                      />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -596,65 +703,144 @@ const ProgressPage = () => {
         
         <Card className="spiritual-card">
           <CardHeader>
-            <CardTitle className="text-lg">Wake-up Time Consistency</CardTitle>
+            <CardTitle className="text-lg">Daily Sadhana Scores</CardTitle>
             <CardDescription>
-              Your morning rising times throughout the week
+              Your sadhana performance based on batch criteria
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-72">
-              {weekStats?.entries.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={prepareWakeUpTimeData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                    <XAxis dataKey="day" />
-                    <YAxis domain={[0, 12]} ticks={[0, 3, 6, 9, 12]} />
-                    <Tooltip content={<WakeUpTimeTooltip />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="time" 
-                      stroke="#7E69AB" 
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: "#7E69AB" }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No data for this week</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="spiritual-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Program Attendance</CardTitle>
-            <CardDescription>
-              Your participation in spiritual programs
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              {weekStats?.entries.length ? (
+              {weekStats?.dailyScores?.length ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart 
-                    data={prepareProgramAttendanceData()} 
-                    layout="vertical"
-                    margin={{ top: 10, right: 10, left: 80, bottom: 0 }}
+                    data={prepareScoreData()} 
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} horizontal={true} vertical={false} />
-                    <XAxis type="number" domain={[0, 7]} />
-                    <YAxis type="category" dataKey="name" />
-                    <Tooltip content={<ProgramTooltip />} />
-                    <Bar dataKey="value" fill="#7E69AB" />
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                    <XAxis dataKey="day" />
+                    <YAxis domain={[0, 'dataMax + 20']} />
+                    <Tooltip content={<ScoreTooltip />} />
+                    <Bar dataKey="score" fill="#4CAF50" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No data for this week</p>
+                  <p className="text-muted-foreground">No score data for this week</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="spiritual-card">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="text-lg">Batch Criteria</CardTitle>
+                <CardDescription>
+                  Scoring requirements for {getBatchName()} batch
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-72 overflow-y-auto pr-2">
+              {batchCriteria ? (
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="sleepTime">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Sleep Time Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        {batchCriteria.sleepTime.map((criterion, index) => (
+                          <li key={index} className="flex items-center">
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="wakeUpTime">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Wake-up Time Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        {batchCriteria.wakeUpTime.map((criterion, index) => (
+                          <li key={index} className="flex items-center">
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="reading">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Reading Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        {batchCriteria.reading.map((criterion, index) => (
+                          <li key={index} className="flex items-center">
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                        <li className="mt-2">1 point per minute of reading</li>
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="daySleep">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Day Sleep Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        {batchCriteria.daySleep.map((criterion, index) => (
+                          <li key={index} className="flex items-center">
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="japaCompletion">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Japa Completion Time Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        {batchCriteria.japaCompletion.map((criterion, index) => (
+                          <li key={index} className="flex items-center">
+                            <span>{criterion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                  
+                  <AccordionItem value="programs">
+                    <AccordionTrigger className="text-spiritual-purple font-medium">
+                      Program Attendance Scoring
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ul className="space-y-1 text-sm">
+                        <li>Mangala Arati: 10 points</li>
+                        <li>Tulsi Arati: 5 points</li>
+                        <li>Narsimha Arati: 5 points</li>
+                        <li>Guru Puja: 5 points</li>
+                        <li>Bhagavatam Class: 20 points</li>
+                      </ul>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-muted-foreground">No batch criteria available</p>
                 </div>
               )}
             </div>
@@ -671,10 +857,10 @@ const ProgressPage = () => {
             <div>
               <h3 className="text-xl font-medium mb-1">Weekly Achievement</h3>
               <p className="text-muted-foreground">
-                {weekStats.totalChantingRounds >= 112 
-                  ? "Excellent! You completed 16 rounds or more per day on average."
-                  : weekStats.totalChantingRounds >= 70
-                  ? "Good progress! You're building consistency in your sadhana."
+                {weekStats.totalScore >= 700 
+                  ? "Excellent! You've earned a high score this week with consistent sadhana."
+                  : weekStats.totalScore >= 500
+                  ? "Good progress! You're maintaining steady spiritual practices."
                   : "Keep going! Each step on the spiritual path is valuable."}
               </p>
             </div>
