@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -105,10 +106,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!currentUser) throw new Error("No user is logged in");
     
     try {
-      const userRef = doc(db, "users", currentUser.uid);
-      await updateDoc(userRef, { ...data });
+      // Create a clean copy of the data without undefined values
+      const cleanData: Record<string, any> = {};
       
-      setUserProfile(prev => prev ? { ...prev, ...data } : null);
+      // Only include properties that have defined values
+      for (const [key, value] of Object.entries(data)) {
+        // Skip undefined values but allow null values (explicitly set)
+        if (value !== undefined) {
+          cleanData[key] = value;
+        }
+      }
+      
+      const userRef = doc(db, "users", currentUser.uid);
+      await updateDoc(userRef, cleanData);
+      
+      setUserProfile(prev => prev ? { ...prev, ...cleanData } : null);
       
       if (data.displayName) {
         await updateProfile(currentUser, { displayName: data.displayName });
