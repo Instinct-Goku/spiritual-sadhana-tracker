@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Building2, Save as SaveIcon, Briefcase as BriefcaseIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Save as SaveIcon, Briefcase as BriefcaseIcon, Building2, X as XIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -40,12 +40,11 @@ const profileSchema = z.object({
   city: z.string().optional(),
   pinCode: z.string().optional(),
   batch: z.string().optional(),
+  // We don't include dateOfBirth in the schema as we'll handle it separately
 });
 
 // Define a type for our profile form values
-type ProfileFormValues = z.infer<typeof profileSchema> & {
-  dateOfBirth?: Date;
-};
+type ProfileFormValues = z.infer<typeof profileSchema>;
 
 // Helper function to validate a date
 const isValidDate = (date: any): boolean => {
@@ -66,7 +65,10 @@ const isValidDate = (date: any): boolean => {
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined | null>(undefined);
+  const [year, setYear] = useState<number | undefined>(undefined);
+  const [month, setMonth] = useState<number | undefined>(undefined);
+  const [selectedView, setSelectedView] = useState<'days' | 'months' | 'years'>('days');
 
   // Initialize the form with react-hook-form
   const form = useForm<ProfileFormValues>({
@@ -83,6 +85,25 @@ const Profile = () => {
       batch: "",
     },
   });
+
+  // Generate years for the year selector
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
+  
+  // Generate months for the month selector
+  const months = [
+    { value: 0, label: "January" },
+    { value: 1, label: "February" },
+    { value: 2, label: "March" },
+    { value: 3, label: "April" },
+    { value: 4, label: "May" },
+    { value: 5, label: "June" },
+    { value: 6, label: "July" },
+    { value: 7, label: "August" },
+    { value: 8, label: "September" },
+    { value: 9, label: "October" },
+    { value: 10, label: "November" },
+    { value: 11, label: "December" },
+  ];
 
   // Populate form with user data when available
   useEffect(() => {
@@ -113,6 +134,8 @@ const Profile = () => {
           // Ensure the date is valid before setting it
           if (dobDate && !isNaN(dobDate.getTime())) {
             setDateOfBirth(dobDate);
+            setYear(dobDate.getFullYear());
+            setMonth(dobDate.getMonth());
           }
         } catch (error) {
           console.error("Error parsing date of birth:", error);
@@ -141,6 +164,23 @@ const Profile = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Create a complete date from year and month
+  const handleYearMonthSelect = () => {
+    if (year && month !== undefined) {
+      // Create a date with the selected year and month (day is set to 1)
+      const newDate = new Date(year, month, 1);
+      setDateOfBirth(newDate);
+      setSelectedView('days');
+    }
+  };
+
+  // Clear the date of birth
+  const clearDateOfBirth = () => {
+    setDateOfBirth(null);
+    setYear(undefined);
+    setMonth(undefined);
   };
 
   const getInitials = (name: string) => {
@@ -223,30 +263,112 @@ const Profile = () => {
                 )}
               />
 
-              {/* Date of Birth */}
+              {/* Date of Birth - Enhanced Version */}
               <FormItem className="flex flex-col">
-                <FormLabel>Date of Birth</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={`w-full justify-start text-left font-normal ${
-                        !dateOfBirth && "text-muted-foreground"
-                      }`}
+                <FormLabel>Date of Birth (Optional)</FormLabel>
+                <div className="flex flex-col space-y-3">
+                  
+                  {/* Display selected date with clear button */}
+                  {dateOfBirth && (
+                    <div className="flex items-center">
+                      <div className="border rounded-md px-3 py-2 flex-1">
+                        {format(dateOfBirth, "PPP")}
+                      </div>
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={clearDateOfBirth}
+                        className="ml-2"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Year and Month Selection UI */}
+                  {!dateOfBirth && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <FormLabel className="text-sm">Year</FormLabel>
+                        <Select
+                          value={year?.toString()}
+                          onValueChange={(value) => setYear(parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select year" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[240px]">
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <FormLabel className="text-sm">Month</FormLabel>
+                        <Select
+                          value={month !== undefined ? month.toString() : undefined}
+                          onValueChange={(value) => setMonth(parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map((month) => (
+                              <SelectItem key={month.value} value={month.value.toString()}>
+                                {month.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Set Date Button */}
+                  {!dateOfBirth && year && month !== undefined && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={handleYearMonthSelect}
+                      className="w-full"
                     >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {dateOfBirth && isValidDate(dateOfBirth) ? format(dateOfBirth, "PPP") : "Select a date"}
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Set Date of Birth
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <CalendarComponent
-                      mode="single"
-                      selected={dateOfBirth}
-                      onSelect={setDateOfBirth}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                  )}
+                  
+                  {/* Show calendar picker button if no date selected */}
+                  {!dateOfBirth && (!year || month === undefined) && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal text-muted-foreground"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          Select a date from calendar
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={dateOfBirth || undefined}
+                          onSelect={setDateOfBirth}
+                          initialFocus
+                          className="pointer-events-auto"
+                          captionLayout="dropdown-buttons"
+                          fromYear={1920}
+                          toYear={new Date().getFullYear()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
               </FormItem>
 
               {/* Occupation */}

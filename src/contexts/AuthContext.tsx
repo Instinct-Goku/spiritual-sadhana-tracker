@@ -43,7 +43,7 @@ export interface UserProfile {
   city?: string;
   location?: string;
   pinCode?: string;
-  dateOfBirth?: Date;
+  dateOfBirth?: Date | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
