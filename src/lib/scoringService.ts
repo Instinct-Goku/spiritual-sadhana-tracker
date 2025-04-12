@@ -1,4 +1,3 @@
-
 import { SadhanaEntry } from "./sadhanaService";
 
 export interface BatchCriteria {
@@ -194,6 +193,25 @@ export const calculateProgramScore = (entry: SadhanaEntry): number => {
   return score;
 };
 
+// Check if weekly scoring is enabled
+export const isWeeklyScoringEnabled = (): boolean => {
+  const storedValue = localStorage.getItem("isWeeklyScoringEnabled");
+  return storedValue === "true";
+};
+
+// Get batch configurations from storage or use defaults
+export const getBatchConfigurations = (): Record<string, BatchCriteria> => {
+  try {
+    const storedConfigs = localStorage.getItem("batchConfigurations");
+    if (storedConfigs) {
+      return JSON.parse(storedConfigs);
+    }
+  } catch (error) {
+    console.error("Error loading batch configurations:", error);
+  }
+  return DEFAULT_BATCHES;
+};
+
 // Calculate total score for a sadhana entry based on batch criteria
 export const calculateSadhanaScore = (
   entry: SadhanaEntry, 
@@ -209,7 +227,8 @@ export const calculateSadhanaScore = (
     programScore: number;
   }
 } => {
-  const batchCriteria = DEFAULT_BATCHES[batchName.toLowerCase()] || DEFAULT_BATCHES.sahadev;
+  const batchConfigs = getBatchConfigurations();
+  const batchCriteria = batchConfigs[batchName.toLowerCase()] || batchConfigs.sahadev;
   
   // Calculate individual scores
   const sleepTimeScore = calculateTimeScore(entry.sleepTime, batchCriteria.sleepTimeScoring);
@@ -241,6 +260,60 @@ export const calculateSadhanaScore = (
   };
 };
 
+// Calculate weekly consolidated score
+export const calculateWeeklySadhanaScore = (
+  entries: SadhanaEntry[],
+  batchName: string = "sahadev"
+): { 
+  totalScore: number;
+  averageScore: number;
+  breakdowns: { 
+    sleepTimeScore: number;
+    wakeUpTimeScore: number;
+    readingScore: number;
+    daySleepScore: number;
+    japaCompletionScore: number;
+    programScore: number;
+  }
+} => {
+  if (!entries || entries.length === 0) {
+    return {
+      totalScore: 0,
+      averageScore: 0,
+      breakdowns: {
+        sleepTimeScore: 0,
+        wakeUpTimeScore: 0,
+        readingScore: 0,
+        daySleepScore: 0,
+        japaCompletionScore: 0,
+        programScore: 0
+      }
+    };
+  }
+  
+  // Calculate individual scores for each entry
+  const scores = entries.map(entry => calculateSadhanaScore(entry, batchName));
+  
+  // Sum up all scores and breakdowns
+  const totalScore = scores.reduce((sum, score) => sum + score.totalScore, 0);
+  const avgScore = totalScore / entries.length;
+  
+  const totalBreakdowns = {
+    sleepTimeScore: scores.reduce((sum, score) => sum + score.breakdowns.sleepTimeScore, 0),
+    wakeUpTimeScore: scores.reduce((sum, score) => sum + score.breakdowns.wakeUpTimeScore, 0),
+    readingScore: scores.reduce((sum, score) => sum + score.breakdowns.readingScore, 0),
+    daySleepScore: scores.reduce((sum, score) => sum + score.breakdowns.daySleepScore, 0),
+    japaCompletionScore: scores.reduce((sum, score) => sum + score.breakdowns.japaCompletionScore, 0),
+    programScore: scores.reduce((sum, score) => sum + score.breakdowns.programScore, 0)
+  };
+  
+  return {
+    totalScore,
+    averageScore: parseFloat(avgScore.toFixed(1)),
+    breakdowns: totalBreakdowns
+  };
+};
+
 // Format time range for display
 export const formatTimeRange = (range: TimeRangeScore): string => {
   return `${range.startTime} - ${range.endTime}`;
@@ -256,7 +329,8 @@ export const formatDurationRange = (range: DurationScore, nextRange?: DurationSc
 
 // Get readable criteria description for a batch
 export const getBatchCriteriaDescription = (batchName: string): Record<string, string[]> => {
-  const batchCriteria = DEFAULT_BATCHES[batchName.toLowerCase()] || DEFAULT_BATCHES.sahadev;
+  const batchConfigs = getBatchConfigurations();
+  const batchCriteria = batchConfigs[batchName.toLowerCase()] || batchConfigs.sahadev;
   
   const descriptions: Record<string, string[]> = {
     sleepTime: [],

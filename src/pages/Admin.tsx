@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/lib/toast";
-import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X, BarChart } from "lucide-react";
+import { Loader2, Plus, Users, User, UsersRound, UserPlus, Trash, Eye, X, BarChart, Settings } from "lucide-react";
 import { 
   createDevoteeGroup, 
   getDevoteeGroups, 
@@ -44,6 +44,7 @@ import {
 import { format } from "date-fns";
 import { UserProfile } from "@/contexts/AuthContext";
 import { Timestamp } from "firebase/firestore";
+import BatchScoreConfig from "@/components/BatchScoreConfig";
 
 const AdminPage = () => {
   const { currentUser, userProfile } = useAuth();
@@ -62,6 +63,7 @@ const AdminPage = () => {
   const [viewTab, setViewTab] = useState<"members" | "progress">("members");
   const [progressData, setProgressData] = useState<DevoteeSadhanaProgress[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [showScoreConfig, setShowScoreConfig] = useState(false);
   
   useEffect(() => {
     const loadGroups = async () => {
@@ -194,8 +196,11 @@ const AdminPage = () => {
   };
   
   const viewDevoteeDetails = async (devotee: DevoteeWithProfile | DevoteeSadhanaProgress) => {
-    const devoteeId = 'uid' in devotee ? devotee.uid : devotee.id;
-    setSelectedDevotee(devotee as DevoteeWithProfile);
+    let devoteeId = 'uid' in devotee ? devotee.uid : devotee.id;
+    
+    if ('uid' in devotee) {
+      setSelectedDevotee(devotee);
+    }
     
     try {
       const details = await getDevoteeDetails(devoteeId);
@@ -272,6 +277,17 @@ const AdminPage = () => {
         <p className="text-muted-foreground">
           Manage devotee groups and track spiritual progress
         </p>
+      </div>
+      
+      <div className="flex justify-end mb-4">
+        <Button 
+          onClick={() => setShowScoreConfig(true)} 
+          variant="outline" 
+          className="flex items-center text-spiritual-purple"
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          Configure Sadhana Scoring
+        </Button>
       </div>
       
       <Tabs defaultValue="groups">
@@ -742,6 +758,25 @@ const AdminPage = () => {
               variant="outline" 
               onClick={() => setShowDevoteeDetails(false)}
             >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showScoreConfig} onOpenChange={setShowScoreConfig}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Sadhana Score Configuration</DialogTitle>
+            <DialogDescription>
+              Configure scoring criteria for different batches and enable weekly score consolidation
+            </DialogDescription>
+          </DialogHeader>
+          
+          <BatchScoreConfig onClose={() => setShowScoreConfig(false)} />
+          
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setShowScoreConfig(false)}>
               Close
             </Button>
           </DialogFooter>

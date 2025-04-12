@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -45,6 +44,8 @@ export interface UserProfile {
   location?: string;
   pinCode?: string;
   dateOfBirth?: Date | null;
+  
+  canConfigureBatches?: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,12 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!currentUser) throw new Error("No user is logged in");
     
     try {
-      // Create a clean copy of the data without undefined values
       const cleanData: Record<string, any> = {};
       
-      // Only include properties that have defined values
       for (const [key, value] of Object.entries(data)) {
-        // Skip undefined values but allow null values (explicitly set)
         if (value !== undefined) {
           cleanData[key] = value;
         }

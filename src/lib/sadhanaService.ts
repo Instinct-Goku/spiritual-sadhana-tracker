@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -13,7 +12,11 @@ import {
   getDoc
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { calculateSadhanaScore } from "./scoringService";
+import { 
+  calculateSadhanaScore, 
+  calculateWeeklySadhanaScore,
+  isWeeklyScoringEnabled
+} from "./scoringService";
 
 export interface SadhanaEntry {
   id?: string;
@@ -62,7 +65,6 @@ export interface WeeklyStats {
   entries: SadhanaEntry[];
 }
 
-// Helper function to safely convert date types
 export const safeConvertToDate = (input: any): Date | null => {
   if (input instanceof Date && !isNaN(input.getTime())) {
     return input;
@@ -79,14 +81,18 @@ export const safeConvertToDate = (input: any): Date | null => {
 
 export const addSadhanaEntry = async (entry: Omit<SadhanaEntry, 'id'>, batchName?: string) => {
   try {
-    // Calculate score if batch name is provided
     let scoreData = {};
     if (batchName) {
-      const scoreResult = calculateSadhanaScore(entry, batchName);
-      scoreData = {
-        score: scoreResult.totalScore,
-        scoreBreakdown: scoreResult.breakdowns
-      };
+      if (isWeeklyScoringEnabled()) {
+        // For weekly scoring, we just save the entry without a score
+        // Scores will be calculated when viewing weekly stats
+      } else {
+        const scoreResult = calculateSadhanaScore(entry, batchName);
+        scoreData = {
+          score: scoreResult.totalScore,
+          scoreBreakdown: scoreResult.breakdowns
+        };
+      }
     }
     
     const formattedEntry = {
@@ -107,9 +113,7 @@ export const updateSadhanaEntry = async (id: string, entry: Partial<SadhanaEntry
   try {
     const updatedData = { ...entry };
     
-    // Calculate score if batch name is provided and we have enough data
-    if (batchName) {
-      // Get the current entry to merge with updates for score calculation
+    if (batchName && !isWeeklyScoringEnabled()) {
       const currentEntry = await getSadhanaEntry(id);
       if (currentEntry) {
         const mergedEntry = { ...currentEntry, ...entry };
@@ -148,7 +152,6 @@ export const getSadhanaEntry = async (id: string) => {
       const data = docSnap.data() as Omit<SadhanaEntry, 'id'>;
       const dateValue = data.date instanceof Timestamp ? data.date.toDate() : data.date;
       
-      // Ensure date is valid
       const safeDate = safeConvertToDate(dateValue) || new Date();
       
       return { 
@@ -212,7 +215,6 @@ export const getDailySadhana = async (userId: string, date: Date) => {
 
 export const getWeeklySadhana = async (userId: string, startDate: Date, batchName?: string): Promise<WeeklyStats> => {
   try {
-    // Create a safe copy of the startDate to avoid mutation issues
     const startDateCopy = new Date(startDate);
     startDateCopy.setHours(0, 0, 0, 0);
     
@@ -249,17 +251,9 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       const data = doc.data() as Omit<SadhanaEntry, 'id'>;
       const safeDate = safeConvertToDate(data.date) || new Date();
       
-      // Recalculate score if batch name is provided and score is missing
-      let entryWithScore = { ...data };
-      if (batchName && (data.score === undefined || data.scoreBreakdown === undefined)) {
-        const scoreResult = calculateSadhanaScore(data as SadhanaEntry, batchName);
-        entryWithScore.score = scoreResult.totalScore;
-        entryWithScore.scoreBreakdown = scoreResult.breakdowns;
-      }
-      
       return {
         id: doc.id,
-        ...entryWithScore,
+        ...data,
         date: safeDate
       };
     });
@@ -287,7 +281,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     let totalWakeUpHours = 0;
     let mangalaAratiCount = 0;
     let morningProgramCount = 0;
-    let totalScore = 0;
     
     entries.forEach(entry => {
       stats.totalChantingRounds += entry.chantingRounds;
@@ -295,7 +288,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       stats.totalHearingMinutes += entry.hearingMinutes || 0;
       
       try {
-        // Safely parse wake-up time
         if (entry.wakeUpTime && typeof entry.wakeUpTime === 'string') {
           const [hours] = entry.wakeUpTime.split(':').map(Number);
           if (!isNaN(hours)) {
@@ -308,20 +300,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;
-      
-      // Add score to total and daily scores array
-      if (entry.score !== undefined) {
-        totalScore += entry.score;
-        
-        // Format date for the daily scores graph
-        const entryDate = entry.date instanceof Date ? entry.date : (entry.date as Timestamp).toDate();
-        const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
-        
-        stats.dailyScores.push({
-          day,
-          score: entry.score
-        });
-      }
     });
     
     stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
@@ -331,9 +309,51 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     stats.mangalaAratiAttendance = parseFloat(((mangalaAratiCount / entries.length) * 100).toFixed(1));
     stats.morningProgramAttendance = parseFloat(((morningProgramCount / entries.length) * 100).toFixed(1));
     
-    // Set score statistics
-    stats.totalScore = totalScore;
-    stats.averageScore = parseFloat((totalScore / entries.length).toFixed(1));
+    if (isWeeklyScoringEnabled() && batchName) {
+      const weeklyScore = calculateWeeklySadhanaScore(entries, batchName);
+      stats.totalScore = weeklyScore.totalScore;
+      stats.averageScore = weeklyScore.averageScore;
+      
+      entries.forEach(entry => {
+        const entryDate = entry.date instanceof Date ? entry.date : new Date();
+        const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
+        
+        stats.dailyScores.push({
+          day,
+          score: Math.round(weeklyScore.averageScore)
+        });
+      });
+    } else {
+      let totalScore = 0;
+      
+      entries.forEach(entry => {
+        if (entry.score !== undefined) {
+          totalScore += entry.score;
+          
+          const entryDate = entry.date instanceof Date ? entry.date : new Date();
+          const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
+          
+          stats.dailyScores.push({
+            day,
+            score: entry.score
+          });
+        } else if (batchName) {
+          const scoreResult = calculateSadhanaScore(entry, batchName);
+          totalScore += scoreResult.totalScore;
+          
+          const entryDate = entry.date instanceof Date ? entry.date : new Date();
+          const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
+          
+          stats.dailyScores.push({
+            day,
+            score: scoreResult.totalScore
+          });
+        }
+      });
+      
+      stats.totalScore = totalScore;
+      stats.averageScore = parseFloat((totalScore / entries.length).toFixed(1));
+    }
     
     return stats;
   } catch (error) {
@@ -342,13 +362,10 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
   }
 };
 
-// Calculate score for a week and save it to the entries
 export const calculateAndSaveWeeklyScores = async (userId: string, startDate: Date, batchName: string) => {
   try {
-    // Get weekly entries
     const weekStats = await getWeeklySadhana(userId, startDate);
     
-    // Update each entry with score
     for (const entry of weekStats.entries) {
       if (entry.id && (entry.score === undefined || entry.scoreBreakdown === undefined)) {
         await updateSadhanaEntry(entry.id, {}, batchName);
