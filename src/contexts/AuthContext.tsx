@@ -1,14 +1,16 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { 
   User, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail,
+  updateEmail,
+  updatePassword
 } from "firebase/auth";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { toast } from "@/lib/toast";
 
@@ -23,21 +25,16 @@ interface AuthContextType {
 }
 
 export interface UserProfile {
+  uid: string;
   displayName: string;
-  email: string;
-  photoURL?: string;
   spiritualName?: string;
-  joinDate?: Date;
+  email: string;
   phoneNumber?: string;
-  location?: string;
-  address?: string;
-  city?: string;
-  pinCode?: string;
-  dateOfBirth?: Date | string;
-  occupation?: string;
-  batch?: string;
+  photoURL?: string;
   isAdmin?: boolean;
-  bio?: string;
+  joinDate?: Date;
+  batchName?: string;
+  groupIds?: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await updateProfile(userCredential.user, { displayName });
       
       const userProfile: UserProfile = {
+        uid: userCredential.user.uid,
         displayName,
         email,
         joinDate: new Date(),
@@ -123,6 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserProfile(userDoc.data() as UserProfile);
         } else {
           const newProfile: UserProfile = {
+            uid: user.uid,
             displayName: user.displayName || "",
             email: user.email || "",
             photoURL: user.photoURL || "",

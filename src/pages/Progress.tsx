@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,12 +92,12 @@ const ProgressPage = () => {
           const stats = await getWeeklySadhana(
             selectedDevotee.id, 
             weekStart, 
-            selectedDevotee.batchName?.toLowerCase()
+            selectedDevotee?.batchName?.toLowerCase() || "sahadev"
           );
           setWeekStats(stats);
           
           // Set batch criteria for the selected devotee
-          if (selectedDevotee.batchName) {
+          if (selectedDevotee?.batchName) {
             const criteria = getBatchCriteriaDescription(selectedDevotee.batchName.toLowerCase());
             setBatchCriteria(criteria);
           } else {
@@ -117,7 +116,7 @@ const ProgressPage = () => {
           const stats = await getWeeklySadhana(
             currentUser.uid, 
             weekStart, 
-            userProfile?.batchName?.toLowerCase()
+            userProfile?.batchName?.toLowerCase() || "sahadev"
           );
           setWeekStats(stats);
           
@@ -296,7 +295,7 @@ const ProgressPage = () => {
   
   const getBatchName = () => {
     if (showingDevoteeProgress && selectedDevotee) {
-      return selectedDevotee.batchName || "Default";
+      return selectedDevotee?.batchName || "Default";
     }
     return userProfile?.batchName || "Default";
   };
@@ -327,7 +326,7 @@ const ProgressPage = () => {
         </h1>
         <p className="text-muted-foreground">
           {showingDevoteeProgress && selectedDevotee
-            ? `Viewing sadhana statistics for ${selectedDevotee.spiritualName || selectedDevotee.displayName} (${selectedDevotee.batchName || "No Batch"})`
+            ? `Viewing sadhana statistics for ${selectedDevotee.spiritualName || selectedDevotee.displayName} (${selectedDevotee?.batchName || "No Batch"})`
             : `Track your spiritual growth and sadhana consistency (${userProfile?.batchName || "No Batch"})`}
         </p>
       </div>
