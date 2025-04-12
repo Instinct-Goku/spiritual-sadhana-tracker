@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
   createUserWithEmailAndPassword,
@@ -35,6 +35,15 @@ export interface UserProfile {
   joinDate?: Date;
   batchName?: string;
   groupIds?: string[];
+  
+  bio?: string;
+  occupation?: string;
+  address?: string;
+  city?: string;
+  pinCode?: string;
+  batch?: string;
+  dateOfBirth?: Date;
+  location?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
