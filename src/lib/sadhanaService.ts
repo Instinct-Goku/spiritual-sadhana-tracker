@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -333,7 +332,14 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       const weeklyScore = calculateWeeklySadhanaScore(entries, batchName);
       stats.totalScore = weeklyScore.totalScore;
       stats.averageScore = weeklyScore.averageScore;
-      stats.scoreBreakdown = weeklyScore.scoreBreakdown;
+      stats.scoreBreakdown = {
+        sleepTimeScore: weeklyScore.breakdowns.sleepTimeScore,
+        wakeUpTimeScore: weeklyScore.breakdowns.wakeUpTimeScore,
+        readingScore: weeklyScore.breakdowns.readingScore,
+        daySleepScore: weeklyScore.breakdowns.daySleepScore,
+        japaCompletionScore: weeklyScore.breakdowns.japaCompletionScore,
+        programScore: weeklyScore.breakdowns.programScore
+      };
       
       entries.forEach(entry => {
         const entryDate = entry.date instanceof Date ? entry.date : new Date();

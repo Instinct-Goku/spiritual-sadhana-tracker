@@ -1,18 +1,16 @@
 import { useState, useEffect } from "react";
-import { useAuth, UserProfile } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/lib/toast";
 import { addSadhanaEntry, getDailySadhana, updateSadhanaEntry, SadhanaEntry } from "@/lib/sadhanaService";
-import { CalendarDateRangePicker } from "@/components/ui/calendar-date-range-picker";
 import { DEFAULT_BATCHES } from "@/lib/scoringService";
 import {
   Select,
@@ -20,9 +18,11 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { CalendarDateRangePicker } from "@/components/ui/calendar-date-range-picker";
 
 interface FormData {
+  id?: string;
   date: Date | null;
   chantingRounds: number;
   chantingCompletionTime: string;
@@ -75,6 +75,7 @@ const SadhanaForm = () => {
         if (dailySadhana) {
           setFormData({
             ...dailySadhana,
+            notes: dailySadhana.notes || "",
             date: dailySadhana.date,
           });
         } else {
@@ -90,7 +91,8 @@ const SadhanaForm = () => {
   }, [currentUser, formData.date]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: keyof FormData) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const target = e.target as HTMLInputElement;
+    const value = target.type === 'checkbox' ? target.checked : target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
   

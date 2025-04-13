@@ -16,7 +16,7 @@ import Sadhana from "./pages/Sadhana";
 import Progress from "./pages/Progress";
 import Reading from "./pages/Reading";
 import Calendar from "./pages/Calendar";
-import Admin from "./pages/Admin";
+import AdminPage from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,7 +52,7 @@ const AppRoutes = () => {
       <Route path="/progress" element={<ProtectedRoute><Layout><Progress /></Layout></ProtectedRoute>} />
       <Route path="/reading" element={<ProtectedRoute><Layout><Reading /></Layout></ProtectedRoute>} />
       <Route path="/calendar" element={<ProtectedRoute><Layout><Calendar /></Layout></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><Layout><Admin /></Layout></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><Layout><AdminPage /></Layout></ProtectedRoute>} />
       
       {/* Catch All - 404 */}
       <Route path="*" element={<NotFound />} />
