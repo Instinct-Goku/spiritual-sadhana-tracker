@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -43,6 +44,7 @@ export interface SadhanaEntry {
     sleepTimeScore: number;
     wakeUpTimeScore: number;
     readingScore: number;
+    readingMaxScore?: number;
     daySleepScore: number;
     japaCompletionScore: number;
     programScore: number;
@@ -63,6 +65,24 @@ export interface WeeklyStats {
   averageScore: number;
   dailyScores: { day: string; score: number }[];
   entries: SadhanaEntry[];
+  scoreBreakdown?: {
+    sleepTimeScore: number;
+    wakeUpTimeScore: number;
+    readingScore: number;
+    readingMaxScore?: number;
+    daySleepScore: number;
+    japaCompletionScore: number;
+    programScore: number;
+  };
+}
+
+export interface WeeklySummary {
+  startDate: Date;
+  endDate: Date;
+  totalScore: number;
+  averageScore: number;
+  totalChantingRounds: number;
+  totalReadingMinutes: number;
 }
 
 export const safeConvertToDate = (input: any): Date | null => {
@@ -313,6 +333,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       const weeklyScore = calculateWeeklySadhanaScore(entries, batchName);
       stats.totalScore = weeklyScore.totalScore;
       stats.averageScore = weeklyScore.averageScore;
+      stats.scoreBreakdown = weeklyScore.scoreBreakdown;
       
       entries.forEach(entry => {
         const entryDate = entry.date instanceof Date ? entry.date : new Date();
@@ -325,10 +346,34 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       });
     } else {
       let totalScore = 0;
+      let combinedBreakdown = {
+        sleepTimeScore: 0,
+        wakeUpTimeScore: 0,
+        readingScore: 0,
+        readingMaxScore: 0,
+        daySleepScore: 0,
+        japaCompletionScore: 0,
+        programScore: 0
+      };
       
       entries.forEach(entry => {
         if (entry.score !== undefined) {
           totalScore += entry.score;
+          
+          // Add to combined breakdown if available
+          if (entry.scoreBreakdown) {
+            combinedBreakdown.sleepTimeScore += entry.scoreBreakdown.sleepTimeScore;
+            combinedBreakdown.wakeUpTimeScore += entry.scoreBreakdown.wakeUpTimeScore;
+            combinedBreakdown.readingScore += entry.scoreBreakdown.readingScore;
+            combinedBreakdown.daySleepScore += entry.scoreBreakdown.daySleepScore;
+            combinedBreakdown.japaCompletionScore += entry.scoreBreakdown.japaCompletionScore;
+            combinedBreakdown.programScore += entry.scoreBreakdown.programScore;
+            
+            // Store max reading score if available
+            if (entry.scoreBreakdown.readingMaxScore && !combinedBreakdown.readingMaxScore) {
+              combinedBreakdown.readingMaxScore = entry.scoreBreakdown.readingMaxScore;
+            }
+          }
           
           const entryDate = entry.date instanceof Date ? entry.date : new Date();
           const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
@@ -341,6 +386,14 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
           const scoreResult = calculateSadhanaScore(entry, batchName);
           totalScore += scoreResult.totalScore;
           
+          // Add to combined breakdown
+          combinedBreakdown.sleepTimeScore += scoreResult.breakdowns.sleepTimeScore;
+          combinedBreakdown.wakeUpTimeScore += scoreResult.breakdowns.wakeUpTimeScore;
+          combinedBreakdown.readingScore += scoreResult.breakdowns.readingScore;
+          combinedBreakdown.daySleepScore += scoreResult.breakdowns.daySleepScore;
+          combinedBreakdown.japaCompletionScore += scoreResult.breakdowns.japaCompletionScore;
+          combinedBreakdown.programScore += scoreResult.breakdowns.programScore;
+          
           const entryDate = entry.date instanceof Date ? entry.date : new Date();
           const day = entryDate.toLocaleDateString('en-US', { weekday: 'short' });
           
@@ -351,13 +404,122 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
         }
       });
       
+      // Set the weekly stats total score and average
       stats.totalScore = totalScore;
       stats.averageScore = parseFloat((totalScore / entries.length).toFixed(1));
+      
+      // Calculate average breakdown scores
+      stats.scoreBreakdown = {
+        sleepTimeScore: Math.round(combinedBreakdown.sleepTimeScore / entries.length),
+        wakeUpTimeScore: Math.round(combinedBreakdown.wakeUpTimeScore / entries.length),
+        readingScore: Math.round(combinedBreakdown.readingScore / entries.length),
+        readingMaxScore: combinedBreakdown.readingMaxScore,
+        daySleepScore: Math.round(combinedBreakdown.daySleepScore / entries.length),
+        japaCompletionScore: Math.round(combinedBreakdown.japaCompletionScore / entries.length),
+        programScore: Math.round(combinedBreakdown.programScore / entries.length)
+      };
     }
     
     return stats;
   } catch (error) {
     console.error("Error getting weekly sadhana:", error);
+    throw error;
+  }
+};
+
+export const getWeeklySadhanaHistory = async (userId: string, weeks: number = 8, batchName?: string): Promise<WeeklySummary[]> => {
+  try {
+    // Get current date and set to start of the week (Sunday)
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() - currentDate.getDay());
+    currentDate.setHours(0, 0, 0, 0);
+    
+    const results: WeeklySummary[] = [];
+    
+    // Fetch data for each week
+    for (let i = 0; i < weeks; i++) {
+      const weekStartDate = new Date(currentDate);
+      weekStartDate.setDate(weekStartDate.getDate() - (7 * i));
+      
+      const weekEndDate = new Date(weekStartDate);
+      weekEndDate.setDate(weekEndDate.getDate() + 6);
+      weekEndDate.setHours(23, 59, 59, 999);
+      
+      // Get all entries for this week
+      const q = query(
+        collection(db, "sadhana"),
+        where("userId", "==", userId)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      const weekEntries = snapshot.docs
+        .map(doc => {
+          const data = doc.data() as Omit<SadhanaEntry, 'id'>;
+          const safeDate = safeConvertToDate(data.date) || new Date();
+          
+          return {
+            id: doc.id,
+            ...data,
+            date: safeDate
+          };
+        })
+        .filter(entry => {
+          const entryDate = entry.date;
+          return entryDate >= weekStartDate && entryDate <= weekEndDate;
+        });
+      
+      if (weekEntries.length > 0) {
+        // Calculate week stats
+        let totalScore = 0;
+        let totalChantingRounds = 0;
+        let totalReadingMinutes = 0;
+        
+        if (isWeeklyScoringEnabled() && batchName) {
+          const weeklyScore = calculateWeeklySadhanaScore(weekEntries, batchName);
+          totalScore = weeklyScore.totalScore;
+        } else {
+          weekEntries.forEach(entry => {
+            if (entry.score !== undefined) {
+              totalScore += entry.score;
+            } else if (batchName) {
+              const scoreResult = calculateSadhanaScore(entry, batchName);
+              totalScore += scoreResult.totalScore;
+            }
+          });
+        }
+        
+        // Calculate totals
+        weekEntries.forEach(entry => {
+          totalChantingRounds += entry.chantingRounds;
+          totalReadingMinutes += entry.readingMinutes;
+        });
+        
+        results.push({
+          startDate: weekStartDate,
+          endDate: weekEndDate,
+          totalScore,
+          averageScore: parseFloat((totalScore / weekEntries.length).toFixed(1)),
+          totalChantingRounds,
+          totalReadingMinutes
+        });
+      } else {
+        // Add empty week data to maintain continuity
+        results.push({
+          startDate: weekStartDate,
+          endDate: weekEndDate,
+          totalScore: 0,
+          averageScore: 0,
+          totalChantingRounds: 0,
+          totalReadingMinutes: 0
+        });
+      }
+    }
+    
+    // Sort from oldest to newest
+    return results.reverse();
+  } catch (error) {
+    console.error("Error getting weekly sadhana history:", error);
     throw error;
   }
 };

@@ -375,3 +375,26 @@ export const getBatchCriteriaDescription = (batchName: string): Record<string, s
   
   return descriptions;
 };
+
+// Function to get user-friendly labels for score breakdown fields
+export function getScoreBreakdownLabels(batchName: string): Record<string, string> {
+  const labels: Record<string, string> = {
+    sleepTimeScore: "Sleep Time Score",
+    wakeUpTimeScore: "Wake-up Time Score",
+    readingScore: "SP Book Reading Score",
+    daySleepScore: "Day Sleep Score",
+    japaCompletionScore: "Japa Completion Score",
+    programScore: "Program Attendance Score"
+  };
+  
+  // Add any batch-specific label customizations here if needed
+  if (batchName) {
+    const batchLower = batchName.toLowerCase();
+    
+    if (batchLower === "arjuna" || batchLower === "balarama") {
+      labels.readingScore = "Srila Prabhupada Book Reading Score";
+    }
+  }
+  
+  return labels;
+}
