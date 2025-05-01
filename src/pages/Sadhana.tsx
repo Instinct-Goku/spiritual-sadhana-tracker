@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,13 +46,13 @@ const SadhanaPage = () => {
   const [existingEntry, setExistingEntry] = useState<SadhanaEntry | null>(null);
   
   // Form fields
-  const [chantingRounds, setChantingRounds] = useState(0);
+  const [chantingRounds, setChantingRounds] = useState<number | ''>('');
   const [chantingCompletionTime, setChantingCompletionTime] = useState("12:00");
-  const [readingMinutes, setReadingMinutes] = useState(0);
-  const [hearingMinutes, setHearingMinutes] = useState(0);
+  const [readingMinutes, setReadingMinutes] = useState<number | ''>('');
+  const [hearingMinutes, setHearingMinutes] = useState<number | ''>('');
   const [wakeUpTime, setWakeUpTime] = useState("05:00");
   const [sleepTime, setSleepTime] = useState("21:30");
-  const [daySleepDuration, setDaySleepDuration] = useState(0);
+  const [daySleepDuration, setDaySleepDuration] = useState<number | ''>('');
   const [morningProgram, setMorningProgram] = useState(false);
   const [mangalaArati, setMangalaArati] = useState(false);
   const [tulsiArati, setTulsiArati] = useState(false);
@@ -77,13 +78,13 @@ const SadhanaPage = () => {
         if (entry) {
           setExistingEntry(entry);
           // Populate form fields with existing data
-          setChantingRounds(entry.chantingRounds);
+          setChantingRounds(entry.chantingRounds || '');
           setChantingCompletionTime(entry.chantingCompletionTime || "12:00");
-          setReadingMinutes(entry.readingMinutes);
-          setHearingMinutes(entry.hearingMinutes || 0);
+          setReadingMinutes(entry.readingMinutes || '');
+          setHearingMinutes(entry.hearingMinutes || '');
           setWakeUpTime(entry.wakeUpTime);
           setSleepTime(entry.sleepTime);
-          setDaySleepDuration(entry.daySleepDuration || 0);
+          setDaySleepDuration(entry.daySleepDuration || '');
           setMorningProgram(entry.morningProgram);
           setMangalaArati(entry.mangalaArati);
           setTulsiArati(entry.tulsiArati || false);
@@ -94,13 +95,13 @@ const SadhanaPage = () => {
         } else {
           // Reset form for new entry
           setExistingEntry(null);
-          setChantingRounds(0);
+          setChantingRounds('');
           setChantingCompletionTime("12:00");
-          setReadingMinutes(0);
-          setHearingMinutes(0);
+          setReadingMinutes('');
+          setHearingMinutes('');
           setWakeUpTime("05:00");
           setSleepTime("21:30");
-          setDaySleepDuration(0);
+          setDaySleepDuration('');
           setMorningProgram(false);
           setMangalaArati(false);
           setTulsiArati(false);
@@ -138,13 +139,13 @@ const SadhanaPage = () => {
       const sadhanaData: Omit<SadhanaEntry, "id"> = {
         userId: currentUser.uid,
         date: selectedDate,
-        chantingRounds,
+        chantingRounds: chantingRounds === '' ? 0 : Number(chantingRounds),
         chantingCompletionTime,
-        readingMinutes,
-        hearingMinutes,
+        readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
+        hearingMinutes: hearingMinutes === '' ? 0 : Number(hearingMinutes),
         wakeUpTime,
         sleepTime,
-        daySleepDuration,
+        daySleepDuration: daySleepDuration === '' ? 0 : Number(daySleepDuration),
         morningProgram,
         mangalaArati,
         tulsiArati,
@@ -229,8 +230,9 @@ const SadhanaPage = () => {
                       type="number"
                       min="0"
                       value={chantingRounds}
-                      onChange={(e) => setChantingRounds(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setChantingRounds(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
+                      placeholder="0"
                     />
                   </div>
                   
@@ -265,8 +267,9 @@ const SadhanaPage = () => {
                       type="number"
                       min="0"
                       value={readingMinutes}
-                      onChange={(e) => setReadingMinutes(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setReadingMinutes(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
+                      placeholder="0"
                     />
                   </div>
                   
@@ -280,8 +283,9 @@ const SadhanaPage = () => {
                       type="number"
                       min="0"
                       value={hearingMinutes}
-                      onChange={(e) => setHearingMinutes(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setHearingMinutes(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
+                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -332,8 +336,9 @@ const SadhanaPage = () => {
                       type="number"
                       min="0"
                       value={daySleepDuration}
-                      onChange={(e) => setDaySleepDuration(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setDaySleepDuration(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
+                      placeholder="0"
                     />
                   </div>
                 </div>
