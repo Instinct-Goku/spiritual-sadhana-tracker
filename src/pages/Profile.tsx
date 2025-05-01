@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/lib/toast";
+import { uploadImageToCloudinary } from "@/lib/cloudinaryService";
 import {
   Select,
   SelectContent,
@@ -33,7 +34,8 @@ import {
   X as XIcon,
   Phone as PhoneIcon,
   User as UserIcon,
-  Upload as UploadIcon
+  Upload as UploadIcon,
+  Loader2 as LoaderIcon
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -64,6 +66,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -137,7 +140,7 @@ const Profile = () => {
   }, [userProfile, currentUser, form]);
 
   // Handle image selection
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setSelectedImage(file);
@@ -145,6 +148,20 @@ const Profile = () => {
       // Create a preview URL for the selected image
       const imageUrl = URL.createObjectURL(file);
       setPreviewUrl(imageUrl);
+
+      // Upload to Cloudinary immediately
+      try {
+        setIsUploading(true);
+        const cloudinaryUrl = await uploadImageToCloudinary(file);
+        // Update the preview with the Cloudinary URL
+        setPreviewUrl(cloudinaryUrl);
+        toast.success("Image uploaded successfully!");
+      } catch (error) {
+        toast.error("Failed to upload image. Please try again.");
+        console.error("Upload failed:", error);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -161,15 +178,8 @@ const Profile = () => {
 
     setIsSubmitting(true);
     try {
-      // First handle image upload if there's a new image
-      let photoURL = currentUser.photoURL;
-      if (selectedImage) {
-        // In a real implementation, upload the image to storage and get the URL
-        // For now, we'll just use the preview URL as an example
-        // photoURL = await uploadImage(selectedImage);
-        photoURL = previewUrl;
-        console.log("Would upload image:", selectedImage.name);
-      }
+      // Use the Cloudinary URL that's already set in previewUrl
+      const photoURL = previewUrl;
 
       // Update the user profile with form values and explicitly set dateOfBirth
       await updateUserProfile({
@@ -211,16 +221,24 @@ const Profile = () => {
         <div className="col-span-1 flex flex-col items-center space-y-4">
           <div className="relative group">
             <Avatar className="h-40 w-40 border-2 border-gray-200">
-              <AvatarImage src={previewUrl || ""} alt={currentUser?.displayName || ""} />
-              <AvatarFallback className="text-4xl bg-spiritual-purple/20 text-spiritual-purple">
-                {getInitials(currentUser?.displayName || "")}
-              </AvatarFallback>
+              {isUploading ? (
+                <div className="h-full w-full flex items-center justify-center bg-muted">
+                  <LoaderIcon className="h-10 w-10 animate-spin text-spiritual-purple/70" />
+                </div>
+              ) : (
+                <>
+                  <AvatarImage src={previewUrl || ""} alt={currentUser?.displayName || ""} />
+                  <AvatarFallback className="text-4xl bg-spiritual-purple/20 text-spiritual-purple">
+                    {getInitials(currentUser?.displayName || "")}
+                  </AvatarFallback>
+                </>
+              )}
             </Avatar>
             <div 
-              onClick={triggerFileInput} 
-              className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all cursor-pointer"
+              onClick={!isUploading ? triggerFileInput : undefined} 
+              className={`absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all ${!isUploading ? 'cursor-pointer' : 'cursor-not-allowed'}`}
             >
-              <UploadIcon className="text-white opacity-0 group-hover:opacity-100" />
+              {!isUploading && <UploadIcon className="text-white opacity-0 group-hover:opacity-100" />}
             </div>
             <input
               type="file"
@@ -228,6 +246,7 @@ const Profile = () => {
               className="hidden"
               ref={fileInputRef}
               onChange={handleImageSelect}
+              disabled={isUploading}
             />
           </div>
           <div className="text-center">
@@ -241,9 +260,19 @@ const Profile = () => {
               size="sm"
               onClick={triggerFileInput}
               className="mt-2"
+              disabled={isUploading}
             >
-              <UploadIcon className="mr-2 h-4 w-4" />
-              Change Photo
+              {isUploading ? (
+                <>
+                  <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <UploadIcon className="mr-2 h-4 w-4" />
+                  Change Photo
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -545,9 +574,12 @@ const Profile = () => {
               />
 
               {/* Submit Button */}
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+              <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
                 {isSubmitting ? (
-                  <>Saving...</>
+                  <>
+                    <LoaderIcon className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
                 ) : (
                   <>
                     <SaveIcon className="mr-2 h-4 w-4" />

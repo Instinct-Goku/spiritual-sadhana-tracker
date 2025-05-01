@@ -26,26 +26,21 @@ interface AuthContextType {
 
 export interface UserProfile {
   uid: string;
-  displayName: string;
-  spiritualName?: string;
-  email: string;
-  phoneNumber?: string;
+  displayName?: string;
+  email?: string;
   photoURL?: string;
-  isAdmin?: boolean;
-  joinDate?: Date;
-  batchName?: string;
-  batch?: string;
-  groupIds?: string[];
-  
   bio?: string;
+  spiritualName?: string;
+  dateOfBirth?: Date | string | null;
   occupation?: string;
   address?: string;
   city?: string;
-  location?: string;
   pinCode?: string;
-  dateOfBirth?: Date | null;
-  
-  canConfigureBatches?: boolean;
+  batch?: string;
+  mobileNumber?: string;
+  isInitiated?: boolean;
+  maritalStatus?: string;
+  referredBy?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
