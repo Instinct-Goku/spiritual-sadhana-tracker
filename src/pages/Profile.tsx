@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,14 +20,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar as CalendarIcon, Save as SaveIcon, Briefcase as BriefcaseIcon, Building2, X as XIcon } from "lucide-react";
+import { 
+  Calendar as CalendarIcon, 
+  Save as SaveIcon, 
+  Briefcase as BriefcaseIcon, 
+  Building2,
+  X as XIcon,
+  Phone as PhoneIcon,
+  User as UserIcon,
+  Upload as UploadIcon
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // Define the schema for form validation
 const profileSchema = z.object({
@@ -40,6 +52,10 @@ const profileSchema = z.object({
   city: z.string().optional(),
   pinCode: z.string().optional(),
   batch: z.string().optional(),
+  mobileNumber: z.string().optional(),
+  isInitiated: z.boolean().optional(),
+  maritalStatus: z.string().optional(),
+  referredBy: z.string().optional(),
 });
 
 // Define a type for our profile form values
@@ -49,6 +65,9 @@ const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize the form with react-hook-form
   const form = useForm<ProfileFormValues>({
@@ -63,6 +82,10 @@ const Profile = () => {
       city: "",
       pinCode: "",
       batch: "",
+      mobileNumber: "",
+      isInitiated: false,
+      maritalStatus: "",
+      referredBy: "",
     },
   });
 
@@ -79,7 +102,16 @@ const Profile = () => {
         city: userProfile.city || "",
         pinCode: userProfile.pinCode || "",
         batch: userProfile.batch || "",
+        mobileNumber: userProfile.mobileNumber || "",
+        isInitiated: userProfile.isInitiated || false,
+        maritalStatus: userProfile.maritalStatus || "",
+        referredBy: userProfile.referredBy || "",
       });
+
+      // Set profile image if exists
+      if (currentUser?.photoURL) {
+        setPreviewUrl(currentUser.photoURL);
+      }
 
       // Set date of birth if it exists and is valid
       if (userProfile.dateOfBirth) {
@@ -104,16 +136,46 @@ const Profile = () => {
     }
   }, [userProfile, currentUser, form]);
 
+  // Handle image selection
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedImage(file);
+      
+      // Create a preview URL for the selected image
+      const imageUrl = URL.createObjectURL(file);
+      setPreviewUrl(imageUrl);
+    }
+  };
+
+  // Trigger file input click
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   // Handle form submission
   const onSubmit = async (values: ProfileFormValues) => {
     if (!currentUser) return;
 
     setIsSubmitting(true);
     try {
+      // First handle image upload if there's a new image
+      let photoURL = currentUser.photoURL;
+      if (selectedImage) {
+        // In a real implementation, upload the image to storage and get the URL
+        // For now, we'll just use the preview URL as an example
+        // photoURL = await uploadImage(selectedImage);
+        photoURL = previewUrl;
+        console.log("Would upload image:", selectedImage.name);
+      }
+
       // Update the user profile with form values and explicitly set dateOfBirth
       await updateUserProfile({
         ...values,
         dateOfBirth: dateOfBirth, // This can be null but not undefined
+        photoURL: photoURL,
       });
 
       toast.success("Profile updated successfully!");
@@ -147,17 +209,42 @@ const Profile = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Profile Avatar Section */}
         <div className="col-span-1 flex flex-col items-center space-y-4">
-          <Avatar className="h-40 w-40">
-            <AvatarImage src={currentUser?.photoURL || ""} alt={currentUser?.displayName || ""} />
-            <AvatarFallback className="text-4xl bg-spiritual-purple/20 text-spiritual-purple">
-              {getInitials(currentUser?.displayName || "")}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative group">
+            <Avatar className="h-40 w-40 border-2 border-gray-200">
+              <AvatarImage src={previewUrl || ""} alt={currentUser?.displayName || ""} />
+              <AvatarFallback className="text-4xl bg-spiritual-purple/20 text-spiritual-purple">
+                {getInitials(currentUser?.displayName || "")}
+              </AvatarFallback>
+            </Avatar>
+            <div 
+              onClick={triggerFileInput} 
+              className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full flex items-center justify-center transition-all cursor-pointer"
+            >
+              <UploadIcon className="text-white opacity-0 group-hover:opacity-100" />
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+            />
+          </div>
           <div className="text-center">
             <h2 className="text-xl font-semibold">{currentUser?.displayName}</h2>
             {userProfile?.spiritualName && (
               <p className="text-muted-foreground">{userProfile.spiritualName}</p>
             )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={triggerFileInput}
+              className="mt-2"
+            >
+              <UploadIcon className="mr-2 h-4 w-4" />
+              Change Photo
+            </Button>
           </div>
         </div>
 
@@ -204,6 +291,93 @@ const Profile = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input placeholder="Your email" {...field} readOnly />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Mobile Number */}
+              <FormField
+                control={form.control}
+                name="mobileNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mobile Number</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input className="pl-10" placeholder="Your mobile number" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Initiated Status */}
+              <FormField
+                control={form.control}
+                name="isInitiated"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Initiated</FormLabel>
+                      <FormDescription>
+                        Have you received spiritual initiation?
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Marital Status */}
+              <FormField
+                control={form.control}
+                name="maritalStatus"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marital Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your marital status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="single">Single</SelectItem>
+                        <SelectItem value="married">Married</SelectItem>
+                        <SelectItem value="widowed">Widowed</SelectItem>
+                        <SelectItem value="divorced">Divorced</SelectItem>
+                        <SelectItem value="separated">Separated</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Referred By */}
+              <FormField
+                control={form.control}
+                name="referredBy"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Referred By</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input className="pl-10" placeholder="Who referred you to us?" {...field} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
