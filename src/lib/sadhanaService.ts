@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -25,7 +26,11 @@ export interface SadhanaEntry {
   chantingRounds: number;
   chantingCompletionTime: string;
   readingMinutes: number;
-  hearingMinutes: number;
+  hearingMinutes: number; // Keeping for backwards compatibility
+  spLectureMinutes?: number; // Srila Prabhupada lecture minutes
+  smLectureMinutes?: number; // Spiritual Master lecture minutes
+  serviceMinutes?: number; // Service minutes
+  shlokaMemorized?: number; // Number of shlokas memorized
   wakeUpTime: string;
   sleepTime: string;
   daySleepDuration: number;

@@ -19,7 +19,11 @@ import {
   Music, 
   Headphones,
   BedDouble,
-  Calendar
+  Calendar,
+  Mic,
+  BookCheck,
+  Scroll,
+  HandHeart
 } from "lucide-react";
 import { 
   addSadhanaEntry, 
@@ -49,7 +53,10 @@ const SadhanaPage = () => {
   const [chantingRounds, setChantingRounds] = useState<number | ''>('');
   const [chantingCompletionTime, setChantingCompletionTime] = useState("12:00");
   const [readingMinutes, setReadingMinutes] = useState<number | ''>('');
-  const [hearingMinutes, setHearingMinutes] = useState<number | ''>('');
+  const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
+  const [smLectureMinutes, setSmLectureMinutes] = useState<number | ''>('');
+  const [serviceMinutes, setServiceMinutes] = useState<number | ''>('');
+  const [shlokaMemorized, setShlokaMemorized] = useState<number | ''>('');
   const [wakeUpTime, setWakeUpTime] = useState("05:00");
   const [sleepTime, setSleepTime] = useState("21:30");
   const [daySleepDuration, setDaySleepDuration] = useState<number | ''>('');
@@ -81,7 +88,10 @@ const SadhanaPage = () => {
           setChantingRounds(entry.chantingRounds || '');
           setChantingCompletionTime(entry.chantingCompletionTime || "12:00");
           setReadingMinutes(entry.readingMinutes || '');
-          setHearingMinutes(entry.hearingMinutes || '');
+          setSpLectureMinutes(entry.spLectureMinutes || '');
+          setSmLectureMinutes(entry.smLectureMinutes || '');
+          setServiceMinutes(entry.serviceMinutes || '');
+          setShlokaMemorized(entry.shlokaMemorized || '');
           setWakeUpTime(entry.wakeUpTime);
           setSleepTime(entry.sleepTime);
           setDaySleepDuration(entry.daySleepDuration || '');
@@ -98,7 +108,10 @@ const SadhanaPage = () => {
           setChantingRounds('');
           setChantingCompletionTime("12:00");
           setReadingMinutes('');
-          setHearingMinutes('');
+          setSpLectureMinutes('');
+          setSmLectureMinutes('');
+          setServiceMinutes('');
+          setShlokaMemorized('');
           setWakeUpTime("05:00");
           setSleepTime("21:30");
           setDaySleepDuration('');
@@ -142,7 +155,11 @@ const SadhanaPage = () => {
         chantingRounds: chantingRounds === '' ? 0 : Number(chantingRounds),
         chantingCompletionTime,
         readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
-        hearingMinutes: hearingMinutes === '' ? 0 : Number(hearingMinutes),
+        spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
+        smLectureMinutes: smLectureMinutes === '' ? 0 : Number(smLectureMinutes),
+        serviceMinutes: serviceMinutes === '' ? 0 : Number(serviceMinutes),
+        shlokaMemorized: shlokaMemorized === '' ? 0 : Number(shlokaMemorized),
+        hearingMinutes: 0, // For backwards compatibility
         wakeUpTime,
         sleepTime,
         daySleepDuration: daySleepDuration === '' ? 0 : Number(daySleepDuration),
@@ -251,39 +268,103 @@ const SadhanaPage = () => {
                 </div>
               </div>
 
-              {/* Reading and Hearing Section */}
+              {/* Reading Section */}
               <div className="space-y-4">
                 <h3 className="font-medium text-spiritual-purple flex items-center">
                   <BookOpen className="h-4 w-4 mr-2" />
                   Study
                 </h3>
+                <div className="space-y-2">
+                  <Label htmlFor="reading" className="font-medium">
+                    Srila Prabhupada Book Reading (minutes)
+                  </Label>
+                  <Input
+                    id="reading"
+                    type="number"
+                    min="0"
+                    value={readingMinutes}
+                    onChange={(e) => setReadingMinutes(e.target.value ? Number(e.target.value) : '')}
+                    className="spiritual-input"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              {/* Hearing Section */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-spiritual-purple flex items-center">
+                  <Headphones className="h-4 w-4 mr-2" />
+                  Hearing (minutes)
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reading" className="font-medium">
-                      Srila Prabhupada Book Reading (minutes)
+                    <Label htmlFor="spLecture" className="font-medium flex items-center">
+                      <Mic className="h-4 w-4 mr-1" />
+                      Srila Prabhupada Lectures
                     </Label>
                     <Input
-                      id="reading"
+                      id="spLecture"
                       type="number"
                       min="0"
-                      value={readingMinutes}
-                      onChange={(e) => setReadingMinutes(e.target.value ? Number(e.target.value) : '')}
+                      value={spLectureMinutes}
+                      onChange={(e) => setSpLectureMinutes(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
                       placeholder="0"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="hearing" className="font-medium flex items-center">
-                      <Headphones className="h-4 w-4 mr-1" />
-                      Hearing (minutes)
+                    <Label htmlFor="smLecture" className="font-medium flex items-center">
+                      <Mic className="h-4 w-4 mr-1" />
+                      Spiritual Master Lectures
                     </Label>
                     <Input
-                      id="hearing"
+                      id="smLecture"
                       type="number"
                       min="0"
-                      value={hearingMinutes}
-                      onChange={(e) => setHearingMinutes(e.target.value ? Number(e.target.value) : '')}
+                      value={smLectureMinutes}
+                      onChange={(e) => setSmLectureMinutes(e.target.value ? Number(e.target.value) : '')}
+                      className="spiritual-input"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Shloka Memorize and Service Section */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-spiritual-purple flex items-center">
+                  <BookCheck className="h-4 w-4 mr-2" />
+                  Additional Practices
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="shlokaMemorize" className="font-medium flex items-center">
+                      <Scroll className="h-4 w-4 mr-1" />
+                      Shlokas Memorized (count)
+                    </Label>
+                    <Input
+                      id="shlokaMemorize"
+                      type="number"
+                      min="0"
+                      value={shlokaMemorized}
+                      onChange={(e) => setShlokaMemorized(e.target.value ? Number(e.target.value) : '')}
+                      className="spiritual-input"
+                      placeholder="0"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="service" className="font-medium flex items-center">
+                      <HandHeart className="h-4 w-4 mr-1" />
+                      Service (minutes)
+                    </Label>
+                    <Input
+                      id="service"
+                      type="number"
+                      min="0"
+                      value={serviceMinutes}
+                      onChange={(e) => setServiceMinutes(e.target.value ? Number(e.target.value) : '')}
                       className="spiritual-input"
                       placeholder="0"
                     />
