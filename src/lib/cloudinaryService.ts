@@ -3,7 +3,7 @@
  * Cloudinary image upload service
  */
 
-const CLOUDINARY_CLOUD_NAME = "lovable";
+const CLOUDINARY_CLOUD_NAME = "techrager-blogspot-com";
 const CLOUDINARY_API_KEY = "265992398755936";
 const CLOUDINARY_UPLOAD_PRESET = "profile_photos";
 

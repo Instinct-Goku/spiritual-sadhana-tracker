@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -41,6 +42,12 @@ export interface UserProfile {
   isInitiated?: boolean;
   maritalStatus?: string;
   referredBy?: string;
+  // Add missing fields referenced in other components
+  isAdmin?: boolean;
+  phoneNumber?: string;
+  location?: string;
+  batchName?: string;
+  joinDate?: Date | string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
