@@ -19,6 +19,9 @@ export const uploadImageToCloudinary = async (file: File): Promise<string> => {
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
     formData.append("api_key", CLOUDINARY_API_KEY);
     
+    // Specify folder for storage
+    formData.append("folder", "profile_photos");
+    
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
       {

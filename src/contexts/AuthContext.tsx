@@ -111,20 +111,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const cleanData: Record<string, any> = {};
       
+      // Create a copy of data to modify for Firebase Auth update
+      const authUpdateData: { displayName?: string; photoURL?: string } = {};
+      
       for (const [key, value] of Object.entries(data)) {
         if (value !== undefined) {
           cleanData[key] = value;
+          
+          // Copy relevant fields for Firebase Auth profile update
+          if (key === 'displayName') {
+            authUpdateData.displayName = value as string;
+          } else if (key === 'photoURL') {
+            authUpdateData.photoURL = value as string;
+          }
         }
       }
       
       const userRef = doc(db, "users", currentUser.uid);
       await updateDoc(userRef, cleanData);
       
-      setUserProfile(prev => prev ? { ...prev, ...cleanData } : null);
-      
-      if (data.displayName) {
-        await updateProfile(currentUser, { displayName: data.displayName });
+      // Update Firebase Auth user profile if needed
+      if (Object.keys(authUpdateData).length > 0) {
+        await updateProfile(currentUser, authUpdateData);
       }
+      
+      // Update local state
+      setUserProfile(prev => prev ? { ...prev, ...cleanData } : null);
       
       toast.success("Profile updated successfully");
     } catch (error: any) {

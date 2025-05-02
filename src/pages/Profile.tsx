@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -112,7 +111,9 @@ const Profile = () => {
       });
 
       // Set profile image if exists
-      if (currentUser?.photoURL) {
+      if (userProfile.photoURL) {
+        setPreviewUrl(userProfile.photoURL);
+      } else if (currentUser?.photoURL) {
         setPreviewUrl(currentUser.photoURL);
       }
 
@@ -155,6 +156,12 @@ const Profile = () => {
         const cloudinaryUrl = await uploadImageToCloudinary(file);
         // Update the preview with the Cloudinary URL
         setPreviewUrl(cloudinaryUrl);
+        
+        // Update the user profile with the new image URL
+        if (currentUser) {
+          await updateUserProfile({ photoURL: cloudinaryUrl });
+        }
+        
         toast.success("Image uploaded successfully!");
       } catch (error) {
         toast.error("Failed to upload image. Please try again.");
@@ -178,14 +185,11 @@ const Profile = () => {
 
     setIsSubmitting(true);
     try {
-      // Use the Cloudinary URL that's already set in previewUrl
-      const photoURL = previewUrl;
-
       // Update the user profile with form values and explicitly set dateOfBirth
       await updateUserProfile({
         ...values,
         dateOfBirth: dateOfBirth, // This can be null but not undefined
-        photoURL: photoURL,
+        photoURL: previewUrl || userProfile?.photoURL,
       });
 
       toast.success("Profile updated successfully!");
