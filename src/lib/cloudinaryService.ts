@@ -5,7 +5,7 @@
 
 const CLOUDINARY_CLOUD_NAME = "techrager-blogspot-com";
 const CLOUDINARY_API_KEY = "265992398755936";
-const CLOUDINARY_UPLOAD_PRESET = "profile_photos";
+const CLOUDINARY_UPLOAD_PRESET = "upload_profile_img";
 
 /**
  * Uploads an image to Cloudinary
