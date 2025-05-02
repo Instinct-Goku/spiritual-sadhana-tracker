@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -18,7 +17,7 @@ import { toast } from "@/lib/toast";
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string, mobileNumber?: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -65,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  async function register(email: string, password: string, displayName: string) {
+  async function register(email: string, password: string, displayName: string, mobileNumber?: string) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName });
@@ -74,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         uid: userCredential.user.uid,
         displayName,
         email,
+        mobileNumber,
         joinDate: new Date(),
       };
       

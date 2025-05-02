@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +11,7 @@ import { toast } from "@/lib/toast";
 const Register = () => {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,8 +21,15 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!displayName || !email || !password || !confirmPassword) {
+    if (!displayName || !email || !password || !confirmPassword || !mobileNumber) {
       toast.error("Please fill in all fields");
+      return;
+    }
+    
+    // Basic mobile number validation
+    const mobileRegex = /^\d{10}$/;
+    if (!mobileRegex.test(mobileNumber)) {
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
     
@@ -36,7 +45,7 @@ const Register = () => {
     
     try {
       setLoading(true);
-      await register(email, password, displayName);
+      await register(email, password, displayName, mobileNumber);
       navigate("/");
     } catch (error) {
       // Error is handled in the register function
@@ -89,6 +98,21 @@ const Register = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="spiritual-input"
                 required
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="mobileNumber" className="text-sm font-medium">
+                Mobile Number
+              </label>
+              <Input
+                id="mobileNumber"
+                type="tel"
+                placeholder="10-digit mobile number"
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                className="spiritual-input"
+                required
+                maxLength={10}
               />
             </div>
             <div className="space-y-2">
