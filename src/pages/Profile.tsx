@@ -1,5 +1,6 @@
+
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +8,13 @@ import { uploadImageToCloudinary } from "@/lib/cloudinaryService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -19,6 +27,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
 import { User, Loader2, Calendar, Upload } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   displayName: z.string().min(2, {
@@ -35,7 +44,7 @@ const formSchema = z.object({
   spiritualName: z.string().max(50, {
     message: "Spiritual name must not exceed 50 characters.",
   }).optional(),
-  dateOfBirth: z.date().nullable().optional(),
+  dateOfBirth: z.string().nullable().optional(),
   occupation: z.string().max(50, {
     message: "Occupation must not exceed 50 characters.",
   }).optional(),
@@ -48,18 +57,30 @@ const formSchema = z.object({
   pinCode: z.string().regex(/^\d{6}$/, {
     message: "Pin code must be a 6-digit number.",
   }).optional(),
-  batch: z.string().max(50, {
-    message: "Batch must not exceed 50 characters.",
-  }).optional(),
+  batch: z.string().optional(),
   mobileNumber: z.string().regex(/^\d{10}$/, {
     message: "Mobile number must be a 10-digit number.",
   }).optional(),
-  isInitiated: z.boolean().optional(),
+  isInitiated: z.boolean().default(false),
   maritalStatus: z.string().optional(),
   referredBy: z.string().max(50, {
     message: "Referred by must not exceed 50 characters.",
   }).optional(),
 });
+
+const maritalStatusOptions = [
+  { value: "single", label: "Single" },
+  { value: "married", label: "Married" },
+  { value: "divorced", label: "Divorced" },
+  { value: "widowed", label: "Widowed" },
+];
+
+const batchOptions = [
+  { value: "morning", label: "Morning" },
+  { value: "afternoon", label: "Afternoon" },
+  { value: "evening", label: "Evening" },
+  { value: "weekend", label: "Weekend" },
+];
 
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
@@ -75,7 +96,11 @@ const Profile = () => {
       email: userProfile?.email || "",
       bio: userProfile?.bio || "",
       spiritualName: userProfile?.spiritualName || "",
-      dateOfBirth: userProfile?.dateOfBirth ? new Date(userProfile.dateOfBirth) : null,
+      dateOfBirth: userProfile?.dateOfBirth ? 
+        typeof userProfile.dateOfBirth === 'string' ? 
+          userProfile.dateOfBirth : 
+          userProfile.dateOfBirth.toISOString().split('T')[0] 
+        : null,
       occupation: userProfile?.occupation || "",
       address: userProfile?.address || "",
       city: userProfile?.city || "",
@@ -87,6 +112,8 @@ const Profile = () => {
       referredBy: userProfile?.referredBy || "",
     },
   });
+  
+  const isInitiatedValue = form.watch("isInitiated");
 
   useEffect(() => {
     // Update form default values when userProfile changes
@@ -95,7 +122,11 @@ const Profile = () => {
       email: userProfile?.email || "",
       bio: userProfile?.bio || "",
       spiritualName: userProfile?.spiritualName || "",
-      dateOfBirth: userProfile?.dateOfBirth ? new Date(userProfile.dateOfBirth) : null,
+      dateOfBirth: userProfile?.dateOfBirth ? 
+        typeof userProfile.dateOfBirth === 'string' ? 
+          userProfile.dateOfBirth : 
+          userProfile.dateOfBirth.toISOString().split('T')[0] 
+        : null,
       occupation: userProfile?.occupation || "",
       address: userProfile?.address || "",
       city: userProfile?.city || "",
@@ -168,35 +199,11 @@ const Profile = () => {
     }
   };
 
-  const onReset = () => {
-    form.reset({
-      displayName: userProfile?.displayName || "",
-      email: userProfile?.email || "",
-      bio: userProfile?.bio || "",
-      spiritualName: userProfile?.spiritualName || "",
-      dateOfBirth: userProfile?.dateOfBirth ? new Date(userProfile.dateOfBirth) : null,
-      occupation: userProfile?.occupation || "",
-      address: userProfile?.address || "",
-      city: userProfile?.city || "",
-      pinCode: userProfile?.pinCode || "",
-      batch: userProfile?.batch || "",
-      mobileNumber: userProfile?.mobileNumber || "",
-      isInitiated: userProfile?.isInitiated || false,
-      maritalStatus: userProfile?.maritalStatus || "",
-      referredBy: userProfile?.referredBy || "",
-    });
-    setSelectedFile(null);
-    setPreviewUrl(userProfile?.photoURL || null);
-  };
-
   return (
     <div className="container mx-auto py-6">
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Profile</h1>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={onReset}>
-            Reset
-          </Button>
           <Button type="submit" onClick={form.handleSubmit(handleSubmit)} disabled={isSubmitting}>
             {isSubmitting ? (
               <>
@@ -293,17 +300,39 @@ const Profile = () => {
                   />
                   <FormField
                     control={form.control}
-                    name="spiritualName"
+                    name="isInitiated"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Spiritual Name</FormLabel>
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                         <FormControl>
-                          <Input placeholder="Spiritual Name" {...field} />
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>I am initiated</FormLabel>
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                  
+                  {isInitiatedValue && (
+                    <FormField
+                      control={form.control}
+                      name="spiritualName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Spiritual Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Spiritual Name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  
                   <FormField
                     control={form.control}
                     name="dateOfBirth"
@@ -311,7 +340,7 @@ const Profile = () => {
                       <FormItem>
                         <FormLabel>Date of Birth</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input type="date" {...field} value={field.value || ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -376,20 +405,23 @@ const Profile = () => {
                       <FormItem>
                         <FormLabel>Batch</FormLabel>
                         <FormControl>
-                          <Input placeholder="Batch" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="isInitiated"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Is Initiated</FormLabel>
-                        <FormControl>
-                          <input type="checkbox" {...field} />
+                          <Select 
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a batch" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {batchOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -402,7 +434,23 @@ const Profile = () => {
                       <FormItem>
                         <FormLabel>Marital Status</FormLabel>
                         <FormControl>
-                          <Input placeholder="Marital Status" {...field} />
+                          <Select 
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select marital status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {maritalStatusOptions.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
