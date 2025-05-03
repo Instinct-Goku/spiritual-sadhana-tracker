@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
-import { Loader2, Search, UserCheck, UserX, UserGroup, Settings } from "lucide-react";
+import { Loader2, Search, UserCheck, UserX, Users, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDevoteeGroups, getDevoteesInGroup } from "@/lib/adminService";
 import BatchScoreConfig from "@/components/BatchScoreConfig";
@@ -410,7 +410,7 @@ const AdminPage = () => {
                               {group.devoteeIds.length} devotees
                             </p>
                           </div>
-                          <UserGroup className="h-5 w-5 text-muted-foreground" />
+                          <Users className="h-5 w-5 text-muted-foreground" />
                         </div>
                       </div>
                     ))}
@@ -428,7 +428,7 @@ const AdminPage = () => {
               <CardContent>
                 {!selectedGroup ? (
                   <div className="text-center py-16">
-                    <UserGroup className="h-16 w-16 mx-auto text-muted-foreground/50" />
+                    <Users className="h-16 w-16 mx-auto text-muted-foreground/50" />
                     <p className="mt-4 text-muted-foreground">Select a group to view its members</p>
                   </div>
                 ) : (
