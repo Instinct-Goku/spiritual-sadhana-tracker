@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,17 +68,15 @@ const formSchema = z.object({
 });
 
 const maritalStatusOptions = [
-  { value: "single", label: "Single" },
   { value: "married", label: "Married" },
-  { value: "divorced", label: "Divorced" },
-  { value: "widowed", label: "Widowed" },
+  { value: "unmarried", label: "Unmarried" },
 ];
 
 const batchOptions = [
-  { value: "morning", label: "Morning" },
-  { value: "afternoon", label: "Afternoon" },
-  { value: "evening", label: "Evening" },
-  { value: "weekend", label: "Weekend" },
+  { value: "Sahadev", label: "Sahadev" },
+  { value: "Nakula", label: "Nakula" },
+  { value: "Arjuna", label: "Arjuna" },
+  { value: "Yudhisthir", label: "Yudhisthir" },
 ];
 
 const Profile = () => {
