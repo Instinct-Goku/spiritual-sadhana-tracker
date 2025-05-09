@@ -7,6 +7,8 @@ export interface BatchCriteria {
   readingMinimum: number; // in minutes
   daySleepScoring: DurationScore[];
   japaCompletionScoring: TimeRangeScore[];
+  hearingMinimum: number; // in minutes
+  serviceMinimum: number; // in minutes
 }
 
 export interface TimeRangeScore {
@@ -42,7 +44,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     wakeUpTimeScoring: [], // No points allotted
     readingMinimum: 90, // 1.5 hours
     daySleepScoring: [], // No points allotted
-    japaCompletionScoring: [] // No points allotted
+    japaCompletionScoring: [], // No points allotted
+    hearingMinimum: 30, // 30 minutes
+    serviceMinimum: 60 // 1 hour
   },
   nakula: {
     name: "Nakula",
@@ -71,7 +75,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "10:00", endTime: "15:00", points: 15 },
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
-    ]
+    ],
+    hearingMinimum: 60, // 1 hour
+    serviceMinimum: 90 // 1.5 hours
   },
   arjuna: {
     name: "Arjuna",
@@ -98,7 +104,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "10:00", endTime: "15:00", points: 15 },
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
-    ]
+    ],
+    hearingMinimum: 90, // 1.5 hours
+    serviceMinimum: 120 // 2 hours
   },
   yudhisthir: {
     name: "Yudhisthir",
@@ -122,7 +130,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "10:00", endTime: "15:00", points: 15 },
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
-    ]
+    ],
+    hearingMinimum: 120, // 2 hours
+    serviceMinimum: 150 // 2.5 hours
   }
 };
 
@@ -182,6 +192,16 @@ export const calculateReadingScore = (minutes: number): number => {
   return Math.max(0, minutes); // 1 point per minute
 };
 
+// Calculate hearing score
+export const calculateHearingScore = (minutes: number): number => {
+  return Math.max(0, minutes); // 1 point per minute
+};
+
+// Calculate service score
+export const calculateServiceScore = (minutes: number): number => {
+  return Math.max(0, minutes); // 1 point per minute
+};
+
 // Calculate program attendance score
 export const calculateProgramScore = (entry: SadhanaEntry): number => {
   let score = 0;
@@ -225,6 +245,8 @@ export const calculateSadhanaScore = (
     daySleepScore: number;
     japaCompletionScore: number;
     programScore: number;
+    hearingScore: number;
+    serviceScore: number;
   }
 } => {
   const batchConfigs = getBatchConfigurations();
@@ -237,6 +259,8 @@ export const calculateSadhanaScore = (
   const daySleepScore = calculateDurationScore(entry.daySleepDuration, batchCriteria.daySleepScoring);
   const japaCompletionScore = calculateTimeScore(entry.chantingCompletionTime, batchCriteria.japaCompletionScoring);
   const programScore = calculateProgramScore(entry);
+  const hearingScore = calculateHearingScore(entry.hearingMinutes || 0);
+  const serviceScore = calculateServiceScore(entry.serviceMinutes || 0);
   
   // Calculate total score
   const totalScore = 
@@ -245,7 +269,9 @@ export const calculateSadhanaScore = (
     readingScore + 
     daySleepScore + 
     japaCompletionScore + 
-    programScore;
+    programScore +
+    hearingScore +
+    serviceScore;
   
   return {
     totalScore,
@@ -255,7 +281,9 @@ export const calculateSadhanaScore = (
       readingScore,
       daySleepScore,
       japaCompletionScore,
-      programScore
+      programScore,
+      hearingScore,
+      serviceScore
     }
   };
 };
@@ -274,6 +302,8 @@ export const calculateWeeklySadhanaScore = (
     daySleepScore: number;
     japaCompletionScore: number;
     programScore: number;
+    hearingScore: number;
+    serviceScore: number;
   }
 } => {
   if (!entries || entries.length === 0) {
@@ -286,7 +316,9 @@ export const calculateWeeklySadhanaScore = (
         readingScore: 0,
         daySleepScore: 0,
         japaCompletionScore: 0,
-        programScore: 0
+        programScore: 0,
+        hearingScore: 0,
+        serviceScore: 0
       }
     };
   }
@@ -304,7 +336,9 @@ export const calculateWeeklySadhanaScore = (
     readingScore: scores.reduce((sum, score) => sum + score.breakdowns.readingScore, 0),
     daySleepScore: scores.reduce((sum, score) => sum + score.breakdowns.daySleepScore, 0),
     japaCompletionScore: scores.reduce((sum, score) => sum + score.breakdowns.japaCompletionScore, 0),
-    programScore: scores.reduce((sum, score) => sum + score.breakdowns.programScore, 0)
+    programScore: scores.reduce((sum, score) => sum + score.breakdowns.programScore, 0),
+    hearingScore: scores.reduce((sum, score) => sum + score.breakdowns.hearingScore, 0),
+    serviceScore: scores.reduce((sum, score) => sum + score.breakdowns.serviceScore, 0)
   };
   
   return {
@@ -337,7 +371,9 @@ export const getBatchCriteriaDescription = (batchName: string): Record<string, s
     wakeUpTime: [],
     reading: [`Minimum: ${batchCriteria.readingMinimum} minutes (${batchCriteria.readingMinimum / 60} hours)`],
     daySleep: [],
-    japaCompletion: []
+    japaCompletion: [],
+    hearing: [`Minimum: ${batchCriteria.hearingMinimum} minutes (${batchCriteria.hearingMinimum / 60} hours)`],
+    service: [`Minimum: ${batchCriteria.serviceMinimum} minutes (${batchCriteria.serviceMinimum / 60} hours)`]
   };
   
   // Sleep time criteria

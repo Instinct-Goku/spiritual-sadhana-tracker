@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Plus, Trash } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { DEFAULT_BATCHES, BatchCriteria, TimeRangeScore, DurationScore } from "@/lib/scoringService";
-import { Switch } from "@/components/ui/switch";
 
 interface BatchScoreConfigProps {
   onClose?: () => void;
@@ -19,17 +18,22 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
   const [batchConfig, setBatchConfig] = useState<BatchCriteria>(DEFAULT_BATCHES.sahadev);
   const [isSaving, setIsSaving] = useState(false);
   const [batches, setBatches] = useState<Record<string, BatchCriteria>>(DEFAULT_BATCHES);
-  const [isWeeklyScoring, setIsWeeklyScoring] = useState(false);
+
+  useEffect(() => {
+    // Load batch configurations from localStorage if available
+    try {
+      const storedConfigs = localStorage.getItem("batchConfigurations");
+      if (storedConfigs) {
+        setBatches(JSON.parse(storedConfigs));
+      }
+    } catch (error) {
+      console.error("Error loading batch configurations:", error);
+    }
+  }, []);
 
   useEffect(() => {
     // Load the selected batch configuration
     setBatchConfig(batches[selectedBatch]);
-    
-    // Check if weekly scoring is enabled (you could store this in localStorage or Firestore)
-    const storedWeeklyScoring = localStorage.getItem("isWeeklyScoringEnabled");
-    if (storedWeeklyScoring !== null) {
-      setIsWeeklyScoring(storedWeeklyScoring === "true");
-    }
   }, [selectedBatch, batches]);
 
   const handleSaveConfig = () => {
@@ -46,7 +50,6 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
       // For now, we'll just update our local state and save to localStorage
       setBatches(updatedBatches);
       localStorage.setItem("batchConfigurations", JSON.stringify(updatedBatches));
-      localStorage.setItem("isWeeklyScoringEnabled", String(isWeeklyScoring));
       
       toast.success("Batch configuration saved successfully");
     } catch (error) {
@@ -230,6 +233,25 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
+  // Add new functions for updating hearing and service minimums
+  const updateHearingMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      hearingMinimum: value,
+    });
+  };
+
+  const updateServiceMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      serviceMinimum: value,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -251,15 +273,6 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
             </>
           )}
         </Button>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="weekly-scoring"
-          checked={isWeeklyScoring}
-          onCheckedChange={setIsWeeklyScoring}
-        />
-        <Label htmlFor="weekly-scoring">Enable Weekly Score Consolidation</Label>
       </div>
       
       <Tabs defaultValue={selectedBatch} onValueChange={setSelectedBatch}>
@@ -286,6 +299,28 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                     type="number"
                     value={batchConfig?.readingMinimum || 0}
                     onChange={(e) => updateReadingMinimum(Number(e.target.value))}
+                    className="w-full md:w-1/3"
+                  />
+                </div>
+                
+                {/* Hearing Minimum */}
+                <div className="space-y-2">
+                  <Label>Hearing Minimum (minutes)</Label>
+                  <Input 
+                    type="number"
+                    value={batchConfig?.hearingMinimum || 0}
+                    onChange={(e) => updateHearingMinimum(Number(e.target.value))}
+                    className="w-full md:w-1/3"
+                  />
+                </div>
+                
+                {/* Service Minimum */}
+                <div className="space-y-2">
+                  <Label>Service Minimum (minutes)</Label>
+                  <Input 
+                    type="number"
+                    value={batchConfig?.serviceMinimum || 0}
+                    onChange={(e) => updateServiceMinimum(Number(e.target.value))}
                     className="w-full md:w-1/3"
                   />
                 </div>
