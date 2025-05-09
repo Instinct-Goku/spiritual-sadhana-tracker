@@ -29,6 +29,7 @@ export interface SadhanaEntry {
   hearingMinutes: number; // Keeping for backwards compatibility
   spLectureMinutes?: number; // Srila Prabhupada lecture minutes
   smLectureMinutes?: number; // Spiritual Master lecture minutes
+  gsnsLectureMinutes?: number; // GS/NS lecture minutes
   serviceMinutes?: number; // Service minutes
   shlokaMemorized?: number; // Number of shlokas memorized
   wakeUpTime: string;
