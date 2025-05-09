@@ -9,6 +9,9 @@ export interface BatchCriteria {
   japaCompletionScoring: TimeRangeScore[];
   hearingMinimum: number; // in minutes
   serviceMinimum: number; // in minutes
+  spLectureMinimum?: number; // Srila Prabhupada lectures minimum in minutes
+  smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
+  gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
 }
 
 export interface TimeRangeScore {
@@ -45,8 +48,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     readingMinimum: 90, // 1.5 hours
     daySleepScoring: [], // No points allotted
     japaCompletionScoring: [], // No points allotted
-    hearingMinimum: 30, // 30 minutes
-    serviceMinimum: 60 // 1 hour
+    hearingMinimum: 60, // 1 hour
+    serviceMinimum: 60, // 1 hour
+    spLectureMinimum: 60 // 1 hour
   },
   nakula: {
     name: "Nakula",
@@ -77,7 +81,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "20:00", endTime: "23:59", points: 0 }
     ],
     hearingMinimum: 60, // 1 hour
-    serviceMinimum: 90 // 1.5 hours
+    serviceMinimum: 90, // 1.5 hours
+    spLectureMinimum: 60 // 1 hour
   },
   arjuna: {
     name: "Arjuna",
@@ -105,8 +110,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
     ],
-    hearingMinimum: 90, // 1.5 hours
-    serviceMinimum: 120 // 2 hours
+    hearingMinimum: 120, // 2 hours
+    serviceMinimum: 120, // 2 hours
+    spLectureMinimum: 60, // 1 hour
+    smLectureMinimum: 60 // 1 hour
   },
   yudhisthir: {
     name: "Yudhisthir",
@@ -131,8 +138,11 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
     ],
-    hearingMinimum: 120, // 2 hours
-    serviceMinimum: 150 // 2.5 hours
+    hearingMinimum: 180, // 3 hours
+    serviceMinimum: 150, // 2.5 hours
+    spLectureMinimum: 60, // 1 hour
+    smLectureMinimum: 60, // 1 hour
+    gsnsLectureMinimum: 60 // 1 hour
   }
 };
 
@@ -259,7 +269,14 @@ export const calculateSadhanaScore = (
   const daySleepScore = calculateDurationScore(entry.daySleepDuration, batchCriteria.daySleepScoring);
   const japaCompletionScore = calculateTimeScore(entry.chantingCompletionTime, batchCriteria.japaCompletionScoring);
   const programScore = calculateProgramScore(entry);
-  const hearingScore = calculateHearingScore(entry.hearingMinutes || 0);
+  
+  // Calculate hearing score (sum of all hearing types)
+  const spLectureMinutes = entry.spLectureMinutes || 0;
+  const smLectureMinutes = entry.smLectureMinutes || 0;
+  const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
+  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
+  const hearingScore = calculateHearingScore(totalHearingMinutes);
+  
   const serviceScore = calculateServiceScore(entry.serviceMinutes || 0);
   
   // Calculate total score
@@ -375,6 +392,19 @@ export const getBatchCriteriaDescription = (batchName: string): Record<string, s
     hearing: [`Minimum: ${batchCriteria.hearingMinimum} minutes (${batchCriteria.hearingMinimum / 60} hours)`],
     service: [`Minimum: ${batchCriteria.serviceMinimum} minutes (${batchCriteria.serviceMinimum / 60} hours)`]
   };
+  
+  // Add specific hearing requirements if available
+  if (batchCriteria.spLectureMinimum) {
+    descriptions.hearing.push(`Srila Prabhupada Lectures: ${batchCriteria.spLectureMinimum} minutes`);
+  }
+  
+  if (batchCriteria.smLectureMinimum) {
+    descriptions.hearing.push(`Spiritual Master Lectures: ${batchCriteria.smLectureMinimum} minutes`);
+  }
+  
+  if (batchCriteria.gsnsLectureMinimum) {
+    descriptions.hearing.push(`GS/NS Lectures: ${batchCriteria.gsnsLectureMinimum} minutes`);
+  }
   
   // Sleep time criteria
   batchCriteria.sleepTimeScoring.forEach((range, i, arr) => {

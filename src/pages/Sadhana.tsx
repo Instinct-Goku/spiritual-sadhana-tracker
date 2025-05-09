@@ -31,6 +31,10 @@ import {
   SadhanaEntry, 
   updateSadhanaEntry 
 } from "@/lib/sadhanaService";
+import {
+  DEFAULT_BATCHES,
+  getBatchConfigurations
+} from "@/lib/scoringService";
 
 const formatDateForDisplay = (date: Date) => {
   return date.toLocaleDateString("en-US", {
@@ -42,7 +46,7 @@ const formatDateForDisplay = (date: Date) => {
 };
 
 const SadhanaPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,6 +59,7 @@ const SadhanaPage = () => {
   const [readingMinutes, setReadingMinutes] = useState<number | ''>('');
   const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
   const [smLectureMinutes, setSmLectureMinutes] = useState<number | ''>('');
+  const [gsnsLectureMinutes, setGsnsLectureMinutes] = useState<number | ''>('');
   const [serviceMinutes, setServiceMinutes] = useState<number | ''>('');
   const [shlokaMemorized, setShlokaMemorized] = useState<number | ''>('');
   const [wakeUpTime, setWakeUpTime] = useState("05:00");
@@ -67,6 +72,11 @@ const SadhanaPage = () => {
   const [guruPuja, setGuruPuja] = useState(false);
   const [bhagavatamClass, setBhagavatamClass] = useState(false);
   const [notes, setNotes] = useState("");
+  
+  // Get user's batch to determine which hearing fields to display
+  const userBatch = userProfile?.batch?.toLowerCase() || "sahadev";
+  const batchConfigs = getBatchConfigurations();
+  const batchCriteria = batchConfigs[userBatch] || DEFAULT_BATCHES.sahadev;
   
   // Format date for input field
   const formatDateForInput = (date: Date) => {
@@ -90,6 +100,7 @@ const SadhanaPage = () => {
           setReadingMinutes(entry.readingMinutes || '');
           setSpLectureMinutes(entry.spLectureMinutes || '');
           setSmLectureMinutes(entry.smLectureMinutes || '');
+          setGsnsLectureMinutes(entry.gsnsLectureMinutes || '');
           setServiceMinutes(entry.serviceMinutes || '');
           setShlokaMemorized(entry.shlokaMemorized || '');
           setWakeUpTime(entry.wakeUpTime);
@@ -110,6 +121,7 @@ const SadhanaPage = () => {
           setReadingMinutes('');
           setSpLectureMinutes('');
           setSmLectureMinutes('');
+          setGsnsLectureMinutes('');
           setServiceMinutes('');
           setShlokaMemorized('');
           setWakeUpTime("05:00");
@@ -157,6 +169,7 @@ const SadhanaPage = () => {
         readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
         spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
         smLectureMinutes: smLectureMinutes === '' ? 0 : Number(smLectureMinutes),
+        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes), // New field
         serviceMinutes: serviceMinutes === '' ? 0 : Number(serviceMinutes),
         shlokaMemorized: shlokaMemorized === '' ? 0 : Number(shlokaMemorized),
         hearingMinutes: 0, // For backwards compatibility
@@ -192,6 +205,14 @@ const SadhanaPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Helper to determine if a hearing field should be shown based on batch criteria
+  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns') => {
+    if (type === 'sp') return true; // All batches show SP lectures
+    if (type === 'sm') return batchCriteria.smLectureMinimum !== undefined;
+    if (type === 'gsns') return batchCriteria.gsnsLectureMinimum !== undefined;
+    return false;
   };
   
   return (
@@ -297,10 +318,11 @@ const SadhanaPage = () => {
                   Hearing (minutes)
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* SP Lecture field - always visible */}
                   <div className="space-y-2">
                     <Label htmlFor="spLecture" className="font-medium flex items-center">
                       <Mic className="h-4 w-4 mr-1" />
-                      Srila Prabhupada Lectures
+                      Srila Prabhupada Lectures {batchCriteria.spLectureMinimum && `(${batchCriteria.spLectureMinimum} min minimum)`}
                     </Label>
                     <Input
                       id="spLecture"
@@ -313,21 +335,43 @@ const SadhanaPage = () => {
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="smLecture" className="font-medium flex items-center">
-                      <Mic className="h-4 w-4 mr-1" />
-                      Spiritual Master Lectures
-                    </Label>
-                    <Input
-                      id="smLecture"
-                      type="number"
-                      min="0"
-                      value={smLectureMinutes}
-                      onChange={(e) => setSmLectureMinutes(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
-                    />
-                  </div>
+                  {/* Spiritual Master Lecture field - conditionally visible */}
+                  {shouldShowHearingField('sm') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="smLecture" className="font-medium flex items-center">
+                        <Mic className="h-4 w-4 mr-1" />
+                        Spiritual Master Lectures {batchCriteria.smLectureMinimum && `(${batchCriteria.smLectureMinimum} min minimum)`}
+                      </Label>
+                      <Input
+                        id="smLecture"
+                        type="number"
+                        min="0"
+                        value={smLectureMinutes}
+                        onChange={(e) => setSmLectureMinutes(e.target.value ? Number(e.target.value) : '')}
+                        className="spiritual-input"
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* GS/NS Lecture field - conditionally visible */}
+                  {shouldShowHearingField('gsns') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="gsnsLecture" className="font-medium flex items-center">
+                        <Mic className="h-4 w-4 mr-1" />
+                        GS/NS Lectures {batchCriteria.gsnsLectureMinimum && `(${batchCriteria.gsnsLectureMinimum} min minimum)`}
+                      </Label>
+                      <Input
+                        id="gsnsLecture"
+                        type="number"
+                        min="0"
+                        value={gsnsLectureMinutes}
+                        onChange={(e) => setGsnsLectureMinutes(e.target.value ? Number(e.target.value) : '')}
+                        className="spiritual-input"
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -357,7 +401,7 @@ const SadhanaPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="service" className="font-medium flex items-center">
                       <HandHeart className="h-4 w-4 mr-1" />
-                      Service (minutes)
+                      Service (minutes) {batchCriteria.serviceMinimum && `(${batchCriteria.serviceMinimum} min minimum)`}
                     </Label>
                     <Input
                       id="service"
