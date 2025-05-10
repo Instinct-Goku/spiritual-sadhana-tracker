@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -23,7 +22,6 @@ export interface SadhanaEntry {
   id?: string;
   userId: string;
   date: Date | Timestamp;
-  chantingRounds: number;
   chantingCompletionTime: string;
   readingMinutes: number;
   hearingMinutes: number; // Keeping for backwards compatibility
@@ -58,7 +56,6 @@ export interface SadhanaEntry {
 }
 
 export interface WeeklyStats {
-  totalChantingRounds: number;
   averageChantingRounds: number;
   totalReadingMinutes: number;
   averageReadingMinutes: number;
@@ -277,8 +274,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     });
     
     const stats: WeeklyStats = {
-      totalChantingRounds: 0,
-      averageChantingRounds: 0,
+      averageChantingRounds: 0, // This will be filled from the user profile later
       totalReadingMinutes: 0,
       averageReadingMinutes: 0,
       totalHearingMinutes: 0,
@@ -322,7 +318,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     let totalJapaCompletionPoints = 0;
     
     entries.forEach(entry => {
-      stats.totalChantingRounds += entry.chantingRounds;
       stats.totalReadingMinutes += entry.readingMinutes;
       
       // Calculate total hearing minutes from all sources
@@ -370,7 +365,6 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       }
     });
     
-    stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
     stats.averageReadingMinutes = Math.round(stats.totalReadingMinutes / entries.length);
     stats.averageHearingMinutes = Math.round(stats.totalHearingMinutes / entries.length);
     stats.averageWakeUpHour = parseFloat((totalWakeUpHours / entries.length).toFixed(1));

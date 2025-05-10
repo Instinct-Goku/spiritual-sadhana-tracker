@@ -65,6 +65,7 @@ const formSchema = z.object({
   referredBy: z.string().max(50, {
     message: "Referred by must not exceed 50 characters.",
   }).optional(),
+  dailyChantingRounds: z.number().min(0).max(64).optional(),
 });
 
 const maritalStatusOptions = [
@@ -107,6 +108,7 @@ const Profile = () => {
       isInitiated: userProfile?.isInitiated || false,
       maritalStatus: userProfile?.maritalStatus || "",
       referredBy: userProfile?.referredBy || "",
+      dailyChantingRounds: userProfile?.dailyChantingRounds || 16,
     },
   });
   
@@ -133,6 +135,7 @@ const Profile = () => {
       isInitiated: userProfile?.isInitiated || false,
       maritalStatus: userProfile?.maritalStatus || "",
       referredBy: userProfile?.referredBy || "",
+      dailyChantingRounds: userProfile?.dailyChantingRounds || 16,
     });
     
     // Also update the preview URL when userProfile changes
@@ -461,6 +464,26 @@ const Profile = () => {
                         <FormLabel>Referred By</FormLabel>
                         <FormControl>
                           <Input placeholder="Referred By" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dailyChantingRounds"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Daily Chanting Rounds</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Daily Chanting Rounds" 
+                            type="number"
+                            {...field} 
+                            onChange={e => field.onChange(parseInt(e.target.value) || 0)}
+                            min={0}
+                            max={64}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

@@ -47,6 +47,7 @@ export interface UserProfile {
   location?: string;
   batchName?: string;
   joinDate?: Date | string;
+  dailyChantingRounds?: number; // New field for daily chanting rounds
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
