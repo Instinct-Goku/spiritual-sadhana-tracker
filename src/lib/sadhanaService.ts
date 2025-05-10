@@ -1,3 +1,4 @@
+
 import { 
   collection, 
   addDoc, 
@@ -70,7 +71,7 @@ export interface WeeklyStats {
   averageScore: number;
   dailyScores: { day: string; score: number }[];
   entries: SadhanaEntry[];
-  // New fields for points calculation
+  // Points calculation fields
   chantingPoints: number;
   readingPoints: number;
   hearingPoints: number;

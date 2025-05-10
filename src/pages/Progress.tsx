@@ -246,7 +246,7 @@ const ProgressPage = () => {
                 placeholder="Search devotees by name or phone number..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-8 pr-10 w-full spiritual-input"
               />
               {searchQuery && (
@@ -442,12 +442,26 @@ const ProgressPage = () => {
           <CardContent>
             <div className="flex flex-col">
               <span className="text-3xl font-bold">
-                {weekStats?.chantingPoints || 0}
+                {weekStats?.japaCompletionPoints || 0}
               </span>
               <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{weekStats?.totalChantingRounds || 0}</span> total rounds
-                <span className="text-sm text-muted-foreground ml-2">({weekStats?.averageChantingRounds || 0}/day)</span>
+                <span className="font-medium">Completion Score</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="ml-1 text-muted-foreground">
+                      <Info className="h-3.5 w-3.5 inline" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Japa Completion Time</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Points awarded based on the time you complete your japa rounds for the day.
+                      </p>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </span>
             </div>
           </CardContent>
@@ -469,7 +483,7 @@ const ProgressPage = () => {
               </span>
               <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{weekStats?.totalReadingMinutes || 0}</span> total minutes
+                <span className="font-medium">{Math.round(weekStats?.readingPoints || 0) / 7}</span> points/day
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="ml-1 text-muted-foreground">
@@ -507,7 +521,7 @@ const ProgressPage = () => {
               </span>
               <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{Math.round(weekStats?.morningProgramAttendance || 0)}%</span> Morning Program
+                <span className="font-medium">{Math.round(weekStats?.programPoints || 0) / 7}</span> points/day
               </span>
             </div>
           </CardContent>
@@ -629,6 +643,14 @@ const ProgressPage = () => {
                       <span className="font-medium">{weekStats.sleepTimePoints} points</span>
                     </div>
                     <Progress value={(weekStats.sleepTimePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Japa Completion</span>
+                      <span className="font-medium">{weekStats.japaCompletionPoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.japaCompletionPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                   </div>
                 </>
               ) : (
