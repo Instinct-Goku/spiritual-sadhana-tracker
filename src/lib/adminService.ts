@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   query, 
@@ -35,8 +34,7 @@ export interface DevoteeSadhanaProgress {
     averageReadingMinutes: number;
     mangalaAratiAttendance: number;
     morningProgramAttendance: number;
-    totalChantingRounds: number; // Added missing property
-    totalReadingMinutes: number; // Added missing property
+    totalReadingMinutes: number; // Keep this property
   };
 }
 
@@ -156,8 +154,7 @@ export const searchDevotees = async (
               averageReadingMinutes: weeklyStats.averageReadingMinutes,
               mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
               morningProgramAttendance: weeklyStats.morningProgramAttendance,
-              totalChantingRounds: weeklyStats.totalChantingRounds || 0, // Added missing property
-              totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Added missing property
+              totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Use existing property
             },
           };
         } catch (error) {
@@ -517,8 +514,7 @@ export const getGroupSadhanaProgress = async (
             averageReadingMinutes: weeklyStats.averageReadingMinutes,
             mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
             morningProgramAttendance: weeklyStats.morningProgramAttendance,
-            totalChantingRounds: weeklyStats.totalChantingRounds || 0, // Added missing property
-            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Added missing property
+            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Use existing property
           },
         };
       } catch (error) {

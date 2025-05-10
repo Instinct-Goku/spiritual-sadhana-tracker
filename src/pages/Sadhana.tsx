@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,7 +53,6 @@ const SadhanaPage = () => {
   const [existingEntry, setExistingEntry] = useState<SadhanaEntry | null>(null);
   
   // Form fields
-  const [chantingRounds, setChantingRounds] = useState<number | ''>('');
   const [chantingCompletionTime, setChantingCompletionTime] = useState("12:00");
   const [readingMinutes, setReadingMinutes] = useState<number | ''>('');
   const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
@@ -95,7 +93,6 @@ const SadhanaPage = () => {
         if (entry) {
           setExistingEntry(entry);
           // Populate form fields with existing data
-          setChantingRounds(entry.chantingRounds || '');
           setChantingCompletionTime(entry.chantingCompletionTime || "12:00");
           setReadingMinutes(entry.readingMinutes || '');
           setSpLectureMinutes(entry.spLectureMinutes || '');
@@ -116,7 +113,6 @@ const SadhanaPage = () => {
         } else {
           // Reset form for new entry
           setExistingEntry(null);
-          setChantingRounds('');
           setChantingCompletionTime("12:00");
           setReadingMinutes('');
           setSpLectureMinutes('');
@@ -164,7 +160,6 @@ const SadhanaPage = () => {
       const sadhanaData: Omit<SadhanaEntry, "id"> = {
         userId: currentUser.uid,
         date: selectedDate,
-        chantingRounds: chantingRounds === '' ? 0 : Number(chantingRounds),
         chantingCompletionTime,
         readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
         spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
@@ -258,34 +253,17 @@ const SadhanaPage = () => {
                   <Music className="h-4 w-4 mr-2" />
                   Chanting
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="chanting" className="font-medium">
-                      Rounds Completed
-                    </Label>
-                    <Input
-                      id="chanting"
-                      type="number"
-                      min="0"
-                      value={chantingRounds}
-                      onChange={(e) => setChantingRounds(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="chantingCompletion" className="font-medium">
-                      Completion Time
-                    </Label>
-                    <Input
-                      id="chantingCompletion"
-                      type="time"
-                      value={chantingCompletionTime}
-                      onChange={(e) => setChantingCompletionTime(e.target.value)}
-                      className="spiritual-input"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chantingCompletion" className="font-medium">
+                    Completion Time
+                  </Label>
+                  <Input
+                    id="chantingCompletion"
+                    type="time"
+                    value={chantingCompletionTime}
+                    onChange={(e) => setChantingCompletionTime(e.target.value)}
+                    className="spiritual-input"
+                  />
                 </div>
               </div>
 
