@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,11 +10,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
   ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -179,6 +175,7 @@ const ProgressPage = () => {
   const viewDevoteeProgress = (devotee: DevoteeSadhanaProgress) => {
     setSelectedDevotee(devotee);
     setShowingDevoteeProgress(true);
+    setSearchResults([]); // Clear search results
     // Reset to current week
     const date = new Date();
     date.setDate(date.getDate() - date.getDay()); // Set to Sunday
@@ -196,101 +193,9 @@ const ProgressPage = () => {
       .substring(0, 2);
   };
   
-  const prepareChantingData = () => {
-    if (!weekStats?.entries.length) return [];
-    
-    return weekStats.entries.map(entry => ({
-      day: new Date(entry.date instanceof Date ? entry.date : entry.date.toDate()).toLocaleDateString('en-US', { weekday: 'short' }),
-      rounds: entry.chantingRounds,
-    }));
-  };
-  
-  const prepareReadingData = () => {
-    if (!weekStats?.entries.length) return [];
-    
-    return weekStats.entries.map(entry => ({
-      day: new Date(entry.date instanceof Date ? entry.date : entry.date.toDate()).toLocaleDateString('en-US', { weekday: 'short' }),
-      minutes: entry.readingMinutes,
-    }));
-  };
-  
   const prepareScoreData = () => {
     if (!weekStats?.dailyScores?.length) return [];
     return weekStats.dailyScores;
-  };
-  
-  const prepareWakeUpTimeData = () => {
-    if (!weekStats?.entries.length) return [];
-    
-    return weekStats.entries.map(entry => {
-      const [hour, minute] = entry.wakeUpTime.split(':').map(Number);
-      const timeDecimal = hour + (minute / 60);
-      
-      return {
-        day: new Date(entry.date instanceof Date ? entry.date : entry.date.toDate()).toLocaleDateString('en-US', { weekday: 'short' }),
-        time: timeDecimal,
-        display: entry.wakeUpTime,
-      };
-    });
-  };
-  
-  const prepareProgramAttendanceData = () => {
-    if (!weekStats?.entries.length) return [];
-    
-    const mangalaCount = weekStats.entries.filter(e => e.mangalaArati).length;
-    const morningCount = weekStats.entries.filter(e => e.morningProgram).length;
-    const eveningCount = weekStats.entries.filter(e => e.eveningArati).length;
-    const classCount = weekStats.entries.filter(e => e.spiritualClass).length;
-    
-    return [
-      { name: 'Mangala Arati', value: mangalaCount, total: weekStats.entries.length },
-      { name: 'Morning Program', value: morningCount, total: weekStats.entries.length },
-      { name: 'Evening Arati', value: eveningCount, total: weekStats.entries.length },
-      { name: 'Spiritual Class', value: classCount, total: weekStats.entries.length },
-    ];
-  };
-  
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'];
-  
-  const WakeUpTimeTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-          <p>{`${payload[0].payload.day}: ${payload[0].payload.display}`}</p>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-  
-  const ProgramTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const percentage = Math.round((data.value / data.total) * 100);
-      
-      return (
-        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-          <p className="font-medium">{data.name}</p>
-          <p>{`${data.value} of ${data.total} days (${percentage}%)`}</p>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-  
-  const ScoreTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-          <p className="font-medium">Day: {payload[0].payload.day}</p>
-          <p>Score: {payload[0].payload.score}</p>
-        </div>
-      );
-    }
-    
-    return null;
   };
   
   const getBatchName = () => {
@@ -537,11 +442,12 @@ const ProgressPage = () => {
           <CardContent>
             <div className="flex flex-col">
               <span className="text-3xl font-bold">
-                {weekStats?.totalChantingRounds || 0}
+                {weekStats?.chantingPoints || 0}
               </span>
-              <span className="text-sm text-muted-foreground">Total Rounds</span>
+              <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{weekStats?.averageChantingRounds || 0}</span> rounds/day avg.
+                <span className="font-medium">{weekStats?.totalChantingRounds || 0}</span> total rounds
+                <span className="text-sm text-muted-foreground ml-2">({weekStats?.averageChantingRounds || 0}/day)</span>
               </span>
             </div>
           </CardContent>
@@ -559,11 +465,11 @@ const ProgressPage = () => {
           <CardContent>
             <div className="flex flex-col">
               <span className="text-3xl font-bold">
-                {weekStats?.totalReadingMinutes || 0}
+                {weekStats?.readingPoints || 0}
               </span>
-              <span className="text-sm text-muted-foreground">Total Minutes</span>
+              <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{weekStats?.averageReadingMinutes || 0}</span> min/day avg.
+                <span className="font-medium">{weekStats?.totalReadingMinutes || 0}</span> total minutes
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="ml-1 text-muted-foreground">
@@ -597,11 +503,11 @@ const ProgressPage = () => {
           <CardContent>
             <div className="flex flex-col">
               <span className="text-3xl font-bold">
-                {Math.round(weekStats?.morningProgramAttendance || 0)}%
+                {weekStats?.programPoints || 0}
               </span>
-              <span className="text-sm text-muted-foreground">Morning Program</span>
+              <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{Math.round(weekStats?.mangalaAratiAttendance || 0)}%</span> Mangala Arati
+                <span className="font-medium">{Math.round(weekStats?.morningProgramAttendance || 0)}%</span> Morning Program
               </span>
             </div>
           </CardContent>
@@ -631,75 +537,6 @@ const ProgressPage = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Card className="spiritual-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Chanting Rounds by Day</CardTitle>
-            <CardDescription>
-              Your daily japa meditation consistency
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              {weekStats?.entries.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prepareChantingData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="rounds" fill="#7E69AB" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No data for this week</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="spiritual-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Reading Minutes by Day</CardTitle>
-            <CardDescription>
-              Your daily spiritual study time
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              {weekStats?.entries.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={prepareReadingData()} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="minutes" fill="#D4AF37" />
-                    {getBatchName() && (
-                      <ReferenceLine 
-                        y={getReadingMinimumForBatch(getBatchName())} 
-                        stroke="#E57373" 
-                        strokeDasharray="3 3"
-                        label={{ 
-                          value: 'Minimum', 
-                          position: 'insideTopRight',
-                          fill: '#E57373',
-                          fontSize: 12 
-                        }} 
-                      />
-                    )}
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No data for this week</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
         <Card className="spiritual-card">
           <CardHeader>
             <CardTitle className="text-lg">Daily Sadhana Scores</CardTitle>
@@ -735,111 +572,68 @@ const ProgressPage = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-lg">Batch Criteria</CardTitle>
+                <CardTitle className="text-lg">Points Summary</CardTitle>
                 <CardDescription>
-                  Scoring requirements for {getBatchName()} batch
+                  Breakdown of sadhana points by category
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-72 overflow-y-auto pr-2">
-              {batchCriteria ? (
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="sleepTime">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Sleep Time Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        {batchCriteria.sleepTime.map((criterion, index) => (
-                          <li key={index} className="flex items-center">
-                            <span>{criterion}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
+            <div className="h-72 space-y-4">
+              {weekStats ? (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Reading</span>
+                      <span className="font-medium">{weekStats.readingPoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.readingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
                   
-                  <AccordionItem value="wakeUpTime">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Wake-up Time Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        {batchCriteria.wakeUpTime.map((criterion, index) => (
-                          <li key={index} className="flex items-center">
-                            <span>{criterion}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Hearing</span>
+                      <span className="font-medium">{weekStats.hearingPoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.hearingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
                   
-                  <AccordionItem value="reading">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Reading Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        {batchCriteria.reading.map((criterion, index) => (
-                          <li key={index} className="flex items-center">
-                            <span>{criterion}</span>
-                          </li>
-                        ))}
-                        <li className="mt-2">1 point per minute of reading</li>
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Service</span>
+                      <span className="font-medium">{weekStats.servicePoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.servicePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
                   
-                  <AccordionItem value="daySleep">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Day Sleep Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        {batchCriteria.daySleep.map((criterion, index) => (
-                          <li key={index} className="flex items-center">
-                            <span>{criterion}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Program Attendance</span>
+                      <span className="font-medium">{weekStats.programPoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.programPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
                   
-                  <AccordionItem value="japaCompletion">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Japa Completion Time Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        {batchCriteria.japaCompletion.map((criterion, index) => (
-                          <li key={index} className="flex items-center">
-                            <span>{criterion}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Wake Up Time</span>
+                      <span className="font-medium">{weekStats.wakeUpPoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.wakeUpPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
                   
-                  <AccordionItem value="programs">
-                    <AccordionTrigger className="text-spiritual-purple font-medium">
-                      Program Attendance Scoring
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <ul className="space-y-1 text-sm">
-                        <li>Mangala Arati: 10 points</li>
-                        <li>Tulsi Arati: 5 points</li>
-                        <li>Narsimha Arati: 5 points</li>
-                        <li>Guru Puja: 5 points</li>
-                        <li>Bhagavatam Class: 20 points</li>
-                      </ul>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Sleep Time</span>
+                      <span className="font-medium">{weekStats.sleepTimePoints} points</span>
+                    </div>
+                    <Progress value={(weekStats.sleepTimePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </div>
+                </>
               ) : (
                 <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No batch criteria available</p>
+                  <p className="text-muted-foreground">No points data available</p>
                 </div>
               )}
             </div>
@@ -868,6 +662,20 @@ const ProgressPage = () => {
       ) : null}
     </div>
   );
+};
+
+// Custom tooltip for score data
+const ScoreTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
+        <p className="font-medium">Day: {payload[0].payload.day}</p>
+        <p>Score: {payload[0].payload.score}</p>
+      </div>
+    );
+  }
+  
+  return null;
 };
 
 export default ProgressPage;

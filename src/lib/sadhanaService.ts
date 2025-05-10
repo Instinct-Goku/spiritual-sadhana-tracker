@@ -1,4 +1,3 @@
-
 import { 
   collection, 
   addDoc, 
@@ -52,6 +51,8 @@ export interface SadhanaEntry {
     daySleepScore: number;
     japaCompletionScore: number;
     programScore: number;
+    hearingScore: number;
+    serviceScore: number;
   };
 }
 
@@ -69,6 +70,16 @@ export interface WeeklyStats {
   averageScore: number;
   dailyScores: { day: string; score: number }[];
   entries: SadhanaEntry[];
+  // New fields for points calculation
+  chantingPoints: number;
+  readingPoints: number;
+  hearingPoints: number;
+  servicePoints: number;
+  programPoints: number;
+  wakeUpPoints: number;
+  sleepTimePoints: number;
+  daySleepPoints: number;
+  japaCompletionPoints: number;
 }
 
 export const safeConvertToDate = (input: any): Date | null => {
@@ -277,7 +288,17 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       totalScore: 0,
       averageScore: 0,
       dailyScores: [],
-      entries: entries
+      entries: entries,
+      // Initialize points calculations
+      chantingPoints: 0,
+      readingPoints: 0,
+      hearingPoints: 0,
+      servicePoints: 0,
+      programPoints: 0, 
+      wakeUpPoints: 0,
+      sleepTimePoints: 0,
+      daySleepPoints: 0,
+      japaCompletionPoints: 0
     };
     
     if (entries.length === 0) {
@@ -288,10 +309,27 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     let mangalaAratiCount = 0;
     let morningProgramCount = 0;
     
+    // Track total points for each category
+    let totalChantingPoints = 0;
+    let totalReadingPoints = 0;
+    let totalHearingPoints = 0;
+    let totalServicePoints = 0;
+    let totalProgramPoints = 0;
+    let totalWakeUpPoints = 0;
+    let totalSleepTimePoints = 0;
+    let totalDaySleepPoints = 0;
+    let totalJapaCompletionPoints = 0;
+    
     entries.forEach(entry => {
       stats.totalChantingRounds += entry.chantingRounds;
       stats.totalReadingMinutes += entry.readingMinutes;
-      stats.totalHearingMinutes += entry.hearingMinutes || 0;
+      
+      // Calculate total hearing minutes from all sources
+      const spLectureMinutes = entry.spLectureMinutes || 0;
+      const smLectureMinutes = entry.smLectureMinutes || 0;
+      const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
+      const entryHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
+      stats.totalHearingMinutes += entryHearingMinutes;
       
       try {
         if (entry.wakeUpTime && typeof entry.wakeUpTime === 'string') {
@@ -306,6 +344,29 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;
+      
+      // Get point breakdowns if available or calculate them
+      if (entry.scoreBreakdown) {
+        totalReadingPoints += entry.scoreBreakdown.readingScore;
+        totalWakeUpPoints += entry.scoreBreakdown.wakeUpTimeScore;
+        totalSleepTimePoints += entry.scoreBreakdown.sleepTimeScore;
+        totalDaySleepPoints += entry.scoreBreakdown.daySleepScore;
+        totalJapaCompletionPoints += entry.scoreBreakdown.japaCompletionScore;
+        totalProgramPoints += entry.scoreBreakdown.programScore;
+        totalHearingPoints += entry.scoreBreakdown.hearingScore;
+        totalServicePoints += entry.scoreBreakdown.serviceScore;
+      } else if (batchName) {
+        // If no breakdown saved, calculate it now
+        const scoreResult = calculateSadhanaScore(entry, batchName);
+        totalReadingPoints += scoreResult.breakdowns.readingScore;
+        totalWakeUpPoints += scoreResult.breakdowns.wakeUpTimeScore;
+        totalSleepTimePoints += scoreResult.breakdowns.sleepTimeScore;
+        totalDaySleepPoints += scoreResult.breakdowns.daySleepScore;
+        totalJapaCompletionPoints += scoreResult.breakdowns.japaCompletionScore;
+        totalProgramPoints += scoreResult.breakdowns.programScore;
+        totalHearingPoints += scoreResult.breakdowns.hearingScore;
+        totalServicePoints += scoreResult.breakdowns.serviceScore;
+      }
     });
     
     stats.averageChantingRounds = parseFloat((stats.totalChantingRounds / entries.length).toFixed(1));
@@ -314,6 +375,16 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     stats.averageWakeUpHour = parseFloat((totalWakeUpHours / entries.length).toFixed(1));
     stats.mangalaAratiAttendance = parseFloat(((mangalaAratiCount / entries.length) * 100).toFixed(1));
     stats.morningProgramAttendance = parseFloat(((morningProgramCount / entries.length) * 100).toFixed(1));
+    
+    // Save calculated points in stats
+    stats.readingPoints = totalReadingPoints;
+    stats.hearingPoints = totalHearingPoints;
+    stats.servicePoints = totalServicePoints;
+    stats.programPoints = totalProgramPoints;
+    stats.wakeUpPoints = totalWakeUpPoints;
+    stats.sleepTimePoints = totalSleepTimePoints;
+    stats.daySleepPoints = totalDaySleepPoints;
+    stats.japaCompletionPoints = totalJapaCompletionPoints;
     
     if (isWeeklyScoringEnabled() && batchName) {
       const weeklyScore = calculateWeeklySadhanaScore(entries, batchName);
