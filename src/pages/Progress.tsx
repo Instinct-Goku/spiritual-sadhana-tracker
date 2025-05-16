@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,11 +83,10 @@ const ProgressPage = () => {
       if (showingDevoteeProgress && selectedDevotee) {
         try {
           setLoading(true);
-          // Use batch name for score calculation if available
+          // Pass only the user ID and the weekStart, let the backend determine the batch from userProfile
           const stats = await getWeeklySadhana(
             selectedDevotee.id, 
-            weekStart, 
-            selectedDevotee?.batchName?.toLowerCase() || "sahadev"
+            weekStart
           );
           setWeekStats(stats);
           
@@ -108,11 +106,10 @@ const ProgressPage = () => {
       } else {
         try {
           setLoading(true);
-          // Use user's batch name for score calculation if available
+          // Pass only the user ID and the weekStart, let the backend determine the batch from userProfile
           const stats = await getWeeklySadhana(
             currentUser.uid, 
-            weekStart, 
-            userProfile?.batchName?.toLowerCase() || "sahadev"
+            weekStart
           );
           setWeekStats(stats);
           
