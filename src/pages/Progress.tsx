@@ -84,11 +84,11 @@ const ProgressPage = () => {
       if (showingDevoteeProgress && selectedDevotee) {
         try {
           setLoading(true);
-          // Pass only the user ID, weekStart, and null for userProfile since backend will fetch it
+          // Use batch name for score calculation if available
           const stats = await getWeeklySadhana(
             selectedDevotee.id, 
-            weekStart,
-            null // Pass null instead of selectedDevotee.batchName
+            weekStart, 
+            selectedDevotee?.batchName?.toLowerCase() || "sahadev"
           );
           setWeekStats(stats);
           
@@ -108,11 +108,11 @@ const ProgressPage = () => {
       } else {
         try {
           setLoading(true);
-          // Pass the current userProfile directly
+          // Use user's batch name for score calculation if available
           const stats = await getWeeklySadhana(
             currentUser.uid, 
-            weekStart,
-            userProfile // Pass the userProfile object directly
+            weekStart, 
+            userProfile?.batchName?.toLowerCase() || "sahadev"
           );
           setWeekStats(stats);
           
