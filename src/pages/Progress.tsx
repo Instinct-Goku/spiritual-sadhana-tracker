@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,10 +84,11 @@ const ProgressPage = () => {
       if (showingDevoteeProgress && selectedDevotee) {
         try {
           setLoading(true);
-          // Pass only the user ID and the weekStart, let the backend determine the batch from userProfile
+          // Pass only the user ID, weekStart, and null for userProfile since backend will fetch it
           const stats = await getWeeklySadhana(
             selectedDevotee.id, 
-            weekStart
+            weekStart,
+            null // Pass null instead of selectedDevotee.batchName
           );
           setWeekStats(stats);
           
@@ -106,10 +108,11 @@ const ProgressPage = () => {
       } else {
         try {
           setLoading(true);
-          // Pass only the user ID and the weekStart, let the backend determine the batch from userProfile
+          // Pass the current userProfile directly
           const stats = await getWeeklySadhana(
             currentUser.uid, 
-            weekStart
+            weekStart,
+            userProfile // Pass the userProfile object directly
           );
           setWeekStats(stats);
           
