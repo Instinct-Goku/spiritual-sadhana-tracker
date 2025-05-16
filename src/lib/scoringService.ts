@@ -225,12 +225,6 @@ export const calculateProgramScore = (entry: SadhanaEntry): number => {
   return score;
 };
 
-// Check if weekly scoring is enabled
-export const isWeeklyScoringEnabled = (): boolean => {
-  const storedValue = localStorage.getItem("isWeeklyScoringEnabled");
-  return storedValue === "true";
-};
-
 // Get batch configurations from storage or use defaults
 export const getBatchConfigurations = (): Record<string, BatchCriteria> => {
   try {
@@ -253,8 +247,6 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
   
   if (userProfile && userProfile.batch) {
     batchName = userProfile.batch.toLowerCase();
-  } else if (userProfile && userProfile.batchName) {
-    batchName = userProfile.batchName.toLowerCase();
   }
   
   // Return the batch criteria or default to sahadev if not found
@@ -264,7 +256,7 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
 // Calculate total score for a sadhana entry based on batch criteria
 export const calculateSadhanaScore = (
   entry: SadhanaEntry, 
-  batchNameOrProfile: string | UserProfile | null = "sahadev"
+  userProfile: UserProfile | null
 ): { 
   totalScore: number;
   breakdowns: { 
@@ -278,17 +270,8 @@ export const calculateSadhanaScore = (
     serviceScore: number;
   }
 } => {
-  let batchCriteria: BatchCriteria;
-  
-  // Handle different types of input for batch information
-  if (typeof batchNameOrProfile === 'string') {
-    // If it's a string, treat it as a batch name
-    const batchConfigs = getBatchConfigurations();
-    batchCriteria = batchConfigs[batchNameOrProfile.toLowerCase()] || batchConfigs.sahadev;
-  } else {
-    // If it's a UserProfile or null, get criteria from profile
-    batchCriteria = getBatchCriteriaFromUserProfile(batchNameOrProfile);
-  }
+  // Get batch criteria from user profile
+  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
   
   // Calculate individual scores
   const sleepTimeScore = calculateTimeScore(entry.sleepTime, batchCriteria.sleepTimeScoring);
@@ -336,7 +319,7 @@ export const calculateSadhanaScore = (
 // Calculate weekly consolidated score
 export const calculateWeeklySadhanaScore = (
   entries: SadhanaEntry[],
-  batchNameOrProfile: string | UserProfile | null = "sahadev"
+  userProfile: UserProfile | null
 ): { 
   totalScore: number;
   averageScore: number;
@@ -369,7 +352,7 @@ export const calculateWeeklySadhanaScore = (
   }
   
   // Calculate individual scores for each entry
-  const scores = entries.map(entry => calculateSadhanaScore(entry, batchNameOrProfile));
+  const scores = entries.map(entry => calculateSadhanaScore(entry, userProfile));
   
   // Sum up all scores and breakdowns
   const totalScore = scores.reduce((sum, score) => sum + score.totalScore, 0);
@@ -407,18 +390,9 @@ export const formatDurationRange = (range: DurationScore, nextRange?: DurationSc
 };
 
 // Get readable criteria description for a batch
-export const getBatchCriteriaDescription = (batchNameOrProfile: string | UserProfile | null): Record<string, string[]> => {
-  let batchCriteria: BatchCriteria;
-  
-  // Handle different types of input for batch information
-  if (typeof batchNameOrProfile === 'string') {
-    // If it's a string, treat it as a batch name
-    const batchConfigs = getBatchConfigurations();
-    batchCriteria = batchConfigs[batchNameOrProfile.toLowerCase()] || batchConfigs.sahadev;
-  } else {
-    // If it's a UserProfile or null, get criteria from profile
-    batchCriteria = getBatchCriteriaFromUserProfile(batchNameOrProfile);
-  }
+export const getBatchCriteriaDescription = (userProfile: UserProfile | null): Record<string, string[]> => {
+  // Get batch criteria from user profile
+  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
   
   const descriptions: Record<string, string[]> = {
     sleepTime: [],

@@ -32,7 +32,7 @@ import {
 } from "@/lib/sadhanaService";
 import {
   DEFAULT_BATCHES,
-  getBatchConfigurations
+  getBatchCriteriaFromUserProfile
 } from "@/lib/scoringService";
 
 const formatDateForDisplay = (date: Date) => {
@@ -72,9 +72,7 @@ const SadhanaPage = () => {
   const [notes, setNotes] = useState("");
   
   // Get user's batch to determine which hearing fields to display
-  const userBatch = userProfile?.batch?.toLowerCase() || "sahadev";
-  const batchConfigs = getBatchConfigurations();
-  const batchCriteria = batchConfigs[userBatch] || DEFAULT_BATCHES.sahadev;
+  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
   
   // Format date for input field
   const formatDateForInput = (date: Date) => {
@@ -164,7 +162,7 @@ const SadhanaPage = () => {
         readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
         spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
         smLectureMinutes: smLectureMinutes === '' ? 0 : Number(smLectureMinutes),
-        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes), // New field
+        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes),
         serviceMinutes: serviceMinutes === '' ? 0 : Number(serviceMinutes),
         shlokaMemorized: shlokaMemorized === '' ? 0 : Number(shlokaMemorized),
         hearingMinutes: 0, // For backwards compatibility
@@ -183,10 +181,10 @@ const SadhanaPage = () => {
       };
       
       if (existingEntry?.id) {
-        await updateSadhanaEntry(existingEntry.id, sadhanaData);
+        await updateSadhanaEntry(existingEntry.id, sadhanaData, userProfile);
         toast.success("Sadhana updated successfully");
       } else {
-        await addSadhanaEntry(sadhanaData);
+        await addSadhanaEntry(sadhanaData, userProfile);
         toast.success("Sadhana recorded successfully");
       }
       
