@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +33,8 @@ import {
 } from "@/lib/sadhanaService";
 import {
   DEFAULT_BATCHES,
-  getBatchConfigurations
+  getBatchConfigurations,
+  getBatchMinimumRequirements
 } from "@/lib/scoringService";
 
 const formatDateForDisplay = (date: Date) => {
@@ -75,6 +77,11 @@ const SadhanaPage = () => {
   const userBatch = userProfile?.batch?.toLowerCase() || "sahadev";
   const batchConfigs = getBatchConfigurations();
   const batchCriteria = batchConfigs[userBatch] || DEFAULT_BATCHES.sahadev;
+  
+  // Get minimum requirements for the user's batch
+  const { readingMinutes: minReadingMinutes, hearingMinutes: minHearingMinutes, 
+          serviceMinutes: minServiceMinutes, shlokaCount: minShlokaCount } = 
+          getBatchMinimumRequirements(userProfile);
   
   // Format date for input field
   const formatDateForInput = (date: Date) => {
@@ -275,7 +282,12 @@ const SadhanaPage = () => {
                 </h3>
                 <div className="space-y-2">
                   <Label htmlFor="reading" className="font-medium">
-                    Srila Prabhupada Book Reading (minutes)
+                    Srila Prabhupada Book Reading (minutes) 
+                    {minReadingMinutes > 0 && (
+                      <span className="text-amber-600 ml-1">
+                        (minimum: {minReadingMinutes} min / {minReadingMinutes / 60} hrs)
+                      </span>
+                    )}
                   </Label>
                   <Input
                     id="reading"
@@ -294,13 +306,23 @@ const SadhanaPage = () => {
                 <h3 className="font-medium text-spiritual-purple flex items-center">
                   <Headphones className="h-4 w-4 mr-2" />
                   Hearing (minutes)
+                  {minHearingMinutes > 0 && (
+                    <span className="text-amber-600 ml-1">
+                      (total minimum: {minHearingMinutes} min / {minHearingMinutes / 60} hrs)
+                    </span>
+                  )}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* SP Lecture field - always visible */}
                   <div className="space-y-2">
                     <Label htmlFor="spLecture" className="font-medium flex items-center">
                       <Mic className="h-4 w-4 mr-1" />
-                      Srila Prabhupada Lectures {batchCriteria.spLectureMinimum && `(${batchCriteria.spLectureMinimum} min minimum)`}
+                      Srila Prabhupada Lectures 
+                      {batchCriteria.spLectureMinimum && (
+                        <span className="text-amber-600 ml-1">
+                          (min: {batchCriteria.spLectureMinimum} min)
+                        </span>
+                      )}
                     </Label>
                     <Input
                       id="spLecture"
@@ -318,7 +340,12 @@ const SadhanaPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="smLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
-                        Spiritual Master Lectures {batchCriteria.smLectureMinimum && `(${batchCriteria.smLectureMinimum} min minimum)`}
+                        Spiritual Master Lectures
+                        {batchCriteria.smLectureMinimum && (
+                          <span className="text-amber-600 ml-1">
+                            (min: {batchCriteria.smLectureMinimum} min)
+                          </span>
+                        )}
                       </Label>
                       <Input
                         id="smLecture"
@@ -337,7 +364,12 @@ const SadhanaPage = () => {
                     <div className="space-y-2">
                       <Label htmlFor="gsnsLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
-                        GS/NS Lectures {batchCriteria.gsnsLectureMinimum && `(${batchCriteria.gsnsLectureMinimum} min minimum)`}
+                        GS/NS Lectures
+                        {batchCriteria.gsnsLectureMinimum && (
+                          <span className="text-amber-600 ml-1">
+                            (min: {batchCriteria.gsnsLectureMinimum} min)
+                          </span>
+                        )}
                       </Label>
                       <Input
                         id="gsnsLecture"
@@ -363,7 +395,12 @@ const SadhanaPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="shlokaMemorize" className="font-medium flex items-center">
                       <Scroll className="h-4 w-4 mr-1" />
-                      Shlokas Memorized (count)
+                      Shlokas Memorized
+                      {minShlokaCount > 0 && (
+                        <span className="text-amber-600 ml-1">
+                          (minimum: {minShlokaCount})
+                        </span>
+                      )}
                     </Label>
                     <Input
                       id="shlokaMemorize"
@@ -379,7 +416,12 @@ const SadhanaPage = () => {
                   <div className="space-y-2">
                     <Label htmlFor="service" className="font-medium flex items-center">
                       <HandHeart className="h-4 w-4 mr-1" />
-                      Service (minutes) {batchCriteria.serviceMinimum && `(${batchCriteria.serviceMinimum} min minimum)`}
+                      Service (minutes)
+                      {minServiceMinutes > 0 && (
+                        <span className="text-amber-600 ml-1">
+                          (minimum: {minServiceMinutes} min / {minServiceMinutes / 60} hrs)
+                        </span>
+                      )}
                     </Label>
                     <Input
                       id="service"
