@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,17 +83,23 @@ const ProgressPage = () => {
       if (showingDevoteeProgress && selectedDevotee) {
         try {
           setLoading(true);
-          // Use batch name for score calculation if available
+          // Create a minimal user profile for the selected devotee
+          const devoteeProfile = {
+            batchName: selectedDevotee?.batchName || "sahadev",
+            uid: selectedDevotee.id,
+            displayName: selectedDevotee.displayName
+          };
+          
           const stats = await getWeeklySadhana(
             selectedDevotee.id, 
             weekStart, 
-            selectedDevotee?.batchName?.toLowerCase() || "sahadev"
+            devoteeProfile
           );
           setWeekStats(stats);
           
           // Set batch criteria for the selected devotee
           if (selectedDevotee?.batchName) {
-            const criteria = getBatchCriteriaDescription(selectedDevotee.batchName.toLowerCase());
+            const criteria = getBatchCriteriaDescription(devoteeProfile);
             setBatchCriteria(criteria);
           } else {
             setBatchCriteria(null);
@@ -108,17 +113,17 @@ const ProgressPage = () => {
       } else {
         try {
           setLoading(true);
-          // Use user's batch name for score calculation if available
+          // Use user's profile for score calculation
           const stats = await getWeeklySadhana(
             currentUser.uid, 
             weekStart, 
-            userProfile?.batchName?.toLowerCase() || "sahadev"
+            userProfile
           );
           setWeekStats(stats);
           
           // Set batch criteria for the current user
           if (userProfile?.batchName) {
-            const criteria = getBatchCriteriaDescription(userProfile.batchName.toLowerCase());
+            const criteria = getBatchCriteriaDescription(userProfile);
             setBatchCriteria(criteria);
           } else {
             setBatchCriteria(null);

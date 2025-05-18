@@ -15,8 +15,10 @@ import { db } from "./firebase";
 import { 
   calculateSadhanaScore, 
   calculateWeeklySadhanaScore,
-  isWeeklyScoringEnabled
+  isWeeklyScoringEnabled,
+  getBatchCriteriaFromUserProfile
 } from "./scoringService";
+import { UserProfile } from "@/contexts/AuthContext";
 
 export interface SadhanaEntry {
   id?: string;
@@ -94,15 +96,15 @@ export const safeConvertToDate = (input: any): Date | null => {
   return null;
 };
 
-export const addSadhanaEntry = async (entry: Omit<SadhanaEntry, 'id'>, batchName?: string) => {
+export const addSadhanaEntry = async (entry: Omit<SadhanaEntry, 'id'>, userProfile?: UserProfile | null) => {
   try {
     let scoreData = {};
-    if (batchName) {
+    if (userProfile) {
       if (isWeeklyScoringEnabled()) {
         // For weekly scoring, we just save the entry without a score
         // Scores will be calculated when viewing weekly stats
       } else {
-        const scoreResult = calculateSadhanaScore(entry, batchName);
+        const scoreResult = calculateSadhanaScore(entry, userProfile);
         scoreData = {
           score: scoreResult.totalScore,
           scoreBreakdown: scoreResult.breakdowns
@@ -124,15 +126,15 @@ export const addSadhanaEntry = async (entry: Omit<SadhanaEntry, 'id'>, batchName
   }
 };
 
-export const updateSadhanaEntry = async (id: string, entry: Partial<SadhanaEntry>, batchName?: string) => {
+export const updateSadhanaEntry = async (id: string, entry: Partial<SadhanaEntry>, userProfile?: UserProfile | null) => {
   try {
     const updatedData = { ...entry };
     
-    if (batchName && !isWeeklyScoringEnabled()) {
+    if (userProfile && !isWeeklyScoringEnabled()) {
       const currentEntry = await getSadhanaEntry(id);
       if (currentEntry) {
         const mergedEntry = { ...currentEntry, ...entry };
-        const scoreResult = calculateSadhanaScore(mergedEntry, batchName);
+        const scoreResult = calculateSadhanaScore(mergedEntry, userProfile);
         updatedData.score = scoreResult.totalScore;
         updatedData.scoreBreakdown = scoreResult.breakdowns;
       }
@@ -228,7 +230,7 @@ export const getDailySadhana = async (userId: string, date: Date) => {
   }
 };
 
-export const getWeeklySadhana = async (userId: string, startDate: Date, batchName?: string): Promise<WeeklyStats> => {
+export const getWeeklySadhana = async (userId: string, startDate: Date, userProfile?: UserProfile | null): Promise<WeeklyStats> => {
   try {
     const startDateCopy = new Date(startDate);
     startDateCopy.setHours(0, 0, 0, 0);
@@ -341,7 +343,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
       if (entry.mangalaArati) mangalaAratiCount++;
       if (entry.morningProgram) morningProgramCount++;
       
-      // Get point breakdowns if available or calculate them
+      // Get point breakdowns if available or calculate them using the user's profile
       if (entry.scoreBreakdown) {
         totalReadingPoints += entry.scoreBreakdown.readingScore;
         totalWakeUpPoints += entry.scoreBreakdown.wakeUpTimeScore;
@@ -351,9 +353,9 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
         totalProgramPoints += entry.scoreBreakdown.programScore;
         totalHearingPoints += entry.scoreBreakdown.hearingScore;
         totalServicePoints += entry.scoreBreakdown.serviceScore;
-      } else if (batchName) {
-        // If no breakdown saved, calculate it now
-        const scoreResult = calculateSadhanaScore(entry, batchName);
+      } else {
+        // If no breakdown saved, calculate it now using user profile
+        const scoreResult = calculateSadhanaScore(entry, userProfile);
         totalReadingPoints += scoreResult.breakdowns.readingScore;
         totalWakeUpPoints += scoreResult.breakdowns.wakeUpTimeScore;
         totalSleepTimePoints += scoreResult.breakdowns.sleepTimeScore;
@@ -381,8 +383,8 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
     stats.daySleepPoints = totalDaySleepPoints;
     stats.japaCompletionPoints = totalJapaCompletionPoints;
     
-    if (isWeeklyScoringEnabled() && batchName) {
-      const weeklyScore = calculateWeeklySadhanaScore(entries, batchName);
+    if (isWeeklyScoringEnabled() && userProfile) {
+      const weeklyScore = calculateWeeklySadhanaScore(entries, userProfile);
       stats.totalScore = weeklyScore.totalScore;
       stats.averageScore = weeklyScore.averageScore;
       
@@ -409,8 +411,8 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
             day,
             score: entry.score
           });
-        } else if (batchName) {
-          const scoreResult = calculateSadhanaScore(entry, batchName);
+        } else if (userProfile) {
+          const scoreResult = calculateSadhanaScore(entry, userProfile);
           totalScore += scoreResult.totalScore;
           
           const entryDate = entry.date instanceof Date ? entry.date : new Date();
@@ -434,13 +436,13 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, batchNam
   }
 };
 
-export const calculateAndSaveWeeklyScores = async (userId: string, startDate: Date, batchName: string) => {
+export const calculateAndSaveWeeklyScores = async (userId: string, startDate: Date, userProfile: UserProfile | null) => {
   try {
-    const weekStats = await getWeeklySadhana(userId, startDate);
+    const weekStats = await getWeeklySadhana(userId, startDate, userProfile);
     
     for (const entry of weekStats.entries) {
       if (entry.id && (entry.score === undefined || entry.scoreBreakdown === undefined)) {
-        await updateSadhanaEntry(entry.id, {}, batchName);
+        await updateSadhanaEntry(entry.id, {}, userProfile);
       }
     }
     
