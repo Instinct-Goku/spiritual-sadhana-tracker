@@ -21,7 +21,7 @@ import { ChevronLeft, ChevronRight, Loader2, Music, BookOpen, Clock, Sun, Award,
 import { toast } from "@/lib/toast";
 import { getWeeklySadhana, WeeklyStats, SadhanaEntry } from "@/lib/sadhanaService";
 import { searchDevotees, DevoteeSadhanaProgress } from "@/lib/adminService";
-import { getBatchCriteriaDescription, DEFAULT_BATCHES } from "@/lib/scoringService";
+import { getBatchCriteriaDescription, DEFAULT_BATCHES, getBatchMinimumRequirements } from "@/lib/scoringService";
 import { 
   Accordion,
   AccordionContent,
@@ -490,7 +490,6 @@ const ProgressPage = () => {
               </span>
               <span className="text-sm text-muted-foreground">Total Points</span>
               <span className="text-md mt-2">
-                <span className="font-medium">{Math.round(weekStats?.readingPoints || 0) / 7}</span> points/day
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className="ml-1 text-muted-foreground">
@@ -527,9 +526,6 @@ const ProgressPage = () => {
                 {weekStats?.programPoints || 0}
               </span>
               <span className="text-sm text-muted-foreground">Total Points</span>
-              <span className="text-md mt-2">
-                <span className="font-medium">{Math.round(weekStats?.programPoints || 0) / 7}</span> points/day
-              </span>
             </div>
           </CardContent>
         </Card>
@@ -598,6 +594,17 @@ const ProgressPage = () => {
                   Breakdown of sadhana points by category
                 </CardDescription>
               </div>
+              {userProfile && (
+                <div className="text-sm border border-spiritual-purple/20 rounded-md p-2 bg-spiritual-purple/5">
+                  <div className="font-medium text-spiritual-purple mb-1">Minimum Requirements:</div>
+                  <div className="space-y-1">
+                    <div>Reading: {getBatchMinimumRequirements(userProfile).readingMinutes} minutes/day</div>
+                    {getBatchMinimumRequirements(userProfile).shlokaCount > 0 && (
+                      <div>Shlokas: {getBatchMinimumRequirements(userProfile).shlokaCount}</div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
