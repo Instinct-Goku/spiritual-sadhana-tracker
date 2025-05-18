@@ -13,6 +13,7 @@ export interface BatchCriteria {
   spLectureMinimum?: number; // Srila Prabhupada lectures minimum in minutes
   smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
   gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
+  shlokaMinimum?: number; // Default: no shlokas required
 }
 
 export interface TimeRangeScore {
@@ -51,7 +52,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     japaCompletionScoring: [], // No points allotted
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 60, // 1 hour
-    spLectureMinimum: 60 // 1 hour
+    spLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 0 // Default: no shlokas required
   },
   nakula: {
     name: "Nakula",
@@ -83,7 +85,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     ],
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 90, // 1.5 hours
-    spLectureMinimum: 60 // 1 hour
+    spLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 2 // Default: 2 shlokas
   },
   arjuna: {
     name: "Arjuna",
@@ -114,7 +117,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 120, // 2 hours
     serviceMinimum: 120, // 2 hours
     spLectureMinimum: 60, // 1 hour
-    smLectureMinimum: 60 // 1 hour
+    smLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 5 // Default: 5 shlokas
   },
   yudhisthir: {
     name: "Yudhisthir",
@@ -143,7 +147,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     serviceMinimum: 150, // 2.5 hours
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
-    gsnsLectureMinimum: 60 // 1 hour
+    gsnsLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 10 // Default: 10 shlokas
   }
 };
 
