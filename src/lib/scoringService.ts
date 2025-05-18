@@ -1,4 +1,3 @@
-
 import { SadhanaEntry } from "./sadhanaService";
 import { UserProfile } from "@/contexts/AuthContext";
 
@@ -477,4 +476,21 @@ export const getBatchCriteriaDescription = (batchNameOrProfile: string | UserPro
   }
   
   return descriptions;
+};
+
+// Get minimum requirements for a specific batch
+export const getBatchMinimumRequirements = (userProfile: UserProfile | null): {
+  readingMinutes: number;
+  hearingMinutes: number;
+  serviceMinutes: number;
+  shlokaCount: number;
+} => {
+  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
+  
+  return {
+    readingMinutes: batchCriteria.readingMinimum || 0,
+    hearingMinutes: batchCriteria.hearingMinimum || 0,
+    serviceMinutes: batchCriteria.serviceMinimum || 0,
+    shlokaCount: batchCriteria.shlokaMinimum || 0
+  };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Save, Plus, Trash } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { DEFAULT_BATCHES, BatchCriteria, TimeRangeScore, DurationScore } from "@/lib/scoringService";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface BatchScoreConfigProps {
   onClose?: () => void;
@@ -233,7 +233,6 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
-  // Add new functions for updating hearing and service minimums
   const updateHearingMinimum = (value: number) => {
     if (!batchConfig) return;
     
@@ -249,6 +248,15 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     setBatchConfig({
       ...batchConfig,
       serviceMinimum: value,
+    });
+  };
+
+  const updateShlokaMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      shlokaMinimum: value,
     });
   };
 
@@ -292,240 +300,255 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                 <CardDescription>Configure scoring criteria for the {batches[batchKey].name} batch</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Reading Minimum */}
-                <div className="space-y-2">
-                  <Label>Reading Minimum (minutes)</Label>
-                  <Input 
-                    type="number"
-                    value={batchConfig?.readingMinimum || 0}
-                    onChange={(e) => updateReadingMinimum(Number(e.target.value))}
-                    className="w-full md:w-1/3"
-                  />
-                </div>
-                
-                {/* Hearing Minimum */}
-                <div className="space-y-2">
-                  <Label>Hearing Minimum (minutes)</Label>
-                  <Input 
-                    type="number"
-                    value={batchConfig?.hearingMinimum || 0}
-                    onChange={(e) => updateHearingMinimum(Number(e.target.value))}
-                    className="w-full md:w-1/3"
-                  />
-                </div>
-                
-                {/* Service Minimum */}
-                <div className="space-y-2">
-                  <Label>Service Minimum (minutes)</Label>
-                  <Input 
-                    type="number"
-                    value={batchConfig?.serviceMinimum || 0}
-                    onChange={(e) => updateServiceMinimum(Number(e.target.value))}
-                    className="w-full md:w-1/3"
-                  />
-                </div>
-                
-                {/* Sleep Time Scoring */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Sleep Time Scoring</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={addSleepTimeRow}
-                      className="h-8"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Range
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {batchConfig?.sleepTimeScoring.map((range, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Input 
-                          type="time"
-                          value={range.startTime}
-                          onChange={(e) => updateTimeRangeScore(index, 'startTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <span>to</span>
-                        <Input 
-                          type="time"
-                          value={range.endTime}
-                          onChange={(e) => updateTimeRangeScore(index, 'endTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <Input 
-                          type="number"
-                          value={range.points}
-                          onChange={(e) => updateTimeRangeScore(index, 'points', Number(e.target.value))}
-                          className="w-full md:w-1/6"
-                          placeholder="Points"
-                        />
+                <ScrollArea className="h-[60vh] pr-4">
+                  <div className="space-y-6">
+                    {/* Reading Minimum */}
+                    <div className="space-y-2">
+                      <Label>Reading Minimum (minutes)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.readingMinimum || 0}
+                        onChange={(e) => updateReadingMinimum(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+                    
+                    {/* Hearing Minimum */}
+                    <div className="space-y-2">
+                      <Label>Hearing Minimum (minutes)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.hearingMinimum || 0}
+                        onChange={(e) => updateHearingMinimum(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+                    
+                    {/* Service Minimum */}
+                    <div className="space-y-2">
+                      <Label>Service Minimum (minutes)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.serviceMinimum || 0}
+                        onChange={(e) => updateServiceMinimum(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+                    
+                    {/* Shloka Minimum */}
+                    <div className="space-y-2">
+                      <Label>Shloka Minimum (count)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.shlokaMinimum || 0}
+                        onChange={(e) => updateShlokaMinimum(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+                    
+                    {/* Sleep Time Scoring */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Sleep Time Scoring</Label>
                         <Button 
                           type="button" 
                           variant="outline" 
-                          size="icon" 
-                          onClick={() => removeSleepTimeRow(index)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          size="sm" 
+                          onClick={addSleepTimeRow}
+                          className="h-8"
                         >
-                          <Trash className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-1" /> Add Range
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Wake Up Time Scoring */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Wake Up Time Scoring</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={addWakeUpTimeRow}
-                      className="h-8"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Range
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {batchConfig?.wakeUpTimeScoring.map((range, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Input 
-                          type="time"
-                          value={range.startTime}
-                          onChange={(e) => updateWakeUpTimeScore(index, 'startTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <span>to</span>
-                        <Input 
-                          type="time"
-                          value={range.endTime}
-                          onChange={(e) => updateWakeUpTimeScore(index, 'endTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <Input 
-                          type="number"
-                          value={range.points}
-                          onChange={(e) => updateWakeUpTimeScore(index, 'points', Number(e.target.value))}
-                          className="w-full md:w-1/6"
-                          placeholder="Points"
-                        />
+                      
+                      <div className="space-y-2">
+                        {batchConfig?.sleepTimeScoring.map((range, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <Input 
+                              type="time"
+                              value={range.startTime}
+                              onChange={(e) => updateTimeRangeScore(index, 'startTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <span>to</span>
+                            <Input 
+                              type="time"
+                              value={range.endTime}
+                              onChange={(e) => updateTimeRangeScore(index, 'endTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <Input 
+                              type="number"
+                              value={range.points}
+                              onChange={(e) => updateTimeRangeScore(index, 'points', Number(e.target.value))}
+                              className="w-full md:w-1/6"
+                              placeholder="Points"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => removeSleepTimeRow(index)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Wake Up Time Scoring */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Wake Up Time Scoring</Label>
                         <Button 
                           type="button" 
                           variant="outline" 
-                          size="icon" 
-                          onClick={() => removeWakeUpTimeRow(index)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          size="sm" 
+                          onClick={addWakeUpTimeRow}
+                          className="h-8"
                         >
-                          <Trash className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-1" /> Add Range
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Day Sleep Scoring */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Day Sleep Scoring</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={addDaySleepRow}
-                      className="h-8"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Range
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {batchConfig?.daySleepScoring.map((range, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Label className="w-full md:w-1/4">Max Duration (minutes)</Label>
-                        <Input 
-                          type="number"
-                          value={range.maxDuration}
-                          onChange={(e) => updateDaySleepScore(index, 'maxDuration', Number(e.target.value))}
-                          className="w-full md:w-1/4"
-                        />
-                        <Input 
-                          type="number"
-                          value={range.points}
-                          onChange={(e) => updateDaySleepScore(index, 'points', Number(e.target.value))}
-                          className="w-full md:w-1/6"
-                          placeholder="Points"
-                        />
+                      
+                      <div className="space-y-2">
+                        {batchConfig?.wakeUpTimeScoring.map((range, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <Input 
+                              type="time"
+                              value={range.startTime}
+                              onChange={(e) => updateWakeUpTimeScore(index, 'startTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <span>to</span>
+                            <Input 
+                              type="time"
+                              value={range.endTime}
+                              onChange={(e) => updateWakeUpTimeScore(index, 'endTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <Input 
+                              type="number"
+                              value={range.points}
+                              onChange={(e) => updateWakeUpTimeScore(index, 'points', Number(e.target.value))}
+                              className="w-full md:w-1/6"
+                              placeholder="Points"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => removeWakeUpTimeRow(index)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Day Sleep Scoring */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Day Sleep Scoring</Label>
                         <Button 
                           type="button" 
                           variant="outline" 
-                          size="icon" 
-                          onClick={() => removeDaySleepRow(index)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          size="sm" 
+                          onClick={addDaySleepRow}
+                          className="h-8"
                         >
-                          <Trash className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-1" /> Add Range
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Japa Completion Scoring */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Japa Completion Scoring</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={addJapaCompletionRow}
-                      className="h-8"
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Range
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {batchConfig?.japaCompletionScoring.map((range, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Input 
-                          type="time"
-                          value={range.startTime}
-                          onChange={(e) => updateJapaCompletionScore(index, 'startTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <span>to</span>
-                        <Input 
-                          type="time"
-                          value={range.endTime}
-                          onChange={(e) => updateJapaCompletionScore(index, 'endTime', e.target.value)}
-                          className="w-full md:w-1/4"
-                        />
-                        <Input 
-                          type="number"
-                          value={range.points}
-                          onChange={(e) => updateJapaCompletionScore(index, 'points', Number(e.target.value))}
-                          className="w-full md:w-1/6"
-                          placeholder="Points"
-                        />
+                      
+                      <div className="space-y-2">
+                        {batchConfig?.daySleepScoring.map((range, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <Label className="w-full md:w-1/4">Max Duration (minutes)</Label>
+                            <Input 
+                              type="number"
+                              value={range.maxDuration}
+                              onChange={(e) => updateDaySleepScore(index, 'maxDuration', Number(e.target.value))}
+                              className="w-full md:w-1/4"
+                            />
+                            <Input 
+                              type="number"
+                              value={range.points}
+                              onChange={(e) => updateDaySleepScore(index, 'points', Number(e.target.value))}
+                              className="w-full md:w-1/6"
+                              placeholder="Points"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => removeDaySleepRow(index)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Japa Completion Scoring */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Japa Completion Scoring</Label>
                         <Button 
                           type="button" 
                           variant="outline" 
-                          size="icon" 
-                          onClick={() => removeJapaCompletionRow(index)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          size="sm" 
+                          onClick={addJapaCompletionRow}
+                          className="h-8"
                         >
-                          <Trash className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-1" /> Add Range
                         </Button>
                       </div>
-                    ))}
+                      
+                      <div className="space-y-2">
+                        {batchConfig?.japaCompletionScoring.map((range, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <Input 
+                              type="time"
+                              value={range.startTime}
+                              onChange={(e) => updateJapaCompletionScore(index, 'startTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <span>to</span>
+                            <Input 
+                              type="time"
+                              value={range.endTime}
+                              onChange={(e) => updateJapaCompletionScore(index, 'endTime', e.target.value)}
+                              className="w-full md:w-1/4"
+                            />
+                            <Input 
+                              type="number"
+                              value={range.points}
+                              onChange={(e) => updateJapaCompletionScore(index, 'points', Number(e.target.value))}
+                              className="w-full md:w-1/6"
+                              placeholder="Points"
+                            />
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => removeJapaCompletionRow(index)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>
