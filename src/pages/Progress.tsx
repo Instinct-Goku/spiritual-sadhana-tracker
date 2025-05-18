@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const ProgressPage = () => {
   const { currentUser, userProfile } = useAuth();
@@ -599,71 +601,73 @@ const ProgressPage = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="h-72 space-y-4">
-              {weekStats ? (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Reading</span>
-                      <span className="font-medium">{weekStats.readingPoints} points</span>
+            <ScrollArea className="h-72 pr-4">
+              <div className="space-y-4">
+                {weekStats ? (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Reading</span>
+                        <span className="font-medium">{weekStats.readingPoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.readingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.readingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Hearing</span>
-                      <span className="font-medium">{weekStats.hearingPoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Hearing</span>
+                        <span className="font-medium">{weekStats.hearingPoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.hearingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.hearingPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Service</span>
-                      <span className="font-medium">{weekStats.servicePoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Service</span>
+                        <span className="font-medium">{weekStats.servicePoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.servicePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.servicePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Program Attendance</span>
-                      <span className="font-medium">{weekStats.programPoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Program Attendance</span>
+                        <span className="font-medium">{weekStats.programPoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.programPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.programPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Wake Up Time</span>
-                      <span className="font-medium">{weekStats.wakeUpPoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Wake Up Time</span>
+                        <span className="font-medium">{weekStats.wakeUpPoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.wakeUpPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.wakeUpPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Sleep Time</span>
-                      <span className="font-medium">{weekStats.sleepTimePoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Sleep Time</span>
+                        <span className="font-medium">{weekStats.sleepTimePoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.sleepTimePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.sleepTimePoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Japa Completion</span>
-                      <span className="font-medium">{weekStats.japaCompletionPoints} points</span>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Japa Completion</span>
+                        <span className="font-medium">{weekStats.japaCompletionPoints} points</span>
+                      </div>
+                      <Progress value={(weekStats.japaCompletionPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
                     </div>
-                    <Progress value={(weekStats.japaCompletionPoints / (weekStats.totalScore || 1)) * 100} className="h-2" />
+                  </>
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <p className="text-muted-foreground">No points data available</p>
                   </div>
-                </>
-              ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No points data available</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
