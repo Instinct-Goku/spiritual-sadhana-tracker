@@ -43,11 +43,12 @@ const PointsProgress = () => {
       try {
         setLoading(true);
         
-        // Get weekly data
-        const weeklyData = await getWeeklySadhana(currentUser.uid);
+        // Get weekly data - add current date as the second parameter
+        const today = new Date();
+        const weeklyData = await getWeeklySadhana(currentUser.uid, today, userProfile);
         
-        if (weeklyData.length > 0) {
-          const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData, userProfile);
+        if (weeklyData.entries && weeklyData.entries.length > 0) {
+          const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
           setWeeklyScore(weeklyScoreData.averageScore);
           setBreakdowns(weeklyScoreData.breakdowns);
         }
