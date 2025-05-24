@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
-import { Loader2, Search, UserCheck, UserX, Users, Settings } from "lucide-react";
+import { Loader2, Search, UserCheck, UserX, Users, Settings, Crown, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDevoteeGroups, getDevoteesInGroup } from "@/lib/adminService";
 import BatchScoreConfig from "@/components/BatchScoreConfig";
@@ -44,17 +43,21 @@ const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDevotee, setSelectedDevotee] = useState<DevoteeWithProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isGroupAdmin, setIsGroupAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("devotees");
   const [groups, setGroups] = useState<DevoteeGroup[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<DevoteeGroup | null>(null);
   const [groupDevotees, setGroupDevotees] = useState<DevoteeWithProfile[]>([]);
 
   useEffect(() => {
-    // Check if current user is admin
+    // Check if current user is admin or group admin
     if (userProfile?.isAdmin) {
       setIsAdmin(true);
       fetchDevotees();
       fetchGroups();
+    } else if (userProfile?.isGroupAdmin) {
+      setIsGroupAdmin(true);
+      fetchGroups(); // Group admins can only see their groups
     } else {
       setLoading(false);
     }
@@ -128,34 +131,51 @@ const AdminPage = () => {
     setFilteredDevotees(filtered);
   };
 
-  const toggleAdminStatus = async (devotee: DevoteeWithProfile) => {
+  const toggleAdminStatus = async (devotee: DevoteeWithProfile, adminType: 'admin' | 'groupAdmin') => {
+    // Only super admins can change admin status
+    if (!userProfile?.isAdmin) {
+      toast.error("Only super admins can change admin status");
+      return;
+    }
+
     try {
       const userRef = doc(db, "users", devotee.uid);
-      const newAdminStatus = !devotee.isAdmin;
+      let updateData: any = {};
       
-      await updateDoc(userRef, {
-        isAdmin: newAdminStatus,
-      });
+      if (adminType === 'admin') {
+        const newAdminStatus = !devotee.isAdmin;
+        updateData.isAdmin = newAdminStatus;
+        
+        toast.success(
+          `${devotee.displayName} is ${newAdminStatus ? "now" : "no longer"} a super admin`
+        );
+      } else if (adminType === 'groupAdmin') {
+        const newGroupAdminStatus = !devotee.isGroupAdmin;
+        updateData.isGroupAdmin = newGroupAdminStatus;
+        
+        toast.success(
+          `${devotee.displayName} is ${newGroupAdminStatus ? "now" : "no longer"} a group admin`
+        );
+      }
+      
+      await updateDoc(userRef, updateData);
       
       // Update local state
       const updatedDevotees = devotees.map((d) =>
-        d.uid === devotee.uid ? { ...d, isAdmin: newAdminStatus } : d
+        d.uid === devotee.uid ? { ...d, ...updateData } : d
       );
       
       setDevotees(updatedDevotees);
       setFilteredDevotees(
         filteredDevotees.map((d) =>
-          d.uid === devotee.uid ? { ...d, isAdmin: newAdminStatus } : d
+          d.uid === devotee.uid ? { ...d, ...updateData } : d
         )
       );
       
       if (selectedDevotee?.uid === devotee.uid) {
-        setSelectedDevotee({ ...selectedDevotee, isAdmin: newAdminStatus });
+        setSelectedDevotee({ ...selectedDevotee, ...updateData });
       }
       
-      toast.success(
-        `${devotee.displayName} is ${newAdminStatus ? "now" : "no longer"} an admin`
-      );
     } catch (error) {
       console.error("Error updating admin status:", error);
       toast.error("Failed to update admin status");
@@ -178,7 +198,7 @@ const AdminPage = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isGroupAdmin) {
     return (
       <div className="container mx-auto py-8 px-4">
         <Card>
@@ -211,8 +231,10 @@ const AdminPage = () => {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">
+          <p className="font-medium truncate flex items-center gap-2">
             {devotee.displayName}
+            {devotee.isAdmin && <Crown className="h-4 w-4 text-yellow-500" title="Super Admin" />}
+            {devotee.isGroupAdmin && <Shield className="h-4 w-4 text-blue-500" title="Group Admin" />}
             {devotee.spiritualName && (
               <span className="text-spiritual-purple ml-1">
                 ({devotee.spiritualName})
@@ -231,21 +253,40 @@ const AdminPage = () => {
             Batch: {devotee.batch || "Not assigned"}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleAdminStatus(devotee);
-          }}
-          title={devotee.isAdmin ? "Remove admin" : "Make admin"}
-        >
-          {devotee.isAdmin ? (
-            <UserCheck className="h-5 w-5 text-green-600" />
-          ) : (
-            <UserX className="h-5 w-5 text-gray-400" />
-          )}
-        </Button>
+        {isAdmin && (
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAdminStatus(devotee, 'admin');
+              }}
+              title={devotee.isAdmin ? "Remove super admin" : "Make super admin"}
+            >
+              {devotee.isAdmin ? (
+                <Crown className="h-5 w-5 text-yellow-600" />
+              ) : (
+                <Crown className="h-5 w-5 text-gray-400" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleAdminStatus(devotee, 'groupAdmin');
+              }}
+              title={devotee.isGroupAdmin ? "Remove group admin" : "Make group admin"}
+            >
+              {devotee.isGroupAdmin ? (
+                <Shield className="h-5 w-5 text-blue-600" />
+              ) : (
+                <Shield className="h-5 w-5 text-gray-400" />
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -254,8 +295,10 @@ const AdminPage = () => {
     selectedDevotee && (
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl text-spiritual-purple">
+          <CardTitle className="text-xl text-spiritual-purple flex items-center gap-2">
             Devotee Details
+            {selectedDevotee.isAdmin && <Crown className="h-5 w-5 text-yellow-500" />}
+            {selectedDevotee.isGroupAdmin && <Shield className="h-5 w-5 text-blue-500" />}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -306,8 +349,20 @@ const AdminPage = () => {
               </div>
               <div>
                 <p className="text-sm font-medium">Admin Status</p>
-                <p className="text-muted-foreground">
-                  {selectedDevotee.isAdmin ? "Admin" : "Regular User"}
+                <p className="text-muted-foreground flex items-center gap-2">
+                  {selectedDevotee.isAdmin && (
+                    <>
+                      <Crown className="h-4 w-4 text-yellow-500" />
+                      Super Admin
+                    </>
+                  )}
+                  {selectedDevotee.isGroupAdmin && (
+                    <>
+                      <Shield className="h-4 w-4 text-blue-500" />
+                      Group Admin
+                    </>
+                  )}
+                  {!selectedDevotee.isAdmin && !selectedDevotee.isGroupAdmin && "Regular User"}
                 </p>
               </div>
               <div>
@@ -339,45 +394,47 @@ const AdminPage = () => {
     <div className="container mx-auto py-6 px-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList className="mb-4">
-          <TabsTrigger value="devotees">All Devotees</TabsTrigger>
+          {isAdmin && <TabsTrigger value="devotees">All Devotees</TabsTrigger>}
           <TabsTrigger value="groups">Devotee Groups</TabsTrigger>
-          <TabsTrigger value="config">Batch Configuration</TabsTrigger>
+          {isAdmin && <TabsTrigger value="config">Batch Configuration</TabsTrigger>}
         </TabsList>
         
-        <TabsContent value="devotees">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-2xl text-spiritual-purple">
-                Devotees Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search devotees by name, email, or mobile..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="pl-10"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredDevotees.map((devotee) => 
-                  renderDevoteeCard(devotee, selectedDevotee?.uid === devotee.uid)
-                )}
-              </div>
-
-              {filteredDevotees.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No devotees found</p>
+        {isAdmin && (
+          <TabsContent value="devotees">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-2xl text-spiritual-purple">
+                  Devotees Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search devotees by name, email, or mobile..."
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    className="pl-10"
+                  />
                 </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          {renderDevoteeDetails()}
-        </TabsContent>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredDevotees.map((devotee) => 
+                    renderDevoteeCard(devotee, selectedDevotee?.uid === devotee.uid)
+                  )}
+                </div>
+
+                {filteredDevotees.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No devotees found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {renderDevoteeDetails()}
+          </TabsContent>
+        )}
         
         <TabsContent value="groups">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

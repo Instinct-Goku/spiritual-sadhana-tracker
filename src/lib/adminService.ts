@@ -35,6 +35,15 @@ export interface DevoteeSadhanaProgress {
     mangalaAratiAttendance: number;
     morningProgramAttendance: number;
     totalReadingMinutes: number; // Keep this property
+    // Add score breakdowns for group progress
+    sleepTimeScore?: number;
+    wakeUpTimeScore?: number;
+    readingScore?: number;
+    daySleepScore?: number;
+    japaCompletionScore?: number;
+    programScore?: number;
+    hearingScore?: number;
+    serviceScore?: number;
   };
 }
 
@@ -495,42 +504,52 @@ export const getGroupSadhanaProgress = async (
     // For each devotee, get their weekly sadhana
     const progressPromises = devotees.map(async (devotee) => {
       try {
-        const weeklyStats = await getWeeklySadhana(devotee.uid, startDate);
+        const today = new Date();
+        const weeklyStats = await getWeeklySadhana(devotee.uid, today);
         
         return {
           id: devotee.uid,
-          uid: devotee.uid, // Add uid for compatibility
+          uid: devotee.uid,
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
-          batch: devotee.batch, // Added for compatibility
-          city: devotee.city, // Added for compatibility
-          location: devotee.location, // Added for compatibility
+          batch: devotee.batch,
+          city: devotee.city,
+          location: devotee.location,
           weeklyStats: {
             averageChantingRounds: weeklyStats.averageChantingRounds,
             averageReadingMinutes: weeklyStats.averageReadingMinutes,
             mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
             morningProgramAttendance: weeklyStats.morningProgramAttendance,
-            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Use existing property
+            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0,
+            // Add score breakdowns if available
+            sleepTimeScore: weeklyStats.sleepTimeScore || 0,
+            wakeUpTimeScore: weeklyStats.wakeUpTimeScore || 0,
+            readingScore: weeklyStats.readingScore || 0,
+            daySleepScore: weeklyStats.daySleepScore || 0,
+            japaCompletionScore: weeklyStats.japaCompletionScore || 0,
+            programScore: weeklyStats.programScore || 0,
+            hearingScore: weeklyStats.hearingScore || 0,
+            serviceScore: weeklyStats.serviceScore || 0,
           },
         };
       } catch (error) {
         console.error(`Failed to fetch weekly stats for devotee ${devotee.uid}:`, error);
         return {
           id: devotee.uid,
-          uid: devotee.uid, // Add uid for compatibility
+          uid: devotee.uid,
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
-          batch: devotee.batch, // Added for compatibility
-          city: devotee.city, // Added for compatibility
-          location: devotee.location, // Added for compatibility
+          batch: devotee.batch,
+          city: devotee.city,
+          location: devotee.location,
         };
       }
     });
