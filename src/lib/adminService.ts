@@ -15,8 +15,7 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { getWeeklySadhana, getSadhanaEntries } from "./sadhanaService";
-import { calculateWeeklySadhanaScore, getBatchCriteriaFromUserProfile } from "./scoringService";
+import { getWeeklySadhana } from "./sadhanaService";
 
 export interface DevoteeSadhanaProgress {
   id: string;
@@ -36,15 +35,6 @@ export interface DevoteeSadhanaProgress {
     mangalaAratiAttendance: number;
     morningProgramAttendance: number;
     totalReadingMinutes: number; // Keep this property
-    // Add score breakdowns for group progress
-    sleepTimeScore?: number;
-    wakeUpTimeScore?: number;
-    readingScore?: number;
-    daySleepScore?: number;
-    japaCompletionScore?: number;
-    programScore?: number;
-    hearingScore?: number;
-    serviceScore?: number;
   };
 }
 
@@ -502,72 +492,45 @@ export const getGroupSadhanaProgress = async (
       return [];
     }
     
-    // For each devotee, get their weekly sadhana and calculate scores
+    // For each devotee, get their weekly sadhana
     const progressPromises = devotees.map(async (devotee) => {
       try {
-        const today = new Date();
-        const sunday = new Date(today.setDate(today.getDate() - today.getDay()));
-        
-        // Get weekly stats
-        const weeklyStats = await getWeeklySadhana(devotee.uid, sunday);
-        
-        // Get sadhana entries for score calculation
-        const entries = await getSadhanaEntries(devotee.uid, sunday);
-        
-        // Create a proper UserProfile object for score calculation
-        const userProfile = {
-          uid: devotee.uid,
-          email: devotee.email || "",
-          displayName: devotee.displayName,
-          batch: devotee.batch || "bhakta"
-        };
-        
-        // Calculate weekly score with breakdowns - pass userProfile instead of batchCriteria
-        const scoreResult = calculateWeeklySadhanaScore(entries, userProfile);
+        const weeklyStats = await getWeeklySadhana(devotee.uid, startDate);
         
         return {
           id: devotee.uid,
-          uid: devotee.uid,
+          uid: devotee.uid, // Add uid for compatibility
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
-          batch: devotee.batch,
-          city: devotee.city,
-          location: devotee.location,
+          batch: devotee.batch, // Added for compatibility
+          city: devotee.city, // Added for compatibility
+          location: devotee.location, // Added for compatibility
           weeklyStats: {
             averageChantingRounds: weeklyStats.averageChantingRounds,
             averageReadingMinutes: weeklyStats.averageReadingMinutes,
             mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
             morningProgramAttendance: weeklyStats.morningProgramAttendance,
-            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0,
-            // Add score breakdowns from calculated scores
-            sleepTimeScore: scoreResult.breakdowns.sleepTimeScore || 0,
-            wakeUpTimeScore: scoreResult.breakdowns.wakeUpTimeScore || 0,
-            readingScore: scoreResult.breakdowns.readingScore || 0,
-            daySleepScore: scoreResult.breakdowns.daySleepScore || 0,
-            japaCompletionScore: scoreResult.breakdowns.japaCompletionScore || 0,
-            programScore: scoreResult.breakdowns.programScore || 0,
-            hearingScore: scoreResult.breakdowns.hearingScore || 0,
-            serviceScore: scoreResult.breakdowns.serviceScore || 0,
+            totalReadingMinutes: weeklyStats.totalReadingMinutes || 0, // Use existing property
           },
         };
       } catch (error) {
         console.error(`Failed to fetch weekly stats for devotee ${devotee.uid}:`, error);
         return {
           id: devotee.uid,
-          uid: devotee.uid,
+          uid: devotee.uid, // Add uid for compatibility
           displayName: devotee.displayName,
           spiritualName: devotee.spiritualName,
           phoneNumber: devotee.phoneNumber,
           photoURL: devotee.photoURL,
           email: devotee.email,
           batchName: devotee.batchName,
-          batch: devotee.batch,
-          city: devotee.city,
-          location: devotee.location,
+          batch: devotee.batch, // Added for compatibility
+          city: devotee.city, // Added for compatibility
+          location: devotee.location, // Added for compatibility
         };
       }
     });

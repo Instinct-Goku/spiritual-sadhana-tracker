@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
@@ -7,11 +8,10 @@ import {
   getBatchMinimumRequirements,
   getBatchCriteriaFromUserProfile
 } from "@/lib/scoringService";
-import { getWeeklySadhana } from "@/lib/sadhanaService";
+import { getDailySadhana, getWeeklySadhana } from "@/lib/sadhanaService";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, BarChartBig, Users } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, BarChartBig } from "lucide-react";
 import { 
   ChartContainer, 
   ChartTooltip, 
@@ -26,7 +26,6 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts";
-import GroupProgressView from "@/components/GroupProgressView";
 
 const PointsProgress = () => {
   const { currentUser, userProfile } = useAuth();
@@ -63,9 +62,6 @@ const PointsProgress = () => {
                    breakdowns.japaCompletionScore + 
                    breakdowns.programScore + 
                    breakdowns.hearingScore;
-
-  // Check if user can see group progress
-  const canViewGroupProgress = userProfile?.isAdmin || userProfile?.isGroupAdmin;
   
   useEffect(() => {
     const fetchPoints = async () => {
@@ -143,370 +139,177 @@ const PointsProgress = () => {
         </p>
       </div>
       
-      {canViewGroupProgress ? (
-        <Tabs defaultValue="personal" className="mb-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="personal">My Progress</TabsTrigger>
-            <TabsTrigger value="group">
-              <Users className="h-4 w-4 mr-2" />
-              Group Progress
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="personal">
-            {loading ? (
-              <div className="flex justify-center py-10">
-                <Loader2 className="h-10 w-10 animate-spin text-spiritual-purple" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6">
-                {/* Weekly Score Overview Card */}
-                <Card className="spiritual-card">
-                  <CardHeader className="pb-2">
-                    <CardTitle>Weekly Score</CardTitle>
-                    <CardDescription>Your total sadhana score for the week</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-4">
-                      <div className="relative h-40 w-40 flex items-center justify-center">
-                        <div className="spiritual-score-ring"></div>
-                        <div className="absolute text-3xl font-bold text-spiritual-purple text-center">
-                          {weeklyTotalScore}
-                          <div className="text-sm font-normal text-muted-foreground mt-1">Total Points</div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-4 flex-1">
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <Label>Body (Physical Discipline)</Label>
-                            <span className="font-medium">{bodyScore} points</span>
-                          </div>
-                          <Progress value={(bodyScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <Label>Soul (Spiritual Practice)</Label>
-                            <span className="font-medium">{soulScore} points</span>
-                          </div>
-                          <Progress value={(soulScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Weekly Chart Card */}
-                <Card className="spiritual-card">
-                  <CardHeader className="pb-2">
-                    <CardTitle>Daily Progress</CardTitle>
-                    <CardDescription>Body and Soul scores breakdown by day</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="w-full h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={chartData}
-                          margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-                        >
-                          <XAxis dataKey="day" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend verticalAlign="top" height={36} />
-                          <Bar dataKey="Body" fill="#94a3b8" name="Body" />
-                          <Bar dataKey="Soul" fill="#c084fc" name="Soul" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Points Summary Card */}
-                <Card className="spiritual-card">
-                  <CardHeader className="pb-2">
-                    <CardTitle>Points Summary</CardTitle>
-                    <CardDescription>Breakdown of your sadhana scores</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <h3 className="font-semibold text-lg text-spiritual-purple">Body (Physical Discipline)</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Sleep Time</Label>
-                        <span className="font-medium">{breakdowns.sleepTimeScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.sleepTimeScore / 25) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Wake Up Time</Label>
-                        <span className="font-medium">{breakdowns.wakeUpTimeScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.wakeUpTimeScore / 25) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Day Sleep</Label>
-                        <span className="font-medium">{breakdowns.daySleepScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.daySleepScore / 25) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Service</Label>
-                        <span className="font-medium">{breakdowns.serviceScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.serviceScore / 150) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="font-semibold text-lg text-spiritual-purple mb-3">Soul (Spiritual Practice)</h3>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Reading</Label>
-                        <span className="font-medium">{breakdowns.readingScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.readingScore / 300) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Japa Completion</Label>
-                        <span className="font-medium">{breakdowns.japaCompletionScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.japaCompletionScore / 25) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Morning Program</Label>
-                        <span className="font-medium">{breakdowns.programScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.programScore / 45) * 100} className="h-2" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <Label>Hearing</Label>
-                        <span className="font-medium">{breakdowns.hearingScore} points</span>
-                      </div>
-                      <Progress value={(breakdowns.hearingScore / 180) * 100} className="h-2" />
-                    </div>
-                    
-                    {/* Minimum Requirements Section */}
-                    <div className="pt-4 border-t">
-                      <h3 className="font-semibold mb-2 text-spiritual-purple">{batchCriteria.name} Batch Minimum Requirements:</h3>
-                      <ul className="space-y-1 text-sm">
-                        <li className="flex justify-between">
-                          <span>Reading:</span>
-                          <span className="font-medium">{readingMinutes} minutes ({readingMinutes/60} hours)</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>Hearing:</span>
-                          <span className="font-medium">{hearingMinutes} minutes ({hearingMinutes/60} hours)</span>
-                        </li>
-                        <li className="flex justify-between">
-                          <span>Service:</span>
-                          <span className="font-medium">{serviceMinutes} minutes ({serviceMinutes/60} hours)</span>
-                        </li>
-                        {shlokaCount > 0 && (
-                          <li className="flex justify-between">
-                            <span>Shlokas:</span>
-                            <span className="font-medium">{shlokaCount} shlokas</span>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="group">
-            <GroupProgressView />
-          </TabsContent>
-        </Tabs>
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="h-10 w-10 animate-spin text-spiritual-purple" />
+        </div>
       ) : (
-        <>
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <Loader2 className="h-10 w-10 animate-spin text-spiritual-purple" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {/* Weekly Score Overview Card */}
-              <Card className="spiritual-card">
-                <CardHeader className="pb-2">
-                  <CardTitle>Weekly Score</CardTitle>
-                  <CardDescription>Your total sadhana score for the week</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-4">
-                    <div className="relative h-40 w-40 flex items-center justify-center">
-                      <div className="spiritual-score-ring"></div>
-                      <div className="absolute text-3xl font-bold text-spiritual-purple text-center">
-                        {weeklyTotalScore}
-                        <div className="text-sm font-normal text-muted-foreground mt-1">Total Points</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4 flex-1">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <Label>Body (Physical Discipline)</Label>
-                          <span className="font-medium">{bodyScore} points</span>
-                        </div>
-                        <Progress value={(bodyScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <Label>Soul (Spiritual Practice)</Label>
-                          <span className="font-medium">{soulScore} points</span>
-                        </div>
-                        <Progress value={(soulScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
-                      </div>
-                    </div>
+        <div className="grid grid-cols-1 gap-6">
+          {/* Weekly Score Overview Card */}
+          <Card className="spiritual-card">
+            <CardHeader className="pb-2">
+              <CardTitle>Weekly Score</CardTitle>
+              <CardDescription>Your total sadhana score for the week</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-4">
+                <div className="relative h-40 w-40 flex items-center justify-center">
+                  <div className="spiritual-score-ring"></div>
+                  <div className="absolute text-3xl font-bold text-spiritual-purple text-center">
+                    {weeklyTotalScore}
+                    <div className="text-sm font-normal text-muted-foreground mt-1">Total Points</div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                
+                <div className="space-y-4 flex-1">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <Label>Body (Physical Discipline)</Label>
+                      <span className="font-medium">{bodyScore} points</span>
+                    </div>
+                    <Progress value={(bodyScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <Label>Soul (Spiritual Practice)</Label>
+                      <span className="font-medium">{soulScore} points</span>
+                    </div>
+                    <Progress value={(soulScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Weekly Chart Card */}
+          <Card className="spiritual-card">
+            <CardHeader className="pb-2">
+              <CardTitle>Daily Progress</CardTitle>
+              <CardDescription>Body and Soul scores breakdown by day</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                  >
+                    <XAxis dataKey="day" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={36} />
+                    <Bar dataKey="Body" fill="#94a3b8" name="Body" />
+                    <Bar dataKey="Soul" fill="#c084fc" name="Soul" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Points Summary Card */}
+          <Card className="spiritual-card">
+            <CardHeader className="pb-2">
+              <CardTitle>Points Summary</CardTitle>
+              <CardDescription>Breakdown of your sadhana scores</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <h3 className="font-semibold text-lg text-spiritual-purple">Body (Physical Discipline)</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Sleep Time</Label>
+                  <span className="font-medium">{breakdowns.sleepTimeScore} points</span>
+                </div>
+                <Progress value={(breakdowns.sleepTimeScore / 25) * 100} className="h-2" />
+              </div>
               
-              {/* Weekly Chart Card */}
-              <Card className="spiritual-card">
-                <CardHeader className="pb-2">
-                  <CardTitle>Daily Progress</CardTitle>
-                  <CardDescription>Body and Soul scores breakdown by day</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="w-full h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={chartData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
-                      >
-                        <XAxis dataKey="day" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend verticalAlign="top" height={36} />
-                        <Bar dataKey="Body" fill="#94a3b8" name="Body" />
-                        <Bar dataKey="Soul" fill="#c084fc" name="Soul" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Wake Up Time</Label>
+                  <span className="font-medium">{breakdowns.wakeUpTimeScore} points</span>
+                </div>
+                <Progress value={(breakdowns.wakeUpTimeScore / 25) * 100} className="h-2" />
+              </div>
               
-              {/* Points Summary Card */}
-              <Card className="spiritual-card">
-                <CardHeader className="pb-2">
-                  <CardTitle>Points Summary</CardTitle>
-                  <CardDescription>Breakdown of your sadhana scores</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <h3 className="font-semibold text-lg text-spiritual-purple">Body (Physical Discipline)</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Sleep Time</Label>
-                      <span className="font-medium">{breakdowns.sleepTimeScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.sleepTimeScore / 25) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Wake Up Time</Label>
-                      <span className="font-medium">{breakdowns.wakeUpTimeScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.wakeUpTimeScore / 25) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Day Sleep</Label>
-                      <span className="font-medium">{breakdowns.daySleepScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.daySleepScore / 25) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Service</Label>
-                      <span className="font-medium">{breakdowns.serviceScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.serviceScore / 150) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="font-semibold text-lg text-spiritual-purple mb-3">Soul (Spiritual Practice)</h3>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Reading</Label>
-                      <span className="font-medium">{breakdowns.readingScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.readingScore / 300) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Japa Completion</Label>
-                      <span className="font-medium">{breakdowns.japaCompletionScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.japaCompletionScore / 25) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Morning Program</Label>
-                      <span className="font-medium">{breakdowns.programScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.programScore / 45) * 100} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>Hearing</Label>
-                      <span className="font-medium">{breakdowns.hearingScore} points</span>
-                    </div>
-                    <Progress value={(breakdowns.hearingScore / 180) * 100} className="h-2" />
-                  </div>
-                  
-                  {/* Minimum Requirements Section */}
-                  <div className="pt-4 border-t">
-                    <h3 className="font-semibold mb-2 text-spiritual-purple">{batchCriteria.name} Batch Minimum Requirements:</h3>
-                    <ul className="space-y-1 text-sm">
-                      <li className="flex justify-between">
-                        <span>Reading:</span>
-                        <span className="font-medium">{readingMinutes} minutes ({readingMinutes/60} hours)</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Hearing:</span>
-                        <span className="font-medium">{hearingMinutes} minutes ({hearingMinutes/60} hours)</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Service:</span>
-                        <span className="font-medium">{serviceMinutes} minutes ({serviceMinutes/60} hours)</span>
-                      </li>
-                      {shlokaCount > 0 && (
-                        <li className="flex justify-between">
-                          <span>Shlokas:</span>
-                          <span className="font-medium">{shlokaCount} shlokas</span>
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Day Sleep</Label>
+                  <span className="font-medium">{breakdowns.daySleepScore} points</span>
+                </div>
+                <Progress value={(breakdowns.daySleepScore / 25) * 100} className="h-2" />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Service</Label>
+                  <span className="font-medium">{breakdowns.serviceScore} points</span>
+                </div>
+                <Progress value={(breakdowns.serviceScore / 150) * 100} className="h-2" />
+              </div>
+              
+              <div className="mt-6">
+                <h3 className="font-semibold text-lg text-spiritual-purple mb-3">Soul (Spiritual Practice)</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Reading</Label>
+                  <span className="font-medium">{breakdowns.readingScore} points</span>
+                </div>
+                <Progress value={(breakdowns.readingScore / 300) * 100} className="h-2" />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Japa Completion</Label>
+                  <span className="font-medium">{breakdowns.japaCompletionScore} points</span>
+                </div>
+                <Progress value={(breakdowns.japaCompletionScore / 25) * 100} className="h-2" />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Morning Program</Label>
+                  <span className="font-medium">{breakdowns.programScore} points</span>
+                </div>
+                <Progress value={(breakdowns.programScore / 45) * 100} className="h-2" />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Hearing</Label>
+                  <span className="font-medium">{breakdowns.hearingScore} points</span>
+                </div>
+                <Progress value={(breakdowns.hearingScore / 180) * 100} className="h-2" />
+              </div>
+
+              {/* Minimum Requirements Section */}
+              <div className="pt-4 border-t">
+                <h3 className="font-semibold mb-2 text-spiritual-purple">{batchCriteria.name} Batch Minimum Requirements:</h3>
+                <ul className="space-y-1 text-sm">
+                  <li className="flex justify-between">
+                    <span>Reading:</span>
+                    <span className="font-medium">{readingMinutes} minutes ({readingMinutes/60} hours)</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>Hearing:</span>
+                    <span className="font-medium">{hearingMinutes} minutes ({hearingMinutes/60} hours)</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>Service:</span>
+                    <span className="font-medium">{serviceMinutes} minutes ({serviceMinutes/60} hours)</span>
+                  </li>
+                  {shlokaCount > 0 && (
+                    <li className="flex justify-between">
+                      <span>Shlokas:</span>
+                      <span className="font-medium">{shlokaCount} shlokas</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
 import { 
   User, 
@@ -42,15 +41,13 @@ export interface UserProfile {
   isInitiated?: boolean;
   maritalStatus?: string;
   referredBy?: string;
-  // Admin roles
-  isAdmin?: boolean; // Super admin with full access
-  isGroupAdmin?: boolean; // Group admin with limited access to their groups
-  adminGroups?: string[]; // Groups this user can admin
+  // Add missing fields referenced in other components
+  isAdmin?: boolean;
   phoneNumber?: string;
   location?: string;
   batchName?: string;
   joinDate?: Date | string;
-  dailyChantingRounds?: number;
+  dailyChantingRounds?: number; // New field for daily chanting rounds
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
