@@ -233,8 +233,8 @@ const AdminPage = () => {
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate flex items-center gap-2">
             {devotee.displayName}
-            {devotee.isAdmin && <Crown className="h-4 w-4 text-yellow-500" title="Super Admin" />}
-            {devotee.isGroupAdmin && <Shield className="h-4 w-4 text-blue-500" title="Group Admin" />}
+            {devotee.isAdmin && <Crown className="h-4 w-4 text-yellow-500" />}
+            {devotee.isGroupAdmin && <Shield className="h-4 w-4 text-blue-500" />}
             {devotee.spiritualName && (
               <span className="text-spiritual-purple ml-1">
                 ({devotee.spiritualName})

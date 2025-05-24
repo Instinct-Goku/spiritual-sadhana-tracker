@@ -15,7 +15,8 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { getWeeklySadhana } from "./sadhanaService";
+import { getWeeklySadhana, getSadhanaEntries } from "./sadhanaService";
+import { calculateWeeklySadhanaScore, getBatchCriteriaFromUserProfile } from "./scoringService";
 
 export interface DevoteeSadhanaProgress {
   id: string;
@@ -501,11 +502,23 @@ export const getGroupSadhanaProgress = async (
       return [];
     }
     
-    // For each devotee, get their weekly sadhana
+    // For each devotee, get their weekly sadhana and calculate scores
     const progressPromises = devotees.map(async (devotee) => {
       try {
         const today = new Date();
-        const weeklyStats = await getWeeklySadhana(devotee.uid, today);
+        const sunday = new Date(today.setDate(today.getDate() - today.getDay()));
+        
+        // Get weekly stats
+        const weeklyStats = await getWeeklySadhana(devotee.uid, sunday);
+        
+        // Get sadhana entries for score calculation
+        const entries = await getSadhanaEntries(devotee.uid, sunday);
+        
+        // Get batch criteria for this devotee
+        const batchCriteria = getBatchCriteriaFromUserProfile({ batch: devotee.batch || "bhakta" });
+        
+        // Calculate weekly score with breakdowns
+        const scoreResult = calculateWeeklySadhanaScore(entries, batchCriteria);
         
         return {
           id: devotee.uid,
@@ -525,15 +538,15 @@ export const getGroupSadhanaProgress = async (
             mangalaAratiAttendance: weeklyStats.mangalaAratiAttendance,
             morningProgramAttendance: weeklyStats.morningProgramAttendance,
             totalReadingMinutes: weeklyStats.totalReadingMinutes || 0,
-            // Add score breakdowns if available
-            sleepTimeScore: weeklyStats.sleepTimeScore || 0,
-            wakeUpTimeScore: weeklyStats.wakeUpTimeScore || 0,
-            readingScore: weeklyStats.readingScore || 0,
-            daySleepScore: weeklyStats.daySleepScore || 0,
-            japaCompletionScore: weeklyStats.japaCompletionScore || 0,
-            programScore: weeklyStats.programScore || 0,
-            hearingScore: weeklyStats.hearingScore || 0,
-            serviceScore: weeklyStats.serviceScore || 0,
+            // Add score breakdowns from calculated scores
+            sleepTimeScore: scoreResult.breakdowns.sleepTimeScore || 0,
+            wakeUpTimeScore: scoreResult.breakdowns.wakeUpTimeScore || 0,
+            readingScore: scoreResult.breakdowns.readingScore || 0,
+            daySleepScore: scoreResult.breakdowns.daySleepScore || 0,
+            japaCompletionScore: scoreResult.breakdowns.japaCompletionScore || 0,
+            programScore: scoreResult.breakdowns.programScore || 0,
+            hearingScore: scoreResult.breakdowns.hearingScore || 0,
+            serviceScore: scoreResult.breakdowns.serviceScore || 0,
           },
         };
       } catch (error) {
