@@ -452,3 +452,56 @@ export const calculateAndSaveWeeklyScores = async (userId: string, startDate: Da
     throw error;
   }
 };
+
+export const getSadhanaEntries = async (userId: string, startDate: Date): Promise<SadhanaEntry[]> => {
+  try {
+    const startDateCopy = new Date(startDate);
+    startDateCopy.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(startDateCopy);
+    endDate.setDate(endDate.getDate() + 6);
+    endDate.setHours(23, 59, 59, 999);
+    
+    const q = query(
+      collection(db, "sadhana"),
+      where("userId", "==", userId)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    const filteredDocs = snapshot.docs.filter(doc => {
+      const data = doc.data();
+      const entryDate = safeConvertToDate(data.date);
+      
+      if (!entryDate) {
+        console.warn("Invalid date in sadhana entry during filtering, skipping:", data);
+        return false;
+      }
+      
+      return entryDate >= startDateCopy && entryDate <= endDate;
+    });
+    
+    // Sort by date
+    filteredDocs.sort((a, b) => {
+      const dateA = safeConvertToDate(a.data().date) || new Date();
+      const dateB = safeConvertToDate(b.data().date) || new Date();
+      return dateA.getTime() - dateB.getTime();
+    });
+    
+    const entries: SadhanaEntry[] = filteredDocs.map(doc => {
+      const data = doc.data() as Omit<SadhanaEntry, 'id'>;
+      const safeDate = safeConvertToDate(data.date) || new Date();
+      
+      return {
+        id: doc.id,
+        ...data,
+        date: safeDate
+      };
+    });
+    
+    return entries;
+  } catch (error) {
+    console.error("Error getting sadhana entries:", error);
+    return [];
+  }
+};

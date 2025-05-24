@@ -514,8 +514,14 @@ export const getGroupSadhanaProgress = async (
         // Get sadhana entries for score calculation
         const entries = await getSadhanaEntries(devotee.uid, sunday);
         
-        // Get batch criteria for this devotee
-        const batchCriteria = getBatchCriteriaFromUserProfile({ batch: devotee.batch || "bhakta" });
+        // Get batch criteria for this devotee - create a proper UserProfile object
+        const userProfile = {
+          uid: devotee.uid,
+          email: devotee.email || "",
+          displayName: devotee.displayName,
+          batch: devotee.batch || "bhakta"
+        };
+        const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
         
         // Calculate weekly score with breakdowns
         const scoreResult = calculateWeeklySadhanaScore(entries, batchCriteria);
