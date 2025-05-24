@@ -24,8 +24,20 @@ import {
   YAxis, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  CartesianGrid
 } from "recharts";
+
+const chartConfig = {
+  body: {
+    label: "Body (Physical Discipline)",
+    color: "#94a3b8"
+  },
+  soul: {
+    label: "Soul (Spiritual Practice)", 
+    color: "#c084fc"
+  }
+};
 
 const PointsProgress = () => {
   const { currentUser, userProfile } = useAuth();
@@ -80,11 +92,14 @@ const PointsProgress = () => {
           setWeeklyAvgScore(weeklyScoreData.averageScore);
           setBreakdowns(weeklyScoreData.breakdowns);
           
-          // Prepare chart data from daily scores
+          // Prepare chart data from daily scores with better formatting
           const dailyData = weeklyData.entries.map((entry, index) => {
-            const day = entry.date instanceof Date 
-              ? entry.date.toLocaleDateString('en-US', { weekday: 'short' })
-              : `Day ${index + 1}`;
+            const entryDate = entry.date instanceof Date ? entry.date : new Date();
+            const day = entryDate.toLocaleDateString('en-US', { 
+              weekday: 'short',
+              month: 'short', 
+              day: 'numeric' 
+            });
             
             // Calculate body and soul scores for each day entry
             const entryBodyScore = 
@@ -101,18 +116,10 @@ const PointsProgress = () => {
             
             return {
               day,
-              Body: entryBodyScore,
-              Soul: entrySoulScore,
-              Total: (entry.score || 0)
+              body: entryBodyScore,
+              soul: entrySoulScore,
+              total: (entry.score || 0)
             };
-          });
-          
-          // Add weekly total as the last bar
-          dailyData.push({
-            day: 'Weekly',
-            Body: bodyScore,
-            Soul: soulScore,
-            Total: weeklyScoreData.totalScore
           });
           
           setChartData(dailyData);
@@ -148,7 +155,7 @@ const PointsProgress = () => {
           {/* Weekly Score Overview Card */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
-              <CardTitle>Weekly Score</CardTitle>
+              <CardTitle>Weekly Score Overview</CardTitle>
               <CardDescription>Your total sadhana score for the week</CardDescription>
             </CardHeader>
             <CardContent>
@@ -182,36 +189,60 @@ const PointsProgress = () => {
             </CardContent>
           </Card>
           
-          {/* Weekly Chart Card */}
+          {/* Weekly Body & Soul Chart */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
-              <CardTitle>Daily Progress</CardTitle>
-              <CardDescription>Body and Soul scores breakdown by day</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <BarChartBig className="h-5 w-5" />
+                Weekly Body & Soul Scores
+              </CardTitle>
+              <CardDescription>Daily breakdown of physical discipline and spiritual practice scores</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="w-full h-[300px]">
+              <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
-                    margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                   >
-                    <XAxis dataKey="day" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend verticalAlign="top" height={36} />
-                    <Bar dataKey="Body" fill="#94a3b8" name="Body" />
-                    <Bar dataKey="Soul" fill="#c084fc" name="Soul" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="day" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend 
+                      verticalAlign="top" 
+                      height={36}
+                      wrapperStyle={{ paddingBottom: '20px' }}
+                    />
+                    <Bar 
+                      dataKey="body" 
+                      fill="var(--color-body)" 
+                      name="Body"
+                      radius={[2, 2, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="soul" 
+                      fill="var(--color-soul)" 
+                      name="Soul"
+                      radius={[2, 2, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </ChartContainer>
             </CardContent>
           </Card>
           
           {/* Points Summary Card */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
-              <CardTitle>Points Summary</CardTitle>
-              <CardDescription>Breakdown of your sadhana scores</CardDescription>
+              <CardTitle>Detailed Points Summary</CardTitle>
+              <CardDescription>Breakdown of your sadhana scores by category</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <h3 className="font-semibold text-lg text-spiritual-purple">Body (Physical Discipline)</h3>
