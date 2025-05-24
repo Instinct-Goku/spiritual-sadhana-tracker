@@ -31,11 +31,11 @@ import {
 const chartConfig = {
   body: {
     label: "Body (Physical Discipline)",
-    color: "#94a3b8"
+    color: "#fb923c"
   },
   soul: {
     label: "Soul (Spiritual Practice)", 
-    color: "#c084fc"
+    color: "#fde047"
   }
 };
 
@@ -74,6 +74,32 @@ const PointsProgress = () => {
                    breakdowns.japaCompletionScore + 
                    breakdowns.programScore + 
                    breakdowns.hearingScore;
+
+  // Function to get the start of the week (Sunday)
+  const getWeekStart = (date: Date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day;
+    return new Date(d.setDate(diff));
+  };
+
+  // Function to format week range
+  const formatWeekRange = (startDate: Date) => {
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+    
+    const startStr = startDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const endStr = endDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    return `${startStr} to ${endStr}`;
+  };
   
   useEffect(() => {
     const fetchPoints = async () => {
@@ -82,48 +108,58 @@ const PointsProgress = () => {
       try {
         setLoading(true);
         
-        // Get weekly data - add current date as the second parameter
+        // Get data for the last 5 weeks
+        const weeksData = [];
         const today = new Date();
-        const weeklyData = await getWeeklySadhana(currentUser.uid, today, userProfile);
         
-        if (weeklyData.entries && weeklyData.entries.length > 0) {
-          const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
-          setWeeklyTotalScore(weeklyScoreData.totalScore);
-          setWeeklyAvgScore(weeklyScoreData.averageScore);
-          setBreakdowns(weeklyScoreData.breakdowns);
+        for (let i = 4; i >= 0; i--) {
+          const weekStart = new Date(today);
+          weekStart.setDate(weekStart.getDate() - (i * 7));
+          const actualWeekStart = getWeekStart(weekStart);
           
-          // Prepare chart data from daily scores with better formatting
-          const dailyData = weeklyData.entries.map((entry, index) => {
-            const entryDate = entry.date instanceof Date ? entry.date : new Date();
-            const day = entryDate.toLocaleDateString('en-US', { 
-              weekday: 'short',
-              month: 'short', 
-              day: 'numeric' 
+          const weeklyData = await getWeeklySadhana(currentUser.uid, actualWeekStart, userProfile);
+          
+          if (weeklyData.entries && weeklyData.entries.length > 0) {
+            const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
+            
+            // Calculate total body and soul scores for the week
+            const weekBodyScore = 
+              weeklyScoreData.breakdowns.sleepTimeScore + 
+              weeklyScoreData.breakdowns.wakeUpTimeScore + 
+              weeklyScoreData.breakdowns.daySleepScore + 
+              weeklyScoreData.breakdowns.serviceScore;
+              
+            const weekSoulScore = 
+              weeklyScoreData.breakdowns.readingScore + 
+              weeklyScoreData.breakdowns.japaCompletionScore + 
+              weeklyScoreData.breakdowns.programScore + 
+              weeklyScoreData.breakdowns.hearingScore;
+            
+            weeksData.push({
+              week: formatWeekRange(actualWeekStart),
+              body: weekBodyScore,
+              soul: weekSoulScore,
+              total: weeklyScoreData.totalScore
             });
             
-            // Calculate body and soul scores for each day entry
-            const entryBodyScore = 
-              (entry.scoreBreakdown?.sleepTimeScore || 0) + 
-              (entry.scoreBreakdown?.wakeUpTimeScore || 0) + 
-              (entry.scoreBreakdown?.daySleepScore || 0) + 
-              (entry.scoreBreakdown?.serviceScore || 0);
-              
-            const entrySoulScore = 
-              (entry.scoreBreakdown?.readingScore || 0) + 
-              (entry.scoreBreakdown?.japaCompletionScore || 0) + 
-              (entry.scoreBreakdown?.programScore || 0) + 
-              (entry.scoreBreakdown?.hearingScore || 0);
-            
-            return {
-              day,
-              body: entryBodyScore,
-              soul: entrySoulScore,
-              total: (entry.score || 0)
-            };
-          });
-          
-          setChartData(dailyData);
+            // Use current week data for the overview card
+            if (i === 0) {
+              setWeeklyTotalScore(weeklyScoreData.totalScore);
+              setWeeklyAvgScore(weeklyScoreData.averageScore);
+              setBreakdowns(weeklyScoreData.breakdowns);
+            }
+          } else {
+            // Add empty week data
+            weeksData.push({
+              week: formatWeekRange(actualWeekStart),
+              body: 0,
+              soul: 0,
+              total: 0
+            });
+          }
         }
+        
+        setChartData(weeksData);
         
       } catch (error) {
         console.error("Error fetching points data:", error);
@@ -155,8 +191,8 @@ const PointsProgress = () => {
           {/* Weekly Score Overview Card */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
-              <CardTitle>Weekly Score Overview</CardTitle>
-              <CardDescription>Your total sadhana score for the week</CardDescription>
+              <CardTitle>Current Week Score Overview</CardTitle>
+              <CardDescription>Your total sadhana score for this week</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-4">
@@ -189,31 +225,35 @@ const PointsProgress = () => {
             </CardContent>
           </Card>
           
-          {/* Weekly Body & Soul Chart */}
+          {/* Weekly Sadhana Score Chart */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2">
                 <BarChartBig className="h-5 w-5" />
-                Weekly Body & Soul Scores
+                Weekly Sadhana Score
               </CardTitle>
-              <CardDescription>Daily breakdown of physical discipline and spiritual practice scores</CardDescription>
+              <CardDescription>Body and soul scores over the last 5 weeks</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                     <XAxis 
-                      dataKey="day" 
-                      tick={{ fontSize: 12 }}
+                      dataKey="week" 
+                      tick={{ fontSize: 10 }}
                       angle={-45}
                       textAnchor="end"
-                      height={80}
+                      height={100}
+                      interval={0}
                     />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      domain={[0, 'dataMax + 50']}
+                    />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Legend 
                       verticalAlign="top" 
