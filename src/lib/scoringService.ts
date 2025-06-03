@@ -53,7 +53,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 60, // 1 hour
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 0 // Default: no shlokas required
+    shlokaMinimum: 1 // Updated: 1 shloka
   },
   nakula: {
     name: "Nakula",
@@ -86,7 +86,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 90, // 1.5 hours
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 2 // Default: 2 shlokas
+    shlokaMinimum: 1 // Updated: 1 shloka
   },
   arjuna: {
     name: "Arjuna",
@@ -118,10 +118,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     serviceMinimum: 120, // 2 hours
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 5 // Default: 5 shlokas
+    shlokaMinimum: 2 // Updated: 2 shlokas
   },
-  yudhisthir: {
-    name: "Yudhisthir",
+  yudhisthira: {
+    name: "Yudhisthira",
     sleepTimeScoring: [
       { startTime: "00:00", endTime: "21:30", points: 25 },
       { startTime: "21:30", endTime: "22:00", points: 15 },
@@ -148,7 +148,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
     gsnsLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 10 // Default: 10 shlokas
+    shlokaMinimum: 2 // Updated: 2 shlokas
   }
 };
 
@@ -259,6 +259,11 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
     batchName = userProfile.batch.toLowerCase();
   } else if (userProfile && userProfile.batchName) {
     batchName = userProfile.batchName.toLowerCase();
+  }
+  
+  // Handle the old spelling for backwards compatibility
+  if (batchName === "yudhisthir") {
+    batchName = "yudhisthira";
   }
   
   // Return the batch criteria or default to sahadev if not found
