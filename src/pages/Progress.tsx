@@ -3,15 +3,21 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { 
   calculateWeeklySadhanaScore, 
   getBatchMinimumRequirements,
-  getBatchCriteriaFromUserProfile
+  getBatchCriteriaFromUserProfile,
+  calculateSadhanaScore
 } from "@/lib/scoringService";
 import { getDailySadhana, getWeeklySadhana } from "@/lib/sadhanaService";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Loader2, BarChartBig } from "lucide-react";
+import { Loader2, BarChartBig, Calendar as CalendarIcon, Clock, Book, Headphones, Heart } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { 
   ChartContainer, 
   ChartTooltip, 
@@ -42,6 +48,9 @@ const chartConfig = {
 const PointsProgress = () => {
   const { currentUser, userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dailySadhana, setDailySadhana] = useState(null);
+  const [dailyScore, setDailyScore] = useState(null);
   const [weeklyTotalScore, setWeeklyTotalScore] = useState(0);
   const [weeklyAvgScore, setWeeklyAvgScore] = useState(0);
   const [chartData, setChartData] = useState([]);
@@ -99,6 +108,27 @@ const PointsProgress = () => {
     });
     
     return `${startStr} to ${endStr}`;
+  };
+
+  // Fetch daily sadhana for selected date
+  const fetchDailySadhana = async (date: Date) => {
+    if (!currentUser) return;
+    
+    try {
+      const dailyData = await getDailySadhana(currentUser.uid, date);
+      setDailySadhana(dailyData);
+      
+      if (dailyData && userProfile) {
+        const scoreResult = calculateSadhanaScore(dailyData, userProfile);
+        setDailyScore(scoreResult);
+      } else {
+        setDailyScore(null);
+      }
+    } catch (error) {
+      console.error("Error fetching daily sadhana:", error);
+      setDailySadhana(null);
+      setDailyScore(null);
+    }
   };
   
   useEffect(() => {
@@ -170,6 +200,11 @@ const PointsProgress = () => {
     
     fetchPoints();
   }, [currentUser, userProfile]);
+
+  // Fetch daily sadhana when selected date changes
+  useEffect(() => {
+    fetchDailySadhana(selectedDate);
+  }, [selectedDate, currentUser, userProfile]);
   
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -188,6 +223,155 @@ const PointsProgress = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
+          {/* Date Picker and Daily Progress */}
+          <Card className="spiritual-card">
+            <CardHeader className="pb-2">
+              <CardTitle>Daily Sadhana Progress</CardTitle>
+              <CardDescription>Select a date to view your sadhana details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Date Picker */}
+                <div className="flex flex-col items-center">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[240px] justify-start text-left font-normal mb-4",
+                          !selectedDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => date && setSelectedDate(date)}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Daily Progress Details */}
+                <div className="flex-1">
+                  {dailySadhana ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Sadhana Score</h3>
+                        <Badge variant="secondary" className="text-lg px-3 py-1">
+                          {dailyScore?.totalScore || 0} points
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Basic Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm font-medium">Wake Up:</span>
+                            <span className="text-sm">{dailySadhana.wakeUpTime}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span className="text-sm font-medium">Sleep Time:</span>
+                            <span className="text-sm">{dailySadhana.sleepTime}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Japa Completion:</span>
+                            <span className="text-sm">{dailySadhana.chantingCompletionTime}</span>
+                          </div>
+                        </div>
+
+                        {/* Activities */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Book className="h-4 w-4" />
+                            <span className="text-sm font-medium">Reading:</span>
+                            <span className="text-sm">{dailySadhana.readingMinutes} mins</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Headphones className="h-4 w-4" />
+                            <span className="text-sm font-medium">Hearing:</span>
+                            <span className="text-sm">
+                              {(dailySadhana.spLectureMinutes || 0) + 
+                               (dailySadhana.smLectureMinutes || 0) + 
+                               (dailySadhana.gsnsLectureMinutes || 0)} mins
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Heart className="h-4 w-4" />
+                            <span className="text-sm font-medium">Service:</span>
+                            <span className="text-sm">{dailySadhana.serviceMinutes || 0} mins</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Morning Program Details */}
+                      <div className="pt-4 border-t">
+                        <h4 className="font-medium mb-3 text-spiritual-purple">Morning Program Attendance</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.mangalaArati ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.mangalaArati ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Mangala Arati</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.tulsiArati ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.tulsiArati ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Tulsi Arati</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.narsimhaArati ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.narsimhaArati ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Narsimha Arati</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.guruPuja ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.guruPuja ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Guru Puja</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.bhagavatamClass ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.bhagavatamClass ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Bhagavatam Class</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={dailySadhana.morningProgram ? "default" : "secondary"} className="text-xs">
+                              {dailySadhana.morningProgram ? "✓" : "✗"}
+                            </Badge>
+                            <span className="text-sm">Full Program</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {dailySadhana.notes && (
+                        <div className="pt-4 border-t">
+                          <h4 className="font-medium mb-2">Notes</h4>
+                          <p className="text-sm text-muted-foreground">{dailySadhana.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No sadhana entry found for {format(selectedDate, "PPP")}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Weekly Score Overview Card */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
