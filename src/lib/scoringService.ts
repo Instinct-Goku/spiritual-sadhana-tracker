@@ -14,6 +14,8 @@ export interface BatchCriteria {
   smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
   gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
   shlokaMinimum?: number; // Default: no shlokas required
+  totalBodyScore: number; // Maximum possible body score
+  totalSoulScore: number; // Maximum possible soul score
 }
 
 export interface TimeRangeScore {
@@ -53,7 +55,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 60, // 1 hour
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 1 // 1 shloka
+    shlokaMinimum: 1, // 1 shloka
+    totalBodyScore: 25, // 25 for sleep time
+    totalSoulScore: 235 // 90 reading + 60 hearing + 30 shloka + 45 program + 10 japa
   },
   nakula: {
     name: "Nakula",
@@ -86,7 +90,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 90, // 1.5 hours
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 1 // 1 shloka
+    shlokaMinimum: 1, // 1 shloka
+    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
+    totalSoulScore: 280 // 150 reading + 60 hearing + 30 shloka + 45 program + 25 japa
   },
   arjuna: {
     name: "Arjuna",
@@ -118,7 +124,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     serviceMinimum: 120, // 2 hours
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 2 // 2 shlokas
+    shlokaMinimum: 2, // 2 shlokas
+    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
+    totalSoulScore: 375 // 210 reading + 120 hearing + 60 shloka + 45 program + 25 japa
   },
   yudhisthira: {
     name: "Yudhisthira",
@@ -148,7 +156,9 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
     gsnsLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 2 // 2 shlokas
+    shlokaMinimum: 2, // 2 shlokas
+    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
+    totalSoulScore: 485 // 300 reading + 180 hearing + 60 shloka + 45 program + 25 japa
   }
 };
 

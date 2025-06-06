@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
@@ -84,6 +83,11 @@ const PointsProgress = () => {
                    breakdowns.programScore + 
                    breakdowns.hearingScore +
                    breakdowns.shlokaScore;
+
+  // Calculate percentage using batch configuration
+  const totalPossibleScore = (batchCriteria.totalBodyScore || 0) + (batchCriteria.totalSoulScore || 0);
+  const currentTotalScore = bodyScore + soulScore;
+  const percentage = totalPossibleScore > 0 ? Math.round((currentTotalScore / totalPossibleScore) * 100) : 0;
 
   // Function to get the start of the week (Sunday)
   const getWeekStart = (date: Date) => {
@@ -239,6 +243,12 @@ const PointsProgress = () => {
         </h1>
         <p className="text-sm md:text-base text-muted-foreground text-center">
           Track your spiritual consistency in {batchCriteria.name} batch
+          {shlokaCount > 0 && (
+            <>
+              <br />
+              <span className="text-xs">Minimum shlokas required: {shlokaCount}</span>
+            </>
+          )}
         </p>
       </div>
       
@@ -401,15 +411,15 @@ const PointsProgress = () => {
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
               <CardTitle>Current Week Score Overview</CardTitle>
-              <CardDescription>Your total sadhana score for this week</CardDescription>
+              <CardDescription>Your sadhana completion percentage for this week</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 py-4">
                 <div className="relative h-40 w-40 flex items-center justify-center">
                   <div className="spiritual-score-ring"></div>
                   <div className="absolute text-3xl font-bold text-spiritual-purple text-center">
-                    {weeklyTotalScore}
-                    <div className="text-sm font-normal text-muted-foreground mt-1">Total Points</div>
+                    {percentage}%
+                    <div className="text-sm font-normal text-muted-foreground mt-1">Completion</div>
                   </div>
                 </div>
                 
@@ -417,17 +427,23 @@ const PointsProgress = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <Label>Body (Physical Discipline)</Label>
-                      <span className="font-medium">{bodyScore} points</span>
+                      <span className="font-medium">{bodyScore}/{batchCriteria.totalBodyScore || 0} points</span>
                     </div>
-                    <Progress value={(bodyScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
+                    <Progress 
+                      value={batchCriteria.totalBodyScore ? (bodyScore / batchCriteria.totalBodyScore) * 100 : 0} 
+                      className="h-2 bg-slate-200" 
+                    />
                   </div>
                   
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <Label>Soul (Spiritual Practice)</Label>
-                      <span className="font-medium">{soulScore} points</span>
+                      <span className="font-medium">{soulScore}/{batchCriteria.totalSoulScore || 0} points</span>
                     </div>
-                    <Progress value={(soulScore / (bodyScore + soulScore)) * 100} className="h-2 bg-slate-200" />
+                    <Progress 
+                      value={batchCriteria.totalSoulScore ? (soulScore / batchCriteria.totalSoulScore) * 100 : 0} 
+                      className="h-2 bg-slate-200" 
+                    />
                   </div>
                 </div>
               </div>

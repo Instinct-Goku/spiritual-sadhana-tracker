@@ -260,6 +260,24 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
+  const updateTotalBodyScore = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      totalBodyScore: value,
+    });
+  };
+
+  const updateTotalSoulScore = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      totalSoulScore: value,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -342,6 +360,28 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                         type="number"
                         value={batchConfig?.shlokaMinimum || 0}
                         onChange={(e) => updateShlokaMinimum(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+
+                    {/* Total Body Score */}
+                    <div className="space-y-2">
+                      <Label>Total Body Score (maximum possible)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.totalBodyScore || 0}
+                        onChange={(e) => updateTotalBodyScore(Number(e.target.value))}
+                        className="w-full md:w-1/3"
+                      />
+                    </div>
+
+                    {/* Total Soul Score */}
+                    <div className="space-y-2">
+                      <Label>Total Soul Score (maximum possible)</Label>
+                      <Input 
+                        type="number"
+                        value={batchConfig?.totalSoulScore || 0}
+                        onChange={(e) => updateTotalSoulScore(Number(e.target.value))}
                         className="w-full md:w-1/3"
                       />
                     </div>
