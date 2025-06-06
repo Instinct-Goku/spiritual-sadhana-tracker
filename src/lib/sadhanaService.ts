@@ -32,6 +32,7 @@ export interface SadhanaEntry {
   gsnsLectureMinutes?: number; // GS/NS lecture minutes
   serviceMinutes?: number; // Service minutes
   shlokaMemorized?: number; // Number of shlokas memorized
+  shlokaCount?: number; // Number of shlokas memorized (alternative property name)
   wakeUpTime: string;
   sleepTime: string;
   daySleepDuration: number;
@@ -53,7 +54,7 @@ export interface SadhanaEntry {
     japaCompletionScore: number;
     programScore: number;
     hearingScore: number;
-    serviceScore: number;
+    shlokaScore: number;
   };
 }
 
@@ -352,7 +353,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, userProf
         totalJapaCompletionPoints += entry.scoreBreakdown.japaCompletionScore;
         totalProgramPoints += entry.scoreBreakdown.programScore;
         totalHearingPoints += entry.scoreBreakdown.hearingScore;
-        totalServicePoints += entry.scoreBreakdown.serviceScore;
+        // Note: serviceScore removed as it's no longer calculated
       } else {
         // If no breakdown saved, calculate it now using user profile
         const scoreResult = calculateSadhanaScore(entry, userProfile);
@@ -363,7 +364,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, userProf
         totalJapaCompletionPoints += scoreResult.breakdowns.japaCompletionScore;
         totalProgramPoints += scoreResult.breakdowns.programScore;
         totalHearingPoints += scoreResult.breakdowns.hearingScore;
-        totalServicePoints += scoreResult.breakdowns.serviceScore;
+        // Note: serviceScore removed as it's no longer calculated
       }
     });
     
