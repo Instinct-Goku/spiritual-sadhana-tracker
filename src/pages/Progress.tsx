@@ -72,7 +72,7 @@ const PointsProgress = () => {
   const { readingMinutes, hearingMinutes, serviceMinutes, shlokaCount } = 
     getBatchMinimumRequirements(userProfile);
   
-  // Calculate body and soul scores (excluding service)
+  // Calculate body and soul scores
   const bodyScore = breakdowns.sleepTimeScore + 
                    breakdowns.wakeUpTimeScore + 
                    breakdowns.daySleepScore;
@@ -151,7 +151,7 @@ const PointsProgress = () => {
           if (weeklyData.entries && weeklyData.entries.length > 0) {
             const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
             
-            // Calculate total body and soul scores for the week (excluding service)
+            // Calculate total body and soul scores for the week
             const weekBodyScore = 
               weeklyScoreData.breakdowns.sleepTimeScore + 
               weeklyScoreData.breakdowns.wakeUpTimeScore + 
