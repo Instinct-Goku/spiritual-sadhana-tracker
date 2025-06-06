@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
@@ -53,6 +54,7 @@ const PointsProgress = () => {
   const [weeklyTotalScore, setWeeklyTotalScore] = useState(0);
   const [weeklyAvgScore, setWeeklyAvgScore] = useState(0);
   const [chartData, setChartData] = useState([]);
+  const [weeklyBreakdowns, setWeeklyBreakdowns] = useState([]);
   const [breakdowns, setBreakdowns] = useState({
     sleepTimeScore: 0,
     wakeUpTimeScore: 0,
@@ -139,6 +141,7 @@ const PointsProgress = () => {
         
         // Get data for the last 5 weeks
         const weeksData = [];
+        const weeklyBreakdownData = [];
         const today = new Date();
         
         for (let i = 4; i >= 0; i--) {
@@ -170,6 +173,13 @@ const PointsProgress = () => {
               soul: weekSoulScore,
               total: weeklyScoreData.totalScore
             });
+
+            // Store weekly breakdown data
+            weeklyBreakdownData.push({
+              week: formatWeekRange(actualWeekStart),
+              totalScore: weeklyScoreData.totalScore,
+              breakdowns: weeklyScoreData.breakdowns
+            });
             
             // Use current week data for the overview card
             if (i === 0) {
@@ -185,10 +195,26 @@ const PointsProgress = () => {
               soul: 0,
               total: 0
             });
+
+            weeklyBreakdownData.push({
+              week: formatWeekRange(actualWeekStart),
+              totalScore: 0,
+              breakdowns: {
+                sleepTimeScore: 0,
+                wakeUpTimeScore: 0,
+                readingScore: 0,
+                daySleepScore: 0,
+                japaCompletionScore: 0,
+                programScore: 0,
+                hearingScore: 0,
+                shlokaScore: 0
+              }
+            });
           }
         }
         
         setChartData(weeksData);
+        setWeeklyBreakdowns(weeklyBreakdownData);
         
       } catch (error) {
         console.error("Error fetching points data:", error);
@@ -461,81 +487,79 @@ const PointsProgress = () => {
             </CardContent>
           </Card>
           
-          {/* Points Summary Card */}
+          {/* Weekly Points Summary Card */}
           <Card className="spiritual-card">
             <CardHeader className="pb-2">
-              <CardTitle>Detailed Points Summary</CardTitle>
-              <CardDescription>Breakdown of your sadhana scores by category</CardDescription>
+              <CardTitle>Weekly Points Summary</CardTitle>
+              <CardDescription>Breakdown of your sadhana scores by week</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <h3 className="font-semibold text-lg text-spiritual-purple">Body (Physical Discipline)</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Sleep Time</Label>
-                  <span className="font-medium">{breakdowns.sleepTimeScore} points</span>
-                </div>
-                <Progress value={(breakdowns.sleepTimeScore / 25) * 100} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Wake Up Time</Label>
-                  <span className="font-medium">{breakdowns.wakeUpTimeScore} points</span>
-                </div>
-                <Progress value={(breakdowns.wakeUpTimeScore / 25) * 100} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Day Sleep</Label>
-                  <span className="font-medium">{breakdowns.daySleepScore} points</span>
-                </div>
-                <Progress value={(breakdowns.daySleepScore / 25) * 100} className="h-2" />
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="font-semibold text-lg text-spiritual-purple mb-3">Soul (Spiritual Practice)</h3>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Reading (max {readingMinutes} pts)</Label>
-                  <span className="font-medium">{breakdowns.readingScore} points</span>
-                </div>
-                <Progress value={(breakdowns.readingScore / readingMinutes) * 100} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Japa Completion</Label>
-                  <span className="font-medium">{breakdowns.japaCompletionScore} points</span>
-                </div>
-                <Progress value={(breakdowns.japaCompletionScore / 25) * 100} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Morning Program</Label>
-                  <span className="font-medium">{breakdowns.programScore} points</span>
-                </div>
-                <Progress value={(breakdowns.programScore / 45) * 100} className="h-2" />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Hearing (max {hearingMinutes} pts)</Label>
-                  <span className="font-medium">{breakdowns.hearingScore} points</span>
-                </div>
-                <Progress value={(breakdowns.hearingScore / hearingMinutes) * 100} className="h-2" />
-              </div>
+            <CardContent className="space-y-6">
+              {weeklyBreakdowns.map((weekData, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-spiritual-purple">{weekData.week}</h3>
+                    <Badge variant="secondary" className="text-lg px-3 py-1">
+                      {weekData.totalScore} points
+                    </Badge>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Body Scores */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-muted-foreground">Body (Physical Discipline)</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Sleep Time:</span>
+                          <span>{weekData.breakdowns.sleepTimeScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Wake Up Time:</span>
+                          <span>{weekData.breakdowns.wakeUpTimeScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Day Sleep:</span>
+                          <span>{weekData.breakdowns.daySleepScore} pts</span>
+                        </div>
+                        <div className="flex justify-between font-medium border-t pt-1">
+                          <span>Body Total:</span>
+                          <span>{weekData.breakdowns.sleepTimeScore + weekData.breakdowns.wakeUpTimeScore + weekData.breakdowns.daySleepScore} pts</span>
+                        </div>
+                      </div>
+                    </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Shlokas</Label>
-                  <span className="font-medium">{breakdowns.shlokaScore} points</span>
+                    {/* Soul Scores */}
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm text-muted-foreground">Soul (Spiritual Practice)</h4>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Reading:</span>
+                          <span>{weekData.breakdowns.readingScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Japa Completion:</span>
+                          <span>{weekData.breakdowns.japaCompletionScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Morning Program:</span>
+                          <span>{weekData.breakdowns.programScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Hearing:</span>
+                          <span>{weekData.breakdowns.hearingScore} pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Shlokas:</span>
+                          <span>{weekData.breakdowns.shlokaScore} pts</span>
+                        </div>
+                        <div className="flex justify-between font-medium border-t pt-1">
+                          <span>Soul Total:</span>
+                          <span>{weekData.breakdowns.readingScore + weekData.breakdowns.japaCompletionScore + weekData.breakdowns.programScore + weekData.breakdowns.hearingScore + weekData.breakdowns.shlokaScore} pts</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <Progress value={(breakdowns.shlokaScore / 30) * 100} className="h-2" />
-              </div>
+              ))}
 
               {/* Minimum Requirements Section */}
               <div className="pt-4 border-t">
