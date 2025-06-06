@@ -32,6 +32,8 @@ import {
   ResponsiveContainer,
   CartesianGrid
 } from "recharts";
+import GroupDevoteeSearch from "@/components/GroupDevoteeSearch";
+import { UserProfile } from "@/contexts/AuthContext";
 
 const chartConfig = {
   body: {
@@ -64,6 +66,7 @@ const PointsProgress = () => {
     hearingScore: 0,
     shlokaScore: 0,
   });
+  const [selectedDevoteeForView, setSelectedDevoteeForView] = useState<UserProfile | null>(null);
   
   // Get user's batch
   const userBatch = userProfile?.batch || "sahadev";
@@ -72,6 +75,10 @@ const PointsProgress = () => {
   // Get minimum requirements for the user's batch
   const { readingMinutes, hearingMinutes, serviceMinutes, shlokaCount } = 
     getBatchMinimumRequirements(userProfile);
+  
+  // Determine which user's data to show (current user or selected devotee for admin)
+  const targetUser = selectedDevoteeForView || userProfile;
+  const targetUserId = selectedDevoteeForView?.uid || currentUser?.uid;
   
   // Calculate body and soul scores
   const bodyScore = breakdowns.sleepTimeScore + 
@@ -117,14 +124,14 @@ const PointsProgress = () => {
 
   // Fetch daily sadhana for selected date
   const fetchDailySadhana = async (date: Date) => {
-    if (!currentUser) return;
+    if (!targetUserId) return;
     
     try {
-      const dailyData = await getDailySadhana(currentUser.uid, date);
+      const dailyData = await getDailySadhana(targetUserId, date);
       setDailySadhana(dailyData);
       
-      if (dailyData && userProfile) {
-        const scoreResult = calculateSadhanaScore(dailyData, userProfile);
+      if (dailyData && targetUser) {
+        const scoreResult = calculateSadhanaScore(dailyData, targetUser);
         setDailyScore(scoreResult);
       } else {
         setDailyScore(null);
@@ -138,7 +145,7 @@ const PointsProgress = () => {
   
   useEffect(() => {
     const fetchPoints = async () => {
-      if (!currentUser) return;
+      if (!targetUserId) return;
       
       try {
         setLoading(true);
@@ -153,10 +160,10 @@ const PointsProgress = () => {
           weekStart.setDate(weekStart.getDate() - (i * 7));
           const actualWeekStart = getWeekStart(weekStart);
           
-          const weeklyData = await getWeeklySadhana(currentUser.uid, actualWeekStart, userProfile);
+          const weeklyData = await getWeeklySadhana(targetUserId, actualWeekStart, targetUser);
           
           if (weeklyData.entries && weeklyData.entries.length > 0) {
-            const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
+            const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, targetUser);
             
             // Calculate total body and soul scores for the week
             const weekBodyScore = 
@@ -218,7 +225,7 @@ const PointsProgress = () => {
         }
         
         setChartData(weeksData);
-        setWeeklyBreakdowns(weeklyBreakdownData);
+        setWeeklyBreakdowns(weeklyBreakdowns);
         
       } catch (error) {
         console.error("Error fetching points data:", error);
@@ -228,21 +235,47 @@ const PointsProgress = () => {
     };
     
     fetchPoints();
-  }, [currentUser, userProfile]);
+  }, [targetUserId, targetUser]);
 
   // Fetch daily sadhana when selected date changes
   useEffect(() => {
+    const fetchDailySadhana = async (date: Date) => {
+      if (!targetUserId) return;
+      
+      try {
+        const dailyData = await getDailySadhana(targetUserId, date);
+        setDailySadhana(dailyData);
+        
+        if (dailyData && targetUser) {
+          const scoreResult = calculateSadhanaScore(dailyData, targetUser);
+          setDailyScore(scoreResult);
+        } else {
+          setDailyScore(null);
+        }
+      } catch (error) {
+        console.error("Error fetching daily sadhana:", error);
+        setDailySadhana(null);
+        setDailyScore(null);
+      }
+    };
+    
     fetchDailySadhana(selectedDate);
-  }, [selectedDate, currentUser, userProfile]);
+  }, [selectedDate, targetUserId, targetUser]);
   
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-spiritual-purple text-center">
           Sadhana Progress
+          {selectedDevoteeForView && (
+            <span className="block text-lg font-normal text-muted-foreground mt-2">
+              Viewing: {selectedDevoteeForView.displayName}
+              {selectedDevoteeForView.spiritualName && ` (${selectedDevoteeForView.spiritualName})`}
+            </span>
+          )}
         </h1>
         <p className="text-sm md:text-base text-muted-foreground text-center">
-          Track your spiritual consistency in {batchCriteria.name} batch
+          Track spiritual consistency in {batchCriteria.name} batch
           {shlokaCount > 0 && (
             <>
               <br />
@@ -251,6 +284,15 @@ const PointsProgress = () => {
           )}
         </p>
       </div>
+      
+      {/* Admin Group Search */}
+      {userProfile?.isAdmin && userProfile?.uid && (
+        <GroupDevoteeSearch
+          adminId={userProfile.uid}
+          onDevoteeSelect={setSelectedDevoteeForView}
+          selectedDevotee={selectedDevoteeForView}
+        />
+      )}
       
       {loading ? (
         <div className="flex justify-center py-10">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -12,6 +11,7 @@ import { Loader2, Search, UserCheck, UserX, Users, Settings } from "lucide-react
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDevoteeGroups, getDevoteesInGroup } from "@/lib/adminService";
 import BatchScoreConfig from "@/components/BatchScoreConfig";
+import CreateGroupDialog from "@/components/CreateGroupDialog";
 
 // Define types for the admin page
 interface DevoteeSadhanaProgress {
@@ -382,16 +382,21 @@ const AdminPage = () => {
         <TabsContent value="groups">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-1">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl text-spiritual-purple">
                   Devotee Groups
                 </CardTitle>
+                {userProfile?.uid && (
+                  <CreateGroupDialog 
+                    adminId={userProfile.uid} 
+                    onGroupCreated={fetchGroups}
+                  />
+                )}
               </CardHeader>
               <CardContent>
                 {groups.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground">No groups created yet</p>
-                    <Button className="mt-4">Create Group</Button>
                   </div>
                 ) : (
                   <div className="space-y-2">
