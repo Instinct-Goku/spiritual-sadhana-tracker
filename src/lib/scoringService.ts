@@ -53,7 +53,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 60, // 1 hour
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 1 // Updated: 1 shloka
+    shlokaMinimum: 1 // 1 shloka
   },
   nakula: {
     name: "Nakula",
@@ -86,7 +86,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     hearingMinimum: 60, // 1 hour
     serviceMinimum: 90, // 1.5 hours
     spLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 1 // Updated: 1 shloka
+    shlokaMinimum: 1 // 1 shloka
   },
   arjuna: {
     name: "Arjuna",
@@ -118,7 +118,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     serviceMinimum: 120, // 2 hours
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 2 // Updated: 2 shlokas
+    shlokaMinimum: 2 // 2 shlokas
   },
   yudhisthira: {
     name: "Yudhisthira",
@@ -148,7 +148,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
     gsnsLectureMinimum: 60, // 1 hour
-    shlokaMinimum: 2 // Updated: 2 shlokas
+    shlokaMinimum: 2 // 2 shlokas
   }
 };
 
@@ -159,6 +159,14 @@ export const PROGRAM_SCORING: ProgramScoring = {
   narsimhaArati: 5,
   guruPuja: 5,
   bhagavatamClass: 20
+};
+
+// Shloka scoring for all batches
+export const SHLOKA_SCORING = {
+  sahadev: 30,
+  nakula: 30,
+  arjuna: 30,
+  yudhisthira: 30
 };
 
 // Parse time string (HH:MM) to minutes since midnight
@@ -203,19 +211,23 @@ export const calculateDurationScore = (duration: number, scoring: DurationScore[
   return 0;
 };
 
-// Calculate reading score
-export const calculateReadingScore = (minutes: number): number => {
-  return Math.max(0, minutes); // 1 point per minute
+// Calculate reading score (capped at batch minimum)
+export const calculateReadingScore = (minutes: number, batchMinimum: number): number => {
+  return Math.min(Math.max(0, minutes), batchMinimum); // Capped at batch minimum
 };
 
-// Calculate hearing score
-export const calculateHearingScore = (minutes: number): number => {
-  return Math.max(0, minutes); // 1 point per minute
+// Calculate hearing score (capped at batch minimum)
+export const calculateHearingScore = (minutes: number, batchMinimum: number): number => {
+  return Math.min(Math.max(0, minutes), batchMinimum); // Capped at batch minimum
 };
 
-// Calculate service score
-export const calculateServiceScore = (minutes: number): number => {
-  return Math.max(0, minutes); // 1 point per minute
+// Calculate shloka score
+export const calculateShlokaScore = (shlokaCount: number, batchCriteria: BatchCriteria, batchName: string): number => {
+  const minimumShlokas = batchCriteria.shlokaMinimum || 0;
+  if (shlokaCount >= minimumShlokas && minimumShlokas > 0) {
+    return SHLOKA_SCORING[batchName.toLowerCase() as keyof typeof SHLOKA_SCORING] || 0;
+  }
+  return 0;
 };
 
 // Calculate program attendance score
@@ -284,39 +296,43 @@ export const calculateSadhanaScore = (
     japaCompletionScore: number;
     programScore: number;
     hearingScore: number;
-    serviceScore: number;
+    shlokaScore: number;
   }
 } => {
   let batchCriteria: BatchCriteria;
+  let batchName: string;
   
   // Handle different types of input for batch information
   if (typeof batchNameOrProfile === 'string') {
     // If it's a string, treat it as a batch name
     const batchConfigs = getBatchConfigurations();
-    batchCriteria = batchConfigs[batchNameOrProfile.toLowerCase()] || batchConfigs.sahadev;
+    batchName = batchNameOrProfile.toLowerCase();
+    batchCriteria = batchConfigs[batchName] || batchConfigs.sahadev;
   } else {
     // If it's a UserProfile or null, get criteria from profile
     batchCriteria = getBatchCriteriaFromUserProfile(batchNameOrProfile);
+    batchName = batchNameOrProfile?.batch?.toLowerCase() || batchNameOrProfile?.batchName?.toLowerCase() || "sahadev";
   }
   
   // Calculate individual scores
   const sleepTimeScore = calculateTimeScore(entry.sleepTime, batchCriteria.sleepTimeScoring);
   const wakeUpTimeScore = calculateTimeScore(entry.wakeUpTime, batchCriteria.wakeUpTimeScoring);
-  const readingScore = calculateReadingScore(entry.readingMinutes);
+  const readingScore = calculateReadingScore(entry.readingMinutes, batchCriteria.readingMinimum);
   const daySleepScore = calculateDurationScore(entry.daySleepDuration, batchCriteria.daySleepScoring);
   const japaCompletionScore = calculateTimeScore(entry.chantingCompletionTime, batchCriteria.japaCompletionScoring);
   const programScore = calculateProgramScore(entry);
   
-  // Calculate hearing score (sum of all hearing types)
+  // Calculate hearing score (sum of all hearing types, capped at batch minimum)
   const spLectureMinutes = entry.spLectureMinutes || 0;
   const smLectureMinutes = entry.smLectureMinutes || 0;
   const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
   const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
-  const hearingScore = calculateHearingScore(totalHearingMinutes);
+  const hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
   
-  const serviceScore = calculateServiceScore(entry.serviceMinutes || 0);
+  // Calculate shloka score
+  const shlokaScore = calculateShlokaScore(entry.shlokaCount || 0, batchCriteria, batchName);
   
-  // Calculate total score
+  // Calculate total score (excluding service)
   const totalScore = 
     sleepTimeScore + 
     wakeUpTimeScore + 
@@ -325,7 +341,7 @@ export const calculateSadhanaScore = (
     japaCompletionScore + 
     programScore +
     hearingScore +
-    serviceScore;
+    shlokaScore;
   
   return {
     totalScore,
@@ -337,7 +353,7 @@ export const calculateSadhanaScore = (
       japaCompletionScore,
       programScore,
       hearingScore,
-      serviceScore
+      shlokaScore
     }
   };
 };
@@ -357,7 +373,7 @@ export const calculateWeeklySadhanaScore = (
     japaCompletionScore: number;
     programScore: number;
     hearingScore: number;
-    serviceScore: number;
+    shlokaScore: number;
   }
 } => {
   if (!entries || entries.length === 0) {
@@ -372,7 +388,7 @@ export const calculateWeeklySadhanaScore = (
         japaCompletionScore: 0,
         programScore: 0,
         hearingScore: 0,
-        serviceScore: 0
+        shlokaScore: 0
       }
     };
   }
@@ -392,7 +408,7 @@ export const calculateWeeklySadhanaScore = (
     japaCompletionScore: scores.reduce((sum, score) => sum + score.breakdowns.japaCompletionScore, 0),
     programScore: scores.reduce((sum, score) => sum + score.breakdowns.programScore, 0),
     hearingScore: scores.reduce((sum, score) => sum + score.breakdowns.hearingScore, 0),
-    serviceScore: scores.reduce((sum, score) => sum + score.breakdowns.serviceScore, 0)
+    shlokaScore: scores.reduce((sum, score) => sum + score.breakdowns.shlokaScore, 0)
   };
   
   return {

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +14,7 @@ import {
   calculateSadhanaScore
 } from "@/lib/scoringService";
 import { getDailySadhana, getWeeklySadhana } from "@/lib/sadhanaService";
-import { Loader2, BarChartBig, Calendar as CalendarIcon, Clock, Book, Headphones, Heart } from "lucide-react";
+import { Loader2, BarChartBig, Calendar as CalendarIcon, Clock, Book, Headphones, Scroll } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { 
@@ -62,7 +61,7 @@ const PointsProgress = () => {
     japaCompletionScore: 0,
     programScore: 0,
     hearingScore: 0,
-    serviceScore: 0,
+    shlokaScore: 0,
   });
   
   // Get user's batch
@@ -73,16 +72,16 @@ const PointsProgress = () => {
   const { readingMinutes, hearingMinutes, serviceMinutes, shlokaCount } = 
     getBatchMinimumRequirements(userProfile);
   
-  // Calculate body and soul scores
+  // Calculate body and soul scores (excluding service)
   const bodyScore = breakdowns.sleepTimeScore + 
                    breakdowns.wakeUpTimeScore + 
-                   breakdowns.daySleepScore + 
-                   breakdowns.serviceScore;
+                   breakdowns.daySleepScore;
                    
   const soulScore = breakdowns.readingScore + 
                    breakdowns.japaCompletionScore + 
                    breakdowns.programScore + 
-                   breakdowns.hearingScore;
+                   breakdowns.hearingScore +
+                   breakdowns.shlokaScore;
 
   // Function to get the start of the week (Sunday)
   const getWeekStart = (date: Date) => {
@@ -152,18 +151,18 @@ const PointsProgress = () => {
           if (weeklyData.entries && weeklyData.entries.length > 0) {
             const weeklyScoreData = calculateWeeklySadhanaScore(weeklyData.entries, userProfile);
             
-            // Calculate total body and soul scores for the week
+            // Calculate total body and soul scores for the week (excluding service)
             const weekBodyScore = 
               weeklyScoreData.breakdowns.sleepTimeScore + 
               weeklyScoreData.breakdowns.wakeUpTimeScore + 
-              weeklyScoreData.breakdowns.daySleepScore + 
-              weeklyScoreData.breakdowns.serviceScore;
+              weeklyScoreData.breakdowns.daySleepScore;
               
             const weekSoulScore = 
               weeklyScoreData.breakdowns.readingScore + 
               weeklyScoreData.breakdowns.japaCompletionScore + 
               weeklyScoreData.breakdowns.programScore + 
-              weeklyScoreData.breakdowns.hearingScore;
+              weeklyScoreData.breakdowns.hearingScore +
+              weeklyScoreData.breakdowns.shlokaScore;
             
             weeksData.push({
               week: formatWeekRange(actualWeekStart),
@@ -305,9 +304,9 @@ const PointsProgress = () => {
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Heart className="h-4 w-4" />
-                            <span className="text-sm font-medium">Service:</span>
-                            <span className="text-sm">{dailySadhana.serviceMinutes || 0} mins</span>
+                            <Scroll className="h-4 w-4" />
+                            <span className="text-sm font-medium">Shlokas:</span>
+                            <span className="text-sm">{dailySadhana.shlokaCount || 0}</span>
                           </div>
                         </div>
                       </div>
@@ -494,24 +493,16 @@ const PointsProgress = () => {
                 <Progress value={(breakdowns.daySleepScore / 25) * 100} className="h-2" />
               </div>
               
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Label>Service</Label>
-                  <span className="font-medium">{breakdowns.serviceScore} points</span>
-                </div>
-                <Progress value={(breakdowns.serviceScore / 150) * 100} className="h-2" />
-              </div>
-              
               <div className="mt-6">
                 <h3 className="font-semibold text-lg text-spiritual-purple mb-3">Soul (Spiritual Practice)</h3>
               </div>
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <Label>Reading</Label>
+                  <Label>Reading (max {readingMinutes} pts)</Label>
                   <span className="font-medium">{breakdowns.readingScore} points</span>
                 </div>
-                <Progress value={(breakdowns.readingScore / 300) * 100} className="h-2" />
+                <Progress value={(breakdowns.readingScore / readingMinutes) * 100} className="h-2" />
               </div>
               
               <div className="space-y-2">
@@ -532,10 +523,18 @@ const PointsProgress = () => {
               
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <Label>Hearing</Label>
+                  <Label>Hearing (max {hearingMinutes} pts)</Label>
                   <span className="font-medium">{breakdowns.hearingScore} points</span>
                 </div>
-                <Progress value={(breakdowns.hearingScore / 180) * 100} className="h-2" />
+                <Progress value={(breakdowns.hearingScore / hearingMinutes) * 100} className="h-2" />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <Label>Shlokas</Label>
+                  <span className="font-medium">{breakdowns.shlokaScore} points</span>
+                </div>
+                <Progress value={(breakdowns.shlokaScore / 30) * 100} className="h-2" />
               </div>
 
               {/* Minimum Requirements Section */}
@@ -550,14 +549,10 @@ const PointsProgress = () => {
                     <span>Hearing:</span>
                     <span className="font-medium">{hearingMinutes} minutes ({hearingMinutes/60} hours)</span>
                   </li>
-                  <li className="flex justify-between">
-                    <span>Service:</span>
-                    <span className="font-medium">{serviceMinutes} minutes ({serviceMinutes/60} hours)</span>
-                  </li>
                   {shlokaCount > 0 && (
                     <li className="flex justify-between">
                       <span>Shlokas:</span>
-                      <span className="font-medium">{shlokaCount} shlokas</span>
+                      <span className="font-medium">{shlokaCount} shlokas (30 pts when met)</span>
                     </li>
                   )}
                 </ul>
