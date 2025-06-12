@@ -1,4 +1,3 @@
-
 export interface TimeRangeScore {
   startTime: string;
   endTime: string;
@@ -73,8 +72,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "12:00", endTime: "23:59", points: 0 }
     ]
   },
-  nakul: {
-    name: "Nakul",
+  nakula: {
+    name: "Nakula",
     readingMinimum: 90,
     hearingMinimum: 90,
     serviceMinimum: 0,
@@ -113,52 +112,12 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "12:00", endTime: "23:59", points: 0 }
     ]
   },
-  arjun: {
-    name: "Arjun",
+  arjuna: {
+    name: "Arjuna",
     readingMinimum: 120,
     hearingMinimum: 120,
     serviceMinimum: 60,
     shlokaMinimum: 1,
-    totalBodyScore: 50,
-    totalSoulScore: 50,
-    enableSmHearing: false,
-    enableGsnsHearing: false,
-    enableHgrspHearing: false,
-    sleepTimeScoring: [
-      { startTime: "21:00", endTime: "22:00", points: 10 },
-      { startTime: "22:00", endTime: "23:00", points: 7 },
-      { startTime: "23:00", endTime: "00:00", points: 5 },
-      { startTime: "00:00", endTime: "01:00", points: 3 },
-      { startTime: "01:00", endTime: "23:59", points: 0 }
-    ],
-    wakeUpTimeScoring: [
-      { startTime: "03:30", endTime: "04:00", points: 10 },
-      { startTime: "04:00", endTime: "04:30", points: 8 },
-      { startTime: "04:30", endTime: "05:00", points: 6 },
-      { startTime: "05:00", endTime: "05:30", points: 4 },
-      { startTime: "05:30", endTime: "23:59", points: 0 }
-    ],
-    daySleepScoring: [
-      { maxDuration: 0, points: 10 },
-      { maxDuration: 30, points: 7 },
-      { maxDuration: 60, points: 5 },
-      { maxDuration: 90, points: 3 },
-      { maxDuration: 999, points: 0 }
-    ],
-    japaCompletionScoring: [
-      { startTime: "06:00", endTime: "07:30", points: 10 },
-      { startTime: "07:30", endTime: "09:00", points: 8 },
-      { startTime: "09:00", endTime: "10:30", points: 6 },
-      { startTime: "10:30", endTime: "12:00", points: 4 },
-      { startTime: "12:00", endTime: "23:59", points: 0 }
-    ]
-  },
-  bheem: {
-    name: "Bheem",
-    readingMinimum: 150,
-    hearingMinimum: 150,
-    serviceMinimum: 90,
-    shlokaMinimum: 2,
     totalBodyScore: 50,
     totalSoulScore: 50,
     enableSmHearing: false,

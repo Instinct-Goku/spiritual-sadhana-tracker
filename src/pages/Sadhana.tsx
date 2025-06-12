@@ -215,16 +215,16 @@ const SadhanaPage = () => {
   // Helper to determine if a hearing field should be shown based on batch criteria
   const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns' | 'hgrsp') => {
     if (type === 'sp') return true; // All batches show SP lectures
-    if (type === 'sm') return batchCriteria.enableSmHearing;
-    if (type === 'gsns') return batchCriteria.enableGsnsHearing;
-    if (type === 'hgrsp') return batchCriteria.enableHgrspHearing;
+    if (type === 'sm') return batchCriteria?.enableSmHearing || false;
+    if (type === 'gsns') return batchCriteria?.enableGsnsHearing || false;
+    if (type === 'hgrsp') return batchCriteria?.enableHgrspHearing || false;
     return false;
   };
   
   // Helper to get shloka description
   const getShlokaDescription = () => {
     if (userBatch === 'yudhisthira') {
-      return "2 minimum shlokas or 50 min spent in reciting or learning";
+      return "minimum 2 shlokas or 50 min recitation";
     }
     return minShlokaCount > 0 ? `minimum: ${minShlokaCount}` : '';
   };
@@ -330,7 +330,7 @@ const SadhanaPage = () => {
                     <Label htmlFor="spLecture" className="font-medium flex items-center">
                       <Mic className="h-4 w-4 mr-1" />
                       Srila Prabhupada Lectures 
-                      {batchCriteria.spLectureMinimum && (
+                      {batchCriteria?.spLectureMinimum && (
                         <span className="text-amber-600 ml-1">
                           (min: {batchCriteria.spLectureMinimum} min)
                         </span>
@@ -353,7 +353,7 @@ const SadhanaPage = () => {
                       <Label htmlFor="smLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
                         Spiritual Master Lectures
-                        {batchCriteria.smLectureMinimum && (
+                        {batchCriteria?.smLectureMinimum && (
                           <span className="text-amber-600 ml-1">
                             (min: {batchCriteria.smLectureMinimum} min)
                           </span>
@@ -377,7 +377,7 @@ const SadhanaPage = () => {
                       <Label htmlFor="gsnsLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
                         GS/NS Lectures
-                        {batchCriteria.gsnsLectureMinimum && (
+                        {batchCriteria?.gsnsLectureMinimum && (
                           <span className="text-amber-600 ml-1">
                             (min: {batchCriteria.gsnsLectureMinimum} min)
                           </span>
@@ -401,7 +401,7 @@ const SadhanaPage = () => {
                       <Label htmlFor="hgrspLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
                         HGRSP/HGRKP Lectures
-                        {batchCriteria.hgrspLectureMinimum && (
+                        {batchCriteria?.hgrspLectureMinimum && (
                           <span className="text-amber-600 ml-1">
                             (min: {batchCriteria.hgrspLectureMinimum} min)
                           </span>
@@ -433,7 +433,7 @@ const SadhanaPage = () => {
                       <Scroll className="h-4 w-4 mr-1" />
                       Shlokas Memorized
                       {getShlokaDescription() && (
-                        <span className="text-amber-600 ml-1">
+                        <span className="text-amber-600 ml-1 text-sm">
                           ({getShlokaDescription()})
                         </span>
                       )}
