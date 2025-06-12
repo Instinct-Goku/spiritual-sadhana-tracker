@@ -59,7 +59,7 @@ const SadhanaPage = () => {
   const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
   const [smLectureMinutes, setSmLectureMinutes] = useState<number | ''>('');
   const [gsnsLectureMinutes, setGsnsLectureMinutes] = useState<number | ''>('');
-  const [hgrspLectureMinutes, setHgrspLectureMinutes] = useState<number | ''>('');
+  const [hgrspLectureMinutes, setHgrspLectureMinutes] = useState<number | ''>(''); // Combined HGRSP/HGRKP
   const [serviceMinutes, setServiceMinutes] = useState<number | ''>('');
   const [shlokaMemorized, setShlokaMemorized] = useState<number | ''>('');
   const [wakeUpTime, setWakeUpTime] = useState("05:00");
@@ -213,12 +213,11 @@ const SadhanaPage = () => {
   };
 
   // Helper to determine if a hearing field should be shown based on batch criteria
-  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns' | 'hgrsp' | 'hgrkp') => {
+  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns' | 'hgrsp') => {
     if (type === 'sp') return true; // All batches show SP lectures
-    if (type === 'sm') return batchCriteria.smLectureMinimum !== undefined;
-    if (type === 'gsns') return batchCriteria.gsnsLectureMinimum !== undefined;
-    if (type === 'hgrsp') return batchCriteria.hgrspLectureMinimum !== undefined;
-    if (type === 'hgrkp') return batchCriteria.hgrkpLectureMinimum !== undefined;
+    if (type === 'sm') return batchCriteria.enableSmHearing;
+    if (type === 'gsns') return batchCriteria.enableGsnsHearing;
+    if (type === 'hgrsp') return batchCriteria.enableHgrspHearing;
     return false;
   };
   
@@ -396,7 +395,7 @@ const SadhanaPage = () => {
                     </div>
                   )}
                   
-                  {/* HGRSP Lecture field - conditionally visible */}
+                  {/* HGRSP/HGRKP Lecture field - conditionally visible and combined */}
                   {shouldShowHearingField('hgrsp') && (
                     <div className="space-y-2">
                       <Label htmlFor="hgrspLecture" className="font-medium flex items-center">
