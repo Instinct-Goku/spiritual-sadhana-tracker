@@ -1,3 +1,4 @@
+
 export interface TimeRangeScore {
   startTime: string;
   endTime: string;
@@ -338,13 +339,7 @@ export const calculateSadhanaScore = (entry: any, userProfile: UserProfile | nul
 };
 
 export const calculateWeeklySadhanaScore = (entries: any[], userProfile: UserProfile | null) => {
-  if (!userProfile) {
-    console.warn("User profile is null. Cannot calculate weekly score.");
-    return { totalScore: 0, averageScore: 0, breakdowns: {} };
-  }
-  
-  let totalScore = 0;
-  const weeklyBreakdowns = {
+  const defaultBreakdowns = {
     sleepTimeScore: 0,
     wakeUpTimeScore: 0,
     readingScore: 0,
@@ -354,6 +349,14 @@ export const calculateWeeklySadhanaScore = (entries: any[], userProfile: UserPro
     hearingScore: 0,
     shlokaScore: 0,
   };
+
+  if (!userProfile) {
+    console.warn("User profile is null. Cannot calculate weekly score.");
+    return { totalScore: 0, averageScore: 0, breakdowns: defaultBreakdowns };
+  }
+  
+  let totalScore = 0;
+  const weeklyBreakdowns = { ...defaultBreakdowns };
   
   entries.forEach(entry => {
     const dailyScoreResult = calculateSadhanaScore(entry, userProfile);
