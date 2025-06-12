@@ -13,6 +13,8 @@ export interface BatchCriteria {
   spLectureMinimum?: number; // Srila Prabhupada lectures minimum in minutes
   smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
   gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
+  hgrspLectureMinimum?: number; // HGRSP lectures minimum in minutes
+  hgrkpLectureMinimum?: number; // HGRKP lectures minimum in minutes
   shlokaMinimum?: number; // Default: no shlokas required
   totalBodyScore: number; // Maximum possible body score
   totalSoulScore: number; // Maximum possible soul score
@@ -151,11 +153,11 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
       { startTime: "15:00", endTime: "20:00", points: 10 },
       { startTime: "20:00", endTime: "23:59", points: 0 }
     ],
-    hearingMinimum: 180, // 3 hours
+    hearingMinimum: 180, // 3 hours total
     serviceMinimum: 150, // 2.5 hours
     spLectureMinimum: 60, // 1 hour
     smLectureMinimum: 60, // 1 hour
-    gsnsLectureMinimum: 60, // 1 hour
+    hgrspLectureMinimum: 60, // 1 hour HGRSP lectures
     shlokaMinimum: 2, // 2 shlokas
     totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
     totalSoulScore: 485 // 300 reading + 180 hearing + 60 shloka + 45 program + 25 japa
@@ -336,7 +338,9 @@ export const calculateSadhanaScore = (
   const spLectureMinutes = entry.spLectureMinutes || 0;
   const smLectureMinutes = entry.smLectureMinutes || 0;
   const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
-  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
+  const hgrspLectureMinutes = entry.hgrspLectureMinutes || 0;
+  const hgrkpLectureMinutes = entry.hgrkpLectureMinutes || 0;
+  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes + hgrkpLectureMinutes;
   const hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
   
   // Calculate shloka score
@@ -476,6 +480,14 @@ export const getBatchCriteriaDescription = (batchNameOrProfile: string | UserPro
   
   if (batchCriteria.gsnsLectureMinimum) {
     descriptions.hearing.push(`GS/NS Lectures: ${batchCriteria.gsnsLectureMinimum} minutes`);
+  }
+  
+  if (batchCriteria.hgrspLectureMinimum) {
+    descriptions.hearing.push(`HGRSP Lectures: ${batchCriteria.hgrspLectureMinimum} minutes`);
+  }
+  
+  if (batchCriteria.hgrkpLectureMinimum) {
+    descriptions.hearing.push(`HGRKP Lectures: ${batchCriteria.hgrkpLectureMinimum} minutes`);
   }
   
   // Sleep time criteria
