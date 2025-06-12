@@ -340,19 +340,43 @@ export const calculateSadhanaScore = (entry: any, userProfile: UserProfile | nul
 export const calculateWeeklySadhanaScore = (entries: any[], userProfile: UserProfile | null) => {
   if (!userProfile) {
     console.warn("User profile is null. Cannot calculate weekly score.");
-    return { totalScore: 0, averageScore: 0 };
+    return { totalScore: 0, averageScore: 0, breakdowns: {} };
   }
   
   let totalScore = 0;
+  const weeklyBreakdowns = {
+    sleepTimeScore: 0,
+    wakeUpTimeScore: 0,
+    readingScore: 0,
+    daySleepScore: 0,
+    japaCompletionScore: 0,
+    programScore: 0,
+    hearingScore: 0,
+    shlokaScore: 0,
+  };
   
   entries.forEach(entry => {
     const dailyScoreResult = calculateSadhanaScore(entry, userProfile);
     totalScore += dailyScoreResult.totalScore;
+    
+    // Accumulate breakdowns
+    weeklyBreakdowns.sleepTimeScore += dailyScoreResult.breakdowns.sleepTimeScore || 0;
+    weeklyBreakdowns.wakeUpTimeScore += dailyScoreResult.breakdowns.wakeUpTimeScore || 0;
+    weeklyBreakdowns.readingScore += dailyScoreResult.breakdowns.readingScore || 0;
+    weeklyBreakdowns.daySleepScore += dailyScoreResult.breakdowns.daySleepScore || 0;
+    weeklyBreakdowns.japaCompletionScore += dailyScoreResult.breakdowns.japaCompletionScore || 0;
+    weeklyBreakdowns.programScore += dailyScoreResult.breakdowns.programScore || 0;
+    weeklyBreakdowns.hearingScore += dailyScoreResult.breakdowns.hearingScore || 0;
+    weeklyBreakdowns.shlokaScore += dailyScoreResult.breakdowns.shlokaScore || 0;
   });
   
   const averageScore = entries.length > 0 ? totalScore / entries.length : 0;
   
-  return { totalScore: Math.round(totalScore), averageScore: Math.round(averageScore) };
+  return { 
+    totalScore: Math.round(totalScore), 
+    averageScore: Math.round(averageScore),
+    breakdowns: weeklyBreakdowns
+  };
 };
 
 const calculateTimeRangeScore = (time: string, scoringRanges: TimeRangeScore[]): number => {
