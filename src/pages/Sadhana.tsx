@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Clock, BookOpen, Headphones, Heart, Moon, Sun, Users } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -36,9 +37,6 @@ const formSchema = z.object({
   narsimhaArati: z.boolean().optional(),
   guruPuja: z.boolean().optional(),
   bhagavatamClass: z.boolean().optional(),
-  morningProgram: z.boolean().optional(),
-  eveningArati: z.boolean().optional(),
-  spiritualClass: z.boolean().optional(),
   notes: z.string().optional(),
 })
 
@@ -68,9 +66,6 @@ const Sadhana = () => {
       narsimhaArati: false,
       guruPuja: false,
       bhagavatamClass: false,
-      morningProgram: false,
-      eveningArati: false,
-      spiritualClass: false,
       notes: "",
     },
   })
@@ -97,9 +92,6 @@ const Sadhana = () => {
       narsimhaArati: false,
       guruPuja: false,
       bhagavatamClass: false,
-      morningProgram: false,
-      eveningArati: false,
-      spiritualClass: false,
       notes: "",
     });
   }, [selectedDate, form]);
@@ -128,9 +120,6 @@ const Sadhana = () => {
             form.setValue("narsimhaArati", entry.narsimhaArati || false);
             form.setValue("guruPuja", entry.guruPuja || false);
             form.setValue("bhagavatamClass", entry.bhagavatamClass || false);
-            form.setValue("morningProgram", entry.morningProgram || false);
-            form.setValue("eveningArati", entry.eveningArati || false);
-            form.setValue("spiritualClass", entry.spiritualClass || false);
             form.setValue("notes", entry.notes || "");
           }
         } catch (error) {
@@ -167,9 +156,6 @@ const Sadhana = () => {
         narsimhaArati: values.narsimhaArati || false,
         guruPuja: values.guruPuja || false,
         bhagavatamClass: values.bhagavatamClass || false,
-        morningProgram: values.morningProgram || false,
-        eveningArati: values.eveningArati || false,
-        spiritualClass: values.spiritualClass || false,
         notes: values.notes || "",
       };
 
@@ -195,27 +181,33 @@ const Sadhana = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold text-spiritual-purple">
+    <div className="min-h-screen bg-gradient-to-br from-spiritual-cream via-white to-spiritual-cream/50 p-4 md:p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-8 relative">
+          <div className="absolute inset-0 mandala-decoration opacity-5" />
+          <h1 className="text-3xl md:text-4xl font-bold text-spiritual-purple mb-2 relative z-10">
             Daily Sadhana Entry
-          </CardTitle>
-          <CardDescription className="text-center">
+          </h1>
+          <p className="text-spiritual-sage text-lg relative z-10">
             Record your spiritual practices for {selectedDate.toLocaleDateString()}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Date Picker */}
-            <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+          </p>
+        </div>
+
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          {/* Date Selection Card */}
+          <Card className="spiritual-card animate-fade-in">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <CalendarIcon className="h-6 w-6 text-spiritual-purple" />
+                <Label className="text-lg font-semibold text-spiritual-purple">Select Date</Label>
+              </div>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full md:w-auto justify-start text-left font-normal bg-white/80 border-spiritual-purple/30 hover:bg-spiritual-cream/50",
                       !selectedDate && "text-muted-foreground"
                     )}
                   >
@@ -223,313 +215,390 @@ const Sadhana = () => {
                     {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-white border-spiritual-purple/20" align="start">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    disabled={(date) =>
-                      date > new Date()
-                    }
+                    disabled={(date) => date > new Date()}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Japa Section */}
-            <div className="space-y-2">
-              <Label htmlFor="chantingCompletionTime">Chanting Completion Time</Label>
-              <Input
-                id="chantingCompletionTime"
-                type="time"
-                {...form.register("chantingCompletionTime")}
-                className="w-full"
-              />
-              {form.formState.errors.chantingCompletionTime && (
-                <p className="text-sm text-red-600">{form.formState.errors.chantingCompletionTime.message}</p>
-              )}
-            </div>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Japa & Reading Section */}
+            <div className="space-y-6">
+              {/* Japa Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <Sun className="h-6 w-6" />
+                    Japa Meditation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="chantingCompletionTime" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Chanting Completion Time
+                    </Label>
+                    <Input
+                      id="chantingCompletionTime"
+                      type="time"
+                      {...form.register("chantingCompletionTime")}
+                      className="spiritual-input"
+                    />
+                    {form.formState.errors.chantingCompletionTime && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.chantingCompletionTime.message}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Reading Section */}
-            <div className="space-y-2">
-              <Label htmlFor="readingMinutes">Reading (minutes)</Label>
-              <Input
-                id="readingMinutes"
-                type="number"
-                min="0"
-                {...form.register("readingMinutes", {
-                  valueAsNumber: true,
-                })}
-                className="w-full"
-              />
-              {form.formState.errors.readingMinutes && (
-                <p className="text-sm text-red-600">{form.formState.errors.readingMinutes.message}</p>
-              )}
-            </div>
+              {/* Reading Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <BookOpen className="h-6 w-6" />
+                    Reading
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div>
+                    <Label htmlFor="readingMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Reading (minutes)
+                    </Label>
+                    <Input
+                      id="readingMinutes"
+                      type="number"
+                      min="0"
+                      {...form.register("readingMinutes", { valueAsNumber: true })}
+                      className="spiritual-input"
+                    />
+                    {form.formState.errors.readingMinutes && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.readingMinutes.message}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Hearing Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-spiritual-purple">Hearing</h3>
-              
-              {/* Srila Prabhupada Lectures */}
-              {batchCriteria.showSpLecture && (
-                <div className="space-y-2">
-                  <Label htmlFor="spLectureMinutes">Srila Prabhupada Lectures (minutes)</Label>
-                  <Input
-                    id="spLectureMinutes"
-                    type="number"
-                    min="0"
-                    {...form.register("spLectureMinutes", { valueAsNumber: true })}
-                    className="w-full"
-                  />
-                  {form.formState.errors.spLectureMinutes && (
-                    <p className="text-sm text-red-600">{form.formState.errors.spLectureMinutes.message}</p>
+              {/* Hearing Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <Headphones className="h-6 w-6" />
+                    Hearing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {batchCriteria.showSpLecture && (
+                    <div>
+                      <Label htmlFor="spLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Srila Prabhupada Lectures (minutes)
+                      </Label>
+                      <Input
+                        id="spLectureMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("spLectureMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.spLectureMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.spLectureMinutes.message}</p>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* Spiritual Master Lectures */}
-              {batchCriteria.showSmLecture && (
-                <div className="space-y-2">
-                  <Label htmlFor="smLectureMinutes">Spiritual Master Lectures (minutes)</Label>
-                  <Input
-                    id="smLectureMinutes"
-                    type="number"
-                    min="0"
-                    {...form.register("smLectureMinutes", { valueAsNumber: true })}
-                    className="w-full"
-                  />
-                  {form.formState.errors.smLectureMinutes && (
-                    <p className="text-sm text-red-600">{form.formState.errors.smLectureMinutes.message}</p>
+                  {batchCriteria.showSmLecture && (
+                    <div>
+                      <Label htmlFor="smLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Spiritual Master Lectures (minutes)
+                      </Label>
+                      <Input
+                        id="smLectureMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("smLectureMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.smLectureMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.smLectureMinutes.message}</p>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* GS/NS Lectures */}
-              {batchCriteria.showGsnsLecture && (
-                <div className="space-y-2">
-                  <Label htmlFor="gsnsLectureMinutes">GS/NS Lectures (minutes)</Label>
-                  <Input
-                    id="gsnsLectureMinutes"
-                    type="number"
-                    min="0"
-                    {...form.register("gsnsLectureMinutes", { valueAsNumber: true })}
-                    className="w-full"
-                  />
-                  {form.formState.errors.gsnsLectureMinutes && (
-                    <p className="text-sm text-red-600">{form.formState.errors.gsnsLectureMinutes.message}</p>
+                  {batchCriteria.showGsnsLecture && (
+                    <div>
+                      <Label htmlFor="gsnsLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        GS/NS Lectures (minutes)
+                      </Label>
+                      <Input
+                        id="gsnsLectureMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("gsnsLectureMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.gsnsLectureMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.gsnsLectureMinutes.message}</p>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* HGRSP/HGRKP Lectures */}
-              {batchCriteria.showHgrspLecture && (
-                <div className="space-y-2">
-                  <Label htmlFor="hgrspLectureMinutes">HGRSP/HGRKP Lectures (minutes)</Label>
-                  <Input
-                    id="hgrspLectureMinutes"
-                    type="number"
-                    min="0"
-                    {...form.register("hgrspLectureMinutes", { valueAsNumber: true })}
-                    className="w-full"
-                  />
-                  {form.formState.errors.hgrspLectureMinutes && (
-                    <p className="text-sm text-red-600">{form.formState.errors.hgrspLectureMinutes.message}</p>
+                  {batchCriteria.showHgrspLecture && (
+                    <div>
+                      <Label htmlFor="hgrspLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        HGRSP/HGRKP Lectures (minutes)
+                      </Label>
+                      <Input
+                        id="hgrspLectureMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("hgrspLectureMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.hgrspLectureMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.hgrspLectureMinutes.message}</p>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Service Section */}
-            <div className="space-y-2">
-              <Label htmlFor="serviceMinutes">Service (minutes)</Label>
-              <Input
-                id="serviceMinutes"
-                type="number"
-                min="0"
-                {...form.register("serviceMinutes", { valueAsNumber: true })}
-                className="w-full"
-              />
-              {form.formState.errors.serviceMinutes && (
-                <p className="text-sm text-red-600">{form.formState.errors.serviceMinutes.message}</p>
-              )}
-            </div>
+            {/* Service & Activities Section */}
+            <div className="space-y-6">
+              {/* Service Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <Heart className="h-6 w-6" />
+                    Service
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div>
+                    <Label htmlFor="serviceMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Service (minutes)
+                    </Label>
+                    <Input
+                      id="serviceMinutes"
+                      type="number"
+                      min="0"
+                      {...form.register("serviceMinutes", { valueAsNumber: true })}
+                      className="spiritual-input"
+                    />
+                    {form.formState.errors.serviceMinutes && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.serviceMinutes.message}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Shloka Section */}
-            <div className="space-y-2">
-              <Label htmlFor="shlokaCount">Shlokas Memorized</Label>
-              <Input
-                id="shlokaCount"
-                type="number"
-                min="0"
-                {...form.register("shlokaCount", { valueAsNumber: true })}
-                className="w-full"
-              />
-              {form.formState.errors.shlokaCount && (
-                <p className="text-sm text-red-600">{form.formState.errors.shlokaCount.message}</p>
-              )}
-            </div>
+              {/* Shloka Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <BookOpen className="h-6 w-6" />
+                    Shloka Memorization
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div>
+                    <Label htmlFor="shlokaCount" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Shlokas Memorized
+                    </Label>
+                    <Input
+                      id="shlokaCount"
+                      type="number"
+                      min="0"
+                      {...form.register("shlokaCount", { valueAsNumber: true })}
+                      className="spiritual-input"
+                    />
+                    {form.formState.errors.shlokaCount && (
+                      <p className="text-sm text-red-600 mt-1">{form.formState.errors.shlokaCount.message}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Wake Up Time */}
-            <div className="space-y-2">
-              <Label htmlFor="wakeUpTime">Wake Up Time</Label>
-              <Input
-                id="wakeUpTime"
-                type="time"
-                {...form.register("wakeUpTime")}
-                className="w-full"
-              />
-              {form.formState.errors.wakeUpTime && (
-                <p className="text-sm text-red-600">{form.formState.errors.wakeUpTime.message}</p>
-              )}
+              {/* Sleep Schedule Card */}
+              <Card className="spiritual-card animate-fade-in">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                    <Moon className="h-6 w-6" />
+                    Sleep Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="wakeUpTime" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Wake Up Time
+                      </Label>
+                      <Input
+                        id="wakeUpTime"
+                        type="time"
+                        {...form.register("wakeUpTime")}
+                        className="spiritual-input"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sleepTime" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Sleep Time
+                      </Label>
+                      <Input
+                        id="sleepTime"
+                        type="time"
+                        {...form.register("sleepTime")}
+                        className="spiritual-input"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="daySleepDuration" className="text-sm font-medium text-gray-700 mb-2 block">
+                      Day Sleep Duration (minutes)
+                    </Label>
+                    <Input
+                      id="daySleepDuration"
+                      type="number"
+                      min="0"
+                      {...form.register("daySleepDuration", { valueAsNumber: true })}
+                      className="spiritual-input"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
 
-            {/* Sleep Time */}
-            <div className="space-y-2">
-              <Label htmlFor="sleepTime">Sleep Time</Label>
-              <Input
-                id="sleepTime"
-                type="time"
-                {...form.register("sleepTime")}
-                className="w-full"
-              />
-              {form.formState.errors.sleepTime && (
-                <p className="text-sm text-red-600">{form.formState.errors.sleepTime.message}</p>
-              )}
-            </div>
+          {/* Morning Program Card */}
+          <Card className="spiritual-card animate-fade-in">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                <Users className="h-6 w-6" />
+                Morning Program Attendance
+              </CardTitle>
+              <CardDescription className="text-sm text-spiritual-sage">
+                Select the programs you attended (points awarded for attendance)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                  <input
+                    id="mangalaArati"
+                    type="checkbox"
+                    className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                    {...form.register("mangalaArati")}
+                  />
+                  <Label htmlFor="mangalaArati" className="flex-1 cursor-pointer">
+                    <span className="block font-medium text-gray-800">Mangala Arati</span>
+                    <span className="text-xs text-spiritual-sage">10 points</span>
+                  </Label>
+                </div>
 
-            {/* Day Sleep Duration */}
-            <div className="space-y-2">
-              <Label htmlFor="daySleepDuration">Day Sleep Duration (minutes)</Label>
-              <Input
-                id="daySleepDuration"
-                type="number"
-                min="0"
-                {...form.register("daySleepDuration", { valueAsNumber: true })}
-                className="w-full"
-              />
-              {form.formState.errors.daySleepDuration && (
-                <p className="text-sm text-red-600">{form.formState.errors.daySleepDuration.message}</p>
-              )}
-            </div>
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                  <input
+                    id="tulsiArati"
+                    type="checkbox"
+                    className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                    {...form.register("tulsiArati")}
+                  />
+                  <Label htmlFor="tulsiArati" className="flex-1 cursor-pointer">
+                    <span className="block font-medium text-gray-800">Tulsi Arati</span>
+                    <span className="text-xs text-spiritual-sage">5 points</span>
+                  </Label>
+                </div>
 
-            {/* Program Attendance */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-spiritual-purple">Program Attendance</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="mangalaArati" className="flex items-center">
-                    <input
-                      id="mangalaArati"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("mangalaArati")}
-                    />
-                    Mangala Arati
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                  <input
+                    id="narsimhaArati"
+                    type="checkbox"
+                    className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                    {...form.register("narsimhaArati")}
+                  />
+                  <Label htmlFor="narsimhaArati" className="flex-1 cursor-pointer">
+                    <span className="block font-medium text-gray-800">Narsimha Arati</span>
+                    <span className="text-xs text-spiritual-sage">5 points</span>
                   </Label>
                 </div>
-                <div>
-                  <Label htmlFor="tulsiArati" className="flex items-center">
-                    <input
-                      id="tulsiArati"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("tulsiArati")}
-                    />
-                    Tulsi Arati
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                  <input
+                    id="guruPuja"
+                    type="checkbox"
+                    className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                    {...form.register("guruPuja")}
+                  />
+                  <Label htmlFor="guruPuja" className="flex-1 cursor-pointer">
+                    <span className="block font-medium text-gray-800">Guru Puja</span>
+                    <span className="text-xs text-spiritual-sage">5 points</span>
                   </Label>
                 </div>
-                <div>
-                  <Label htmlFor="narsimhaArati" className="flex items-center">
-                    <input
-                      id="narsimhaArati"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("narsimhaArati")}
-                    />
-                    Narsimha Arati
-                  </Label>
-                </div>
-                <div>
-                  <Label htmlFor="guruPuja" className="flex items-center">
-                    <input
-                      id="guruPuja"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("guruPuja")}
-                    />
-                    Guru Puja
-                  </Label>
-                </div>
-                <div>
-                  <Label htmlFor="bhagavatamClass" className="flex items-center">
-                    <input
-                      id="bhagavatamClass"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("bhagavatamClass")}
-                    />
-                    Bhagavatam Class
-                  </Label>
-                </div>
-                <div>
-                  <Label htmlFor="morningProgram" className="flex items-center">
-                    <input
-                      id="morningProgram"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("morningProgram")}
-                    />
-                    Morning Program
-                  </Label>
-                </div>
-                <div>
-                  <Label htmlFor="eveningArati" className="flex items-center">
-                    <input
-                      id="eveningArati"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("eveningArati")}
-                    />
-                    Evening Arati
-                  </Label>
-                </div>
-                <div>
-                  <Label htmlFor="spiritualClass" className="flex items-center">
-                    <input
-                      id="spiritualClass"
-                      type="checkbox"
-                      className="mr-2"
-                      {...form.register("spiritualClass")}
-                    />
-                    Spiritual Class
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                  <input
+                    id="bhagavatamClass"
+                    type="checkbox"
+                    className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                    {...form.register("bhagavatamClass")}
+                  />
+                  <Label htmlFor="bhagavatamClass" className="flex-1 cursor-pointer">
+                    <span className="block font-medium text-gray-800">Bhagavatam Class</span>
+                    <span className="text-xs text-spiritual-sage">20 points</span>
                   </Label>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Notes Section */}
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Input
-                id="notes"
-                type="text"
-                {...form.register("notes")}
-                className="w-full"
-              />
-              {form.formState.errors.notes && (
-                <p className="text-sm text-red-600">{form.formState.errors.notes.message}</p>
+          {/* Notes Card */}
+          <Card className="spiritual-card animate-fade-in">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                <Clock className="h-6 w-6" />
+                Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label htmlFor="notes" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Additional Notes (Optional)
+                </Label>
+                <Input
+                  id="notes"
+                  type="text"
+                  placeholder="Any additional reflections or notes about your sadhana..."
+                  {...form.register("notes")}
+                  className="spiritual-input"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Submit Button */}
+          <div className="flex justify-center pt-4">
+            <Button 
+              type="submit" 
+              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-spiritual-purple to-spiritual-purple/80 hover:from-spiritual-purple/90 hover:to-spiritual-purple text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Submitting...
+                </div>
+              ) : (
+                "Submit Sadhana Entry"
               )}
-            </div>
-
-            {/* Submit Button */}
-            <Button type="submit" className="w-full bg-spiritual-purple hover:bg-spiritual-purple/90" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
