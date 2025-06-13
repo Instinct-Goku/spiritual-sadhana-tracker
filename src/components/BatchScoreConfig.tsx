@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Save, Plus, Trash } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { DEFAULT_BATCHES, BatchCriteria, TimeRangeScore, DurationScore } from "@/lib/scoringService";
@@ -279,54 +278,6 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
-  const updateEnableSmHearing = (enabled: boolean) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      enableSmHearing: enabled,
-    });
-  };
-
-  const updateEnableGsnsHearing = (enabled: boolean) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      enableGsnsHearing: enabled,
-    });
-  };
-
-  const updateEnableHgrspHearing = (enabled: boolean) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      enableHgrspHearing: enabled,
-    });
-  };
-
-  const updateSmLectureMinimum = (value: number) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      smLectureMinimum: value,
-    });
-  };
-
-  const updateGsnsLectureMinimum = (value: number) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      gsnsLectureMinimum: value,
-    });
-  };
-
-  const updateHgrspLectureMinimum = (value: number) => {
-    if (!batchConfig) return;
-    setBatchConfig({
-      ...batchConfig,
-      hgrspLectureMinimum: value,
-    });
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -389,80 +340,6 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                         onChange={(e) => updateHearingMinimum(Number(e.target.value))}
                         className="w-full md:w-1/3"
                       />
-                    </div>
-
-                    {/* Hearing Field Controls */}
-                    <div className="space-y-4">
-                      <Label className="text-base font-medium">Hearing Categories</Label>
-                      
-                      {/* SM Hearing */}
-                      <div className="flex items-center space-x-4 p-4 border rounded-lg">
-                        <Checkbox 
-                          id="enable-sm-hearing"
-                          checked={batchConfig?.enableSmHearing || false}
-                          onCheckedChange={(checked) => updateEnableSmHearing(checked === true)}
-                        />
-                        <Label htmlFor="enable-sm-hearing" className="flex-1">Enable Spiritual Master Hearing</Label>
-                        {batchConfig?.enableSmHearing && (
-                          <div className="flex items-center space-x-2">
-                            <Label>Min:</Label>
-                            <Input 
-                              type="number"
-                              value={batchConfig?.smLectureMinimum || 0}
-                              onChange={(e) => updateSmLectureMinimum(Number(e.target.value))}
-                              className="w-20"
-                              placeholder="0"
-                            />
-                            <span className="text-sm text-muted-foreground">min</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* GSNS Hearing */}
-                      <div className="flex items-center space-x-4 p-4 border rounded-lg">
-                        <Checkbox 
-                          id="enable-gsns-hearing"
-                          checked={batchConfig?.enableGsnsHearing || false}
-                          onCheckedChange={(checked) => updateEnableGsnsHearing(checked === true)}
-                        />
-                        <Label htmlFor="enable-gsns-hearing" className="flex-1">Enable GS/NS Hearing</Label>
-                        {batchConfig?.enableGsnsHearing && (
-                          <div className="flex items-center space-x-2">
-                            <Label>Min:</Label>
-                            <Input 
-                              type="number"
-                              value={batchConfig?.gsnsLectureMinimum || 0}
-                              onChange={(e) => updateGsnsLectureMinimum(Number(e.target.value))}
-                              className="w-20"
-                              placeholder="0"
-                            />
-                            <span className="text-sm text-muted-foreground">min</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* HGRSP/HGRKP Hearing */}
-                      <div className="flex items-center space-x-4 p-4 border rounded-lg">
-                        <Checkbox 
-                          id="enable-hgrsp-hearing"
-                          checked={batchConfig?.enableHgrspHearing || false}
-                          onCheckedChange={(checked) => updateEnableHgrspHearing(checked === true)}
-                        />
-                        <Label htmlFor="enable-hgrsp-hearing" className="flex-1">Enable HGRSP/HGRKP Hearing</Label>
-                        {batchConfig?.enableHgrspHearing && (
-                          <div className="flex items-center space-x-2">
-                            <Label>Min:</Label>
-                            <Input 
-                              type="number"
-                              value={batchConfig?.hgrspLectureMinimum || 0}
-                              onChange={(e) => updateHgrspLectureMinimum(Number(e.target.value))}
-                              className="w-20"
-                              placeholder="0"
-                            />
-                            <span className="text-sm text-muted-foreground">min</span>
-                          </div>
-                        )}
-                      </div>
                     </div>
                     
                     {/* Service Minimum */}

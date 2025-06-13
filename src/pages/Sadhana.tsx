@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,6 @@ const SadhanaPage = () => {
   const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
   const [smLectureMinutes, setSmLectureMinutes] = useState<number | ''>('');
   const [gsnsLectureMinutes, setGsnsLectureMinutes] = useState<number | ''>('');
-  const [hgrspLectureMinutes, setHgrspLectureMinutes] = useState<number | ''>(''); // Combined HGRSP/HGRKP
   const [serviceMinutes, setServiceMinutes] = useState<number | ''>('');
   const [shlokaMemorized, setShlokaMemorized] = useState<number | ''>('');
   const [wakeUpTime, setWakeUpTime] = useState("05:00");
@@ -105,7 +105,6 @@ const SadhanaPage = () => {
           setSpLectureMinutes(entry.spLectureMinutes || '');
           setSmLectureMinutes(entry.smLectureMinutes || '');
           setGsnsLectureMinutes(entry.gsnsLectureMinutes || '');
-          setHgrspLectureMinutes(entry.hgrspLectureMinutes || '');
           setServiceMinutes(entry.serviceMinutes || '');
           setShlokaMemorized(entry.shlokaMemorized || '');
           setWakeUpTime(entry.wakeUpTime);
@@ -126,7 +125,6 @@ const SadhanaPage = () => {
           setSpLectureMinutes('');
           setSmLectureMinutes('');
           setGsnsLectureMinutes('');
-          setHgrspLectureMinutes('');
           setServiceMinutes('');
           setShlokaMemorized('');
           setWakeUpTime("05:00");
@@ -173,8 +171,7 @@ const SadhanaPage = () => {
         readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
         spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
         smLectureMinutes: smLectureMinutes === '' ? 0 : Number(smLectureMinutes),
-        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes),
-        hgrspLectureMinutes: hgrspLectureMinutes === '' ? 0 : Number(hgrspLectureMinutes),
+        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes), // New field
         serviceMinutes: serviceMinutes === '' ? 0 : Number(serviceMinutes),
         shlokaMemorized: shlokaMemorized === '' ? 0 : Number(shlokaMemorized),
         hearingMinutes: 0, // For backwards compatibility
@@ -213,20 +210,11 @@ const SadhanaPage = () => {
   };
 
   // Helper to determine if a hearing field should be shown based on batch criteria
-  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns' | 'hgrsp') => {
+  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns') => {
     if (type === 'sp') return true; // All batches show SP lectures
-    if (type === 'sm') return batchCriteria?.enableSmHearing || false;
-    if (type === 'gsns') return batchCriteria?.enableGsnsHearing || false;
-    if (type === 'hgrsp') return batchCriteria?.enableHgrspHearing || false;
+    if (type === 'sm') return batchCriteria.smLectureMinimum !== undefined;
+    if (type === 'gsns') return batchCriteria.gsnsLectureMinimum !== undefined;
     return false;
-  };
-  
-  // Helper to get shloka description
-  const getShlokaDescription = () => {
-    if (userBatch === 'yudhisthira') {
-      return "minimum 2 shlokas or 50 min recitation";
-    }
-    return minShlokaCount > 0 ? `minimum: ${minShlokaCount}` : '';
   };
   
   return (
@@ -330,7 +318,7 @@ const SadhanaPage = () => {
                     <Label htmlFor="spLecture" className="font-medium flex items-center">
                       <Mic className="h-4 w-4 mr-1" />
                       Srila Prabhupada Lectures 
-                      {batchCriteria?.spLectureMinimum && (
+                      {batchCriteria.spLectureMinimum && (
                         <span className="text-amber-600 ml-1">
                           (min: {batchCriteria.spLectureMinimum} min)
                         </span>
@@ -353,7 +341,7 @@ const SadhanaPage = () => {
                       <Label htmlFor="smLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
                         Spiritual Master Lectures
-                        {batchCriteria?.smLectureMinimum && (
+                        {batchCriteria.smLectureMinimum && (
                           <span className="text-amber-600 ml-1">
                             (min: {batchCriteria.smLectureMinimum} min)
                           </span>
@@ -377,7 +365,7 @@ const SadhanaPage = () => {
                       <Label htmlFor="gsnsLecture" className="font-medium flex items-center">
                         <Mic className="h-4 w-4 mr-1" />
                         GS/NS Lectures
-                        {batchCriteria?.gsnsLectureMinimum && (
+                        {batchCriteria.gsnsLectureMinimum && (
                           <span className="text-amber-600 ml-1">
                             (min: {batchCriteria.gsnsLectureMinimum} min)
                           </span>
@@ -389,30 +377,6 @@ const SadhanaPage = () => {
                         min="0"
                         value={gsnsLectureMinutes}
                         onChange={(e) => setGsnsLectureMinutes(e.target.value ? Number(e.target.value) : '')}
-                        className="spiritual-input"
-                        placeholder="0"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* HGRSP/HGRKP Lecture field - conditionally visible and combined */}
-                  {shouldShowHearingField('hgrsp') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="hgrspLecture" className="font-medium flex items-center">
-                        <Mic className="h-4 w-4 mr-1" />
-                        HGRSP/HGRKP Lectures
-                        {batchCriteria?.hgrspLectureMinimum && (
-                          <span className="text-amber-600 ml-1">
-                            (min: {batchCriteria.hgrspLectureMinimum} min)
-                          </span>
-                        )}
-                      </Label>
-                      <Input
-                        id="hgrspLecture"
-                        type="number"
-                        min="0"
-                        value={hgrspLectureMinutes}
-                        onChange={(e) => setHgrspLectureMinutes(e.target.value ? Number(e.target.value) : '')}
                         className="spiritual-input"
                         placeholder="0"
                       />
@@ -432,9 +396,9 @@ const SadhanaPage = () => {
                     <Label htmlFor="shlokaMemorize" className="font-medium flex items-center">
                       <Scroll className="h-4 w-4 mr-1" />
                       Shlokas Memorized
-                      {getShlokaDescription() && (
-                        <span className="text-amber-600 ml-1 text-sm">
-                          ({getShlokaDescription()})
+                      {minShlokaCount > 0 && (
+                        <span className="text-amber-600 ml-1">
+                          (minimum: {minShlokaCount})
                         </span>
                       )}
                     </Label>

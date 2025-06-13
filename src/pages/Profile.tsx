@@ -1,11 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadImageToCloudinary } from "@/lib/cloudinaryService";
-import { getBatchConfigurations } from "@/lib/scoringService";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,12 +73,18 @@ const maritalStatusOptions = [
   { value: "unmarried", label: "Unmarried" },
 ];
 
+const batchOptions = [
+  { value: "Sahadev", label: "Sahadev" },
+  { value: "Nakula", label: "Nakula" },
+  { value: "Arjuna", label: "Arjuna" },
+  { value: "Yudhisthir", label: "Yudhisthir" },
+];
+
 const Profile = () => {
   const { currentUser, userProfile, updateUserProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(userProfile?.photoURL || null);
-  const [batchOptions, setBatchOptions] = useState<{ value: string; label: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -109,20 +113,6 @@ const Profile = () => {
   });
   
   const isInitiatedValue = form.watch("isInitiated");
-
-  // Load batch configurations on component mount
-  useEffect(() => {
-    const loadBatchOptions = () => {
-      const batchConfigurations = getBatchConfigurations();
-      const options = Object.keys(batchConfigurations).map(key => ({
-        value: batchConfigurations[key].name,
-        label: batchConfigurations[key].name
-      }));
-      setBatchOptions(options);
-    };
-
-    loadBatchOptions();
-  }, []);
 
   useEffect(() => {
     // Update form default values when userProfile changes

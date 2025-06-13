@@ -30,7 +30,6 @@ export interface SadhanaEntry {
   spLectureMinutes?: number; // Srila Prabhupada lecture minutes
   smLectureMinutes?: number; // Spiritual Master lecture minutes
   gsnsLectureMinutes?: number; // GS/NS lecture minutes
-  hgrspLectureMinutes?: number; // HGRSP/HGRKP lecture minutes (combined)
   serviceMinutes?: number; // Service minutes
   shlokaMemorized?: number; // Number of shlokas memorized
   shlokaCount?: number; // Number of shlokas memorized (alternative property name)
@@ -328,8 +327,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, userProf
       const spLectureMinutes = entry.spLectureMinutes || 0;
       const smLectureMinutes = entry.smLectureMinutes || 0;
       const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
-      const hgrspLectureMinutes = entry.hgrspLectureMinutes || 0;
-      const entryHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes;
+      const entryHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
       stats.totalHearingMinutes += entryHearingMinutes;
       
       try {
