@@ -46,7 +46,7 @@ const Sadhana = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [existingEntry, setExistingEntry] = useState<SadhanaEntry | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { currentUser, user, userProfile } = useAuth();
+  const { currentUser, userProfile } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
