@@ -1,3 +1,4 @@
+
 import { SadhanaEntry } from "./sadhanaService";
 import { UserProfile } from "@/contexts/AuthContext";
 
@@ -16,6 +17,10 @@ export interface BatchCriteria {
   shlokaMinimum?: number; // Default: no shlokas required
   totalBodyScore: number; // Maximum possible body score
   totalSoulScore: number; // Maximum possible soul score
+  // New checkbox flags for hearing categories
+  showSpLecture: boolean; // Show Srila Prabhupada lectures
+  showSmLecture: boolean; // Show Spiritual Master lectures
+  showGsnsLecture: boolean; // Show GS/NS lectures
 }
 
 export interface TimeRangeScore {
@@ -57,7 +62,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     spLectureMinimum: 60, // 1 hour
     shlokaMinimum: 1, // 1 shloka
     totalBodyScore: 25, // 25 for sleep time
-    totalSoulScore: 235 // 90 reading + 60 hearing + 30 shloka + 45 program + 10 japa
+    totalSoulScore: 235, // 90 reading + 60 hearing + 30 shloka + 45 program + 10 japa
+    showSpLecture: true,
+    showSmLecture: false,
+    showGsnsLecture: false
   },
   nakula: {
     name: "Nakula",
@@ -92,7 +100,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     spLectureMinimum: 60, // 1 hour
     shlokaMinimum: 1, // 1 shloka
     totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
-    totalSoulScore: 280 // 150 reading + 60 hearing + 30 shloka + 45 program + 25 japa
+    totalSoulScore: 280, // 150 reading + 60 hearing + 30 shloka + 45 program + 25 japa
+    showSpLecture: true,
+    showSmLecture: false,
+    showGsnsLecture: false
   },
   arjuna: {
     name: "Arjuna",
@@ -126,7 +137,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     smLectureMinimum: 60, // 1 hour
     shlokaMinimum: 2, // 2 shlokas
     totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
-    totalSoulScore: 375 // 210 reading + 120 hearing + 60 shloka + 45 program + 25 japa
+    totalSoulScore: 375, // 210 reading + 120 hearing + 60 shloka + 45 program + 25 japa
+    showSpLecture: true,
+    showSmLecture: true,
+    showGsnsLecture: false
   },
   yudhisthira: {
     name: "Yudhisthira",
@@ -158,7 +172,10 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     gsnsLectureMinimum: 60, // 1 hour
     shlokaMinimum: 2, // 2 shlokas
     totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
-    totalSoulScore: 485 // 300 reading + 180 hearing + 60 shloka + 45 program + 25 japa
+    totalSoulScore: 485, // 300 reading + 180 hearing + 60 shloka + 45 program + 25 japa
+    showSpLecture: true,
+    showSmLecture: true,
+    showGsnsLecture: true
   }
 };
 

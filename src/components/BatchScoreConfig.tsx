@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Save, Plus, Trash } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { DEFAULT_BATCHES, BatchCriteria, TimeRangeScore, DurationScore } from "@/lib/scoringService";
@@ -278,6 +279,33 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
+  const updateShowSpLecture = (value: boolean) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      showSpLecture: value,
+    });
+  };
+
+  const updateShowSmLecture = (value: boolean) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      showSmLecture: value,
+    });
+  };
+
+  const updateShowGsnsLecture = (value: boolean) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      showGsnsLecture: value,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -384,6 +412,39 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                         onChange={(e) => updateTotalSoulScore(Number(e.target.value))}
                         className="w-full md:w-1/3"
                       />
+                    </div>
+                    
+                    {/* Hearing Categories Checkboxes */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-medium">Hearing Categories to Show in Sadhana Entry</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="show-sp-lecture" 
+                            checked={batchConfig?.showSpLecture || false}
+                            onCheckedChange={(checked) => updateShowSpLecture(checked === true)}
+                          />
+                          <Label htmlFor="show-sp-lecture">Srila Prabhupada Lectures</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="show-sm-lecture" 
+                            checked={batchConfig?.showSmLecture || false}
+                            onCheckedChange={(checked) => updateShowSmLecture(checked === true)}
+                          />
+                          <Label htmlFor="show-sm-lecture">Spiritual Master Lectures</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="show-gsns-lecture" 
+                            checked={batchConfig?.showGsnsLecture || false}
+                            onCheckedChange={(checked) => updateShowGsnsLecture(checked === true)}
+                          />
+                          <Label htmlFor="show-gsns-lecture">GS/NS Lectures</Label>
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Sleep Time Scoring */}

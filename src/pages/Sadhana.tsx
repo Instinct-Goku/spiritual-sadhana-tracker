@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -209,11 +208,11 @@ const SadhanaPage = () => {
     }
   };
 
-  // Helper to determine if a hearing field should be shown based on batch criteria
+  // Helper to determine if a hearing field should be shown based on batch criteria checkboxes
   const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns') => {
-    if (type === 'sp') return true; // All batches show SP lectures
-    if (type === 'sm') return batchCriteria.smLectureMinimum !== undefined;
-    if (type === 'gsns') return batchCriteria.gsnsLectureMinimum !== undefined;
+    if (type === 'sp') return batchCriteria.showSpLecture;
+    if (type === 'sm') return batchCriteria.showSmLecture;
+    if (type === 'gsns') return batchCriteria.showGsnsLecture;
     return false;
   };
   
