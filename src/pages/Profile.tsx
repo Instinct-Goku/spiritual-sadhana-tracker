@@ -74,10 +74,10 @@ const maritalStatusOptions = [
 ];
 
 const batchOptions = [
-  { value: "Sahadev", label: "Sahadev" },
-  { value: "Nakula", label: "Nakula" },
-  { value: "Arjuna", label: "Arjuna" },
-  { value: "Yudhishthira", label: "Yudhishthira" },
+  { value: "sahadev", label: "Sahadev" },
+  { value: "nakula", label: "Nakula" },
+  { value: "arjuna", label: "Arjuna" },
+  { value: "yudhishthira", label: "Yudhishthira" },
 ];
 
 const Profile = () => {

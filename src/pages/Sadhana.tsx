@@ -46,7 +46,7 @@ const Sadhana = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [existingEntry, setExistingEntry] = useState<SadhanaEntry | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user, userProfile } = useAuth();
+  const { currentUser, user, userProfile } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -106,9 +106,9 @@ const Sadhana = () => {
 
   useEffect(() => {
     const loadDailySadhana = async () => {
-      if (user && selectedDate) {
+      if (currentUser && selectedDate) {
         try {
-          const entry = await getDailySadhana(user.uid, selectedDate);
+          const entry = await getDailySadhana(currentUser.uid, selectedDate);
           setExistingEntry(entry);
 
           if (entry) {
@@ -141,16 +141,36 @@ const Sadhana = () => {
     };
 
     loadDailySadhana();
-  }, [user, selectedDate, form]);
+  }, [currentUser, selectedDate, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
       const sadhanaEntry = {
         ...values,
-        userId: user!.uid,
+        userId: currentUser!.uid,
         date: selectedDate,
-        hearingMinutes: 0 // Keeping for backwards compatibility
+        hearingMinutes: 0, // Keeping for backwards compatibility
+        sleepTime: values.sleepTime || "",
+        wakeUpTime: values.wakeUpTime || "",
+        chantingCompletionTime: values.chantingCompletionTime || "",
+        readingMinutes: values.readingMinutes || 0,
+        spLectureMinutes: values.spLectureMinutes || 0,
+        smLectureMinutes: values.smLectureMinutes || 0,
+        gsnsLectureMinutes: values.gsnsLectureMinutes || 0,
+        hgrspLectureMinutes: values.hgrspLectureMinutes || 0,
+        serviceMinutes: values.serviceMinutes || 0,
+        shlokaCount: values.shlokaCount || 0,
+        daySleepDuration: values.daySleepDuration || 0,
+        mangalaArati: values.mangalaArati || false,
+        tulsiArati: values.tulsiArati || false,
+        narsimhaArati: values.narsimhaArati || false,
+        guruPuja: values.guruPuja || false,
+        bhagavatamClass: values.bhagavatamClass || false,
+        morningProgram: values.morningProgram || false,
+        eveningArati: values.eveningArati || false,
+        spiritualClass: values.spiritualClass || false,
+        notes: values.notes || "",
       };
 
       if (existingEntry) {
@@ -164,7 +184,7 @@ const Sadhana = () => {
       }
 
       // Refresh the data
-      const entry = await getDailySadhana(user!.uid, selectedDate);
+      const entry = await getDailySadhana(currentUser!.uid, selectedDate);
       setExistingEntry(entry);
     } catch (error) {
       console.error("Error submitting sadhana entry:", error);
