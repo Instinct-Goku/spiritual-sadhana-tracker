@@ -1,585 +1,517 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/lib/toast";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  Loader2, 
-  Save, 
-  Clock, 
-  BookOpen, 
-  Sun, 
-  Moon, 
-  Music, 
-  Headphones,
-  BedDouble,
-  Calendar,
-  Mic,
-  BookCheck,
-  Scroll,
-  HandHeart
-} from "lucide-react";
-import { 
-  addSadhanaEntry, 
-  getDailySadhana, 
-  SadhanaEntry, 
-  updateSadhanaEntry 
-} from "@/lib/sadhanaService";
-import {
-  DEFAULT_BATCHES,
-  getBatchConfigurations,
-  getBatchMinimumRequirements
-} from "@/lib/scoringService";
+import React, { useState, useEffect } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { CalendarIcon } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { toast } from "@/lib/toast"
+import { addSadhanaEntry, getDailySadhana, updateSadhanaEntry, SadhanaEntry } from "@/lib/sadhanaService"
+import { useAuth } from "@/contexts/AuthContext"
+import { getBatchCriteriaFromUserProfile } from '@/lib/scoringService';
 
-const formatDateForDisplay = (date: Date) => {
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
+const formSchema = z.object({
+  date: z.date({
+    required_error: "A date is required.",
+  }),
+  chantingCompletionTime: z.string().optional(),
+  readingMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  spLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  smLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  gsnsLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  hgrspLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  serviceMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  shlokaCount: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  wakeUpTime: z.string().optional(),
+  sleepTime: z.string().optional(),
+  daySleepDuration: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  mangalaArati: z.boolean().optional(),
+  tulsiArati: z.boolean().optional(),
+  narsimhaArati: z.boolean().optional(),
+  guruPuja: z.boolean().optional(),
+  bhagavatamClass: z.boolean().optional(),
+  morningProgram: z.boolean().optional(),
+  eveningArati: z.boolean().optional(),
+  spiritualClass: z.boolean().optional(),
+  notes: z.string().optional(),
+})
 
-const SadhanaPage = () => {
-  const { currentUser, userProfile } = useAuth();
-  const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+const Sadhana = () => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [existingEntry, setExistingEntry] = useState<SadhanaEntry | null>(null);
-  
-  // Form fields
-  const [chantingCompletionTime, setChantingCompletionTime] = useState("12:00");
-  const [readingMinutes, setReadingMinutes] = useState<number | ''>('');
-  const [spLectureMinutes, setSpLectureMinutes] = useState<number | ''>('');
-  const [smLectureMinutes, setSmLectureMinutes] = useState<number | ''>('');
-  const [gsnsLectureMinutes, setGsnsLectureMinutes] = useState<number | ''>('');
-  const [serviceMinutes, setServiceMinutes] = useState<number | ''>('');
-  const [shlokaMemorized, setShlokaMemorized] = useState<number | ''>('');
-  const [wakeUpTime, setWakeUpTime] = useState("05:00");
-  const [sleepTime, setSleepTime] = useState("21:30");
-  const [daySleepDuration, setDaySleepDuration] = useState<number | ''>('');
-  const [morningProgram, setMorningProgram] = useState(false);
-  const [mangalaArati, setMangalaArati] = useState(false);
-  const [tulsiArati, setTulsiArati] = useState(false);
-  const [narsimhaArati, setNarsimhaArati] = useState(false);
-  const [guruPuja, setGuruPuja] = useState(false);
-  const [bhagavatamClass, setBhagavatamClass] = useState(false);
-  const [notes, setNotes] = useState("");
-  
-  // Get user's batch to determine which hearing fields to display
-  const userBatch = userProfile?.batch?.toLowerCase() || "sahadev";
-  const batchConfigs = getBatchConfigurations();
-  const batchCriteria = batchConfigs[userBatch] || DEFAULT_BATCHES.sahadev;
-  
-  // Get minimum requirements for the user's batch
-  const { readingMinutes: minReadingMinutes, hearingMinutes: minHearingMinutes, 
-          serviceMinutes: minServiceMinutes, shlokaCount: minShlokaCount } = 
-          getBatchMinimumRequirements(userProfile);
-  
-  // Format date for input field
-  const formatDateForInput = (date: Date) => {
-    return date.toISOString().split("T")[0];
-  };
-  
-  // Fetch existing entry for the selected date
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, userProfile } = useAuth();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      date: selectedDate,
+      chantingCompletionTime: "",
+      readingMinutes: 0,
+      spLectureMinutes: 0,
+      smLectureMinutes: 0,
+      gsnsLectureMinutes: 0,
+      hgrspLectureMinutes: 0,
+      serviceMinutes: 0,
+      shlokaCount: 0,
+      wakeUpTime: "",
+      sleepTime: "",
+      daySleepDuration: 0,
+      mangalaArati: false,
+      tulsiArati: false,
+      narsimhaArati: false,
+      guruPuja: false,
+      bhagavatamClass: false,
+      morningProgram: false,
+      eveningArati: false,
+      spiritualClass: false,
+      notes: "",
+    },
+  })
+
+  // Get batch criteria to determine which hearing categories to show
+  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
+
   useEffect(() => {
-    const fetchDailySadhana = async () => {
-      if (!currentUser) return;
-      
-      try {
-        setLoading(true);
-        const entry = await getDailySadhana(currentUser.uid, selectedDate);
-        
-        if (entry) {
+    form.reset({
+      date: selectedDate,
+      chantingCompletionTime: "",
+      readingMinutes: 0,
+      spLectureMinutes: 0,
+      smLectureMinutes: 0,
+      gsnsLectureMinutes: 0,
+      hgrspLectureMinutes: 0,
+      serviceMinutes: 0,
+      shlokaCount: 0,
+      wakeUpTime: "",
+      sleepTime: "",
+      daySleepDuration: 0,
+      mangalaArati: false,
+      tulsiArati: false,
+      narsimhaArati: false,
+      guruPuja: false,
+      bhagavatamClass: false,
+      morningProgram: false,
+      eveningArati: false,
+      spiritualClass: false,
+      notes: "",
+    });
+  }, [selectedDate, form]);
+
+  useEffect(() => {
+    const loadDailySadhana = async () => {
+      if (user && selectedDate) {
+        try {
+          const entry = await getDailySadhana(user.uid, selectedDate);
           setExistingEntry(entry);
-          // Populate form fields with existing data
-          setChantingCompletionTime(entry.chantingCompletionTime || "12:00");
-          setReadingMinutes(entry.readingMinutes || '');
-          setSpLectureMinutes(entry.spLectureMinutes || '');
-          setSmLectureMinutes(entry.smLectureMinutes || '');
-          setGsnsLectureMinutes(entry.gsnsLectureMinutes || '');
-          setServiceMinutes(entry.serviceMinutes || '');
-          setShlokaMemorized(entry.shlokaMemorized || '');
-          setWakeUpTime(entry.wakeUpTime);
-          setSleepTime(entry.sleepTime);
-          setDaySleepDuration(entry.daySleepDuration || '');
-          setMorningProgram(entry.morningProgram);
-          setMangalaArati(entry.mangalaArati);
-          setTulsiArati(entry.tulsiArati || false);
-          setNarsimhaArati(entry.narsimhaArati || false);
-          setGuruPuja(entry.guruPuja || false);
-          setBhagavatamClass(entry.bhagavatamClass || false);
-          setNotes(entry.notes || "");
-        } else {
-          // Reset form for new entry
-          setExistingEntry(null);
-          setChantingCompletionTime("12:00");
-          setReadingMinutes('');
-          setSpLectureMinutes('');
-          setSmLectureMinutes('');
-          setGsnsLectureMinutes('');
-          setServiceMinutes('');
-          setShlokaMemorized('');
-          setWakeUpTime("05:00");
-          setSleepTime("21:30");
-          setDaySleepDuration('');
-          setMorningProgram(false);
-          setMangalaArati(false);
-          setTulsiArati(false);
-          setNarsimhaArati(false);
-          setGuruPuja(false);
-          setBhagavatamClass(false);
-          setNotes("");
+
+          if (entry) {
+            form.setValue("chantingCompletionTime", entry.chantingCompletionTime || "");
+            form.setValue("readingMinutes", entry.readingMinutes || 0);
+            form.setValue("spLectureMinutes", entry.spLectureMinutes || 0);
+            form.setValue("smLectureMinutes", entry.smLectureMinutes || 0);
+            form.setValue("gsnsLectureMinutes", entry.gsnsLectureMinutes || 0);
+            form.setValue("hgrspLectureMinutes", entry.hgrspLectureMinutes || 0);
+            form.setValue("serviceMinutes", entry.serviceMinutes || 0);
+            form.setValue("shlokaCount", entry.shlokaCount || entry.shlokaMemorized || 0);
+            form.setValue("wakeUpTime", entry.wakeUpTime || "");
+            form.setValue("sleepTime", entry.sleepTime || "");
+            form.setValue("daySleepDuration", entry.daySleepDuration || 0);
+            form.setValue("mangalaArati", entry.mangalaArati || false);
+            form.setValue("tulsiArati", entry.tulsiArati || false);
+            form.setValue("narsimhaArati", entry.narsimhaArati || false);
+            form.setValue("guruPuja", entry.guruPuja || false);
+            form.setValue("bhagavatamClass", entry.bhagavatamClass || false);
+            form.setValue("morningProgram", entry.morningProgram || false);
+            form.setValue("eveningArati", entry.eveningArati || false);
+            form.setValue("spiritualClass", entry.spiritualClass || false);
+            form.setValue("notes", entry.notes || "");
+          }
+        } catch (error) {
+          console.error("Error loading daily sadhana:", error);
+          toast.error("Failed to load daily sadhana");
         }
-      } catch (error) {
-        console.error("Error fetching sadhana:", error);
-        toast.error("Failed to load sadhana data");
-      } finally {
-        setLoading(false);
       }
     };
-    
-    fetchDailySadhana();
-  }, [currentUser, selectedDate]);
-  
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(new Date(e.target.value));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!currentUser) {
-      toast.error("You must be logged in");
-      return;
-    }
-    
-    try {
-      setSaving(true);
-      
-      const sadhanaData: Omit<SadhanaEntry, "id"> = {
-        userId: currentUser.uid,
-        date: selectedDate,
-        chantingCompletionTime,
-        readingMinutes: readingMinutes === '' ? 0 : Number(readingMinutes),
-        spLectureMinutes: spLectureMinutes === '' ? 0 : Number(spLectureMinutes),
-        smLectureMinutes: smLectureMinutes === '' ? 0 : Number(smLectureMinutes),
-        gsnsLectureMinutes: gsnsLectureMinutes === '' ? 0 : Number(gsnsLectureMinutes), // New field
-        serviceMinutes: serviceMinutes === '' ? 0 : Number(serviceMinutes),
-        shlokaMemorized: shlokaMemorized === '' ? 0 : Number(shlokaMemorized),
-        hearingMinutes: 0, // For backwards compatibility
-        wakeUpTime,
-        sleepTime,
-        daySleepDuration: daySleepDuration === '' ? 0 : Number(daySleepDuration),
-        morningProgram,
-        mangalaArati,
-        tulsiArati,
-        narsimhaArati,
-        guruPuja,
-        bhagavatamClass,
-        eveningArati: false,
-        spiritualClass: false,
-        notes,
-      };
-      
-      if (existingEntry?.id) {
-        await updateSadhanaEntry(existingEntry.id, sadhanaData);
-        toast.success("Sadhana updated successfully");
-      } else {
-        await addSadhanaEntry(sadhanaData);
-        toast.success("Sadhana recorded successfully");
-      }
-      
-      // Refresh the data
-      const entry = await getDailySadhana(currentUser.uid, selectedDate);
-      setExistingEntry(entry);
-      
-    } catch (error) {
-      console.error("Error saving sadhana:", error);
-      toast.error("Failed to save sadhana data");
-    } finally {
-      setSaving(false);
-    }
-  };
 
-  // Helper to determine if a hearing field should be shown based on batch criteria checkboxes
-  const shouldShowHearingField = (type: 'sp' | 'sm' | 'gsns') => {
-    if (type === 'sp') return batchCriteria.showSpLecture;
-    if (type === 'sm') return batchCriteria.showSmLecture;
-    if (type === 'gsns') return batchCriteria.showGsnsLecture;
-    return false;
-  };
-  
+    loadDailySadhana();
+  }, [user, selectedDate, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    try {
+      const sadhanaEntry = {
+        ...values,
+        userId: user!.uid,
+        date: selectedDate,
+        hearingMinutes: 0 // Keeping for backwards compatibility
+      };
+
+      if (existingEntry) {
+        // Update existing entry
+        await updateSadhanaEntry(existingEntry.id!, sadhanaEntry, userProfile);
+        toast.success("Sadhana entry updated successfully");
+      } else {
+        // Add new entry
+        await addSadhanaEntry(sadhanaEntry, userProfile);
+        toast.success("Sadhana entry added successfully");
+      }
+
+      // Refresh the data
+      const entry = await getDailySadhana(user!.uid, selectedDate);
+      setExistingEntry(entry);
+    } catch (error) {
+      console.error("Error submitting sadhana entry:", error);
+      toast.error("Failed to submit sadhana entry");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <div className="max-w-4xl mx-auto px-4">
-      <div className="mb-6 md:mb-8 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-spiritual-purple">Daily Sadhana Card</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          Record your spiritual practices for personal growth
-        </p>
-      </div>
-      
-      <Card className="spiritual-card mb-6">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-xl md:text-2xl flex items-center">
-              <Calendar className="h-5 w-5 mr-2 hidden md:inline" />
-              {formatDateForDisplay(selectedDate)}
-            </CardTitle>
-            <div className="flex items-center">
-              <Input
-                type="date"
-                value={formatDateForInput(selectedDate)}
-                onChange={handleDateChange}
-                className="w-full sm:w-auto"
-              />
-            </div>
-          </div>
-          <CardDescription>
-            {existingEntry ? "Update your sadhana for today" : "Record your sadhana for today"}
+    <div className="container mx-auto p-4 max-w-2xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-bold text-spiritual-purple">
+            Daily Sadhana Entry
+          </CardTitle>
+          <CardDescription className="text-center">
+            Record your spiritual practices for {selectedDate.toLocaleDateString()}
           </CardDescription>
         </CardHeader>
-        
-        {loading ? (
-          <CardContent className="flex justify-center py-10">
-            <Loader2 className="h-10 w-10 animate-spin text-spiritual-purple" />
-          </CardContent>
-        ) : (
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Chanting Section */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <Music className="h-4 w-4 mr-2" />
-                  Chanting
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="chantingCompletion" className="font-medium">
-                    Completion Time
-                  </Label>
-                  <Input
-                    id="chantingCompletion"
-                    type="time"
-                    value={chantingCompletionTime}
-                    onChange={(e) => setChantingCompletionTime(e.target.value)}
-                    className="spiritual-input"
-                  />
-                </div>
-              </div>
-
-              {/* Reading Section */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Study
-                </h3>
-                <div className="space-y-2">
-                  <Label htmlFor="reading" className="font-medium">
-                    Srila Prabhupada Book Reading (minutes) 
-                    {minReadingMinutes > 0 && (
-                      <span className="text-amber-600 ml-1">
-                        (minimum: {minReadingMinutes} min / {minReadingMinutes / 60} hrs)
-                      </span>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Date Picker */}
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
                     )}
-                  </Label>
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) =>
+                      date > new Date()
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Japa Section */}
+            <div className="space-y-2">
+              <Label htmlFor="chantingCompletionTime">Chanting Completion Time</Label>
+              <Input
+                id="chantingCompletionTime"
+                type="time"
+                {...form.register("chantingCompletionTime")}
+                className="w-full"
+              />
+              {form.formState.errors.chantingCompletionTime && (
+                <p className="text-sm text-red-600">{form.formState.errors.chantingCompletionTime.message}</p>
+              )}
+            </div>
+
+            {/* Reading Section */}
+            <div className="space-y-2">
+              <Label htmlFor="readingMinutes">Reading (minutes)</Label>
+              <Input
+                id="readingMinutes"
+                type="number"
+                min="0"
+                {...form.register("readingMinutes", {
+                  valueAsNumber: true,
+                })}
+                className="w-full"
+              />
+              {form.formState.errors.readingMinutes && (
+                <p className="text-sm text-red-600">{form.formState.errors.readingMinutes.message}</p>
+              )}
+            </div>
+
+            {/* Hearing Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-spiritual-purple">Hearing</h3>
+              
+              {/* Srila Prabhupada Lectures */}
+              {batchCriteria.showSpLecture && (
+                <div className="space-y-2">
+                  <Label htmlFor="spLectureMinutes">Srila Prabhupada Lectures (minutes)</Label>
                   <Input
-                    id="reading"
+                    id="spLectureMinutes"
                     type="number"
                     min="0"
-                    value={readingMinutes}
-                    onChange={(e) => setReadingMinutes(e.target.value ? Number(e.target.value) : '')}
-                    className="spiritual-input"
-                    placeholder="0"
+                    {...form.register("spLectureMinutes", { valueAsNumber: true })}
+                    className="w-full"
                   />
-                </div>
-              </div>
-
-              {/* Hearing Section */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <Headphones className="h-4 w-4 mr-2" />
-                  Hearing (minutes)
-                  {minHearingMinutes > 0 && (
-                    <span className="text-amber-600 ml-1">
-                      (total minimum: {minHearingMinutes} min / {minHearingMinutes / 60} hrs)
-                    </span>
-                  )}
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* SP Lecture field - always visible */}
-                  <div className="space-y-2">
-                    <Label htmlFor="spLecture" className="font-medium flex items-center">
-                      <Mic className="h-4 w-4 mr-1" />
-                      Srila Prabhupada Lectures 
-                      {batchCriteria.spLectureMinimum && (
-                        <span className="text-amber-600 ml-1">
-                          (min: {batchCriteria.spLectureMinimum} min)
-                        </span>
-                      )}
-                    </Label>
-                    <Input
-                      id="spLecture"
-                      type="number"
-                      min="0"
-                      value={spLectureMinutes}
-                      onChange={(e) => setSpLectureMinutes(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
-                    />
-                  </div>
-                  
-                  {/* Spiritual Master Lecture field - conditionally visible */}
-                  {shouldShowHearingField('sm') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="smLecture" className="font-medium flex items-center">
-                        <Mic className="h-4 w-4 mr-1" />
-                        Spiritual Master Lectures
-                        {batchCriteria.smLectureMinimum && (
-                          <span className="text-amber-600 ml-1">
-                            (min: {batchCriteria.smLectureMinimum} min)
-                          </span>
-                        )}
-                      </Label>
-                      <Input
-                        id="smLecture"
-                        type="number"
-                        min="0"
-                        value={smLectureMinutes}
-                        onChange={(e) => setSmLectureMinutes(e.target.value ? Number(e.target.value) : '')}
-                        className="spiritual-input"
-                        placeholder="0"
-                      />
-                    </div>
-                  )}
-                  
-                  {/* GS/NS Lecture field - conditionally visible */}
-                  {shouldShowHearingField('gsns') && (
-                    <div className="space-y-2">
-                      <Label htmlFor="gsnsLecture" className="font-medium flex items-center">
-                        <Mic className="h-4 w-4 mr-1" />
-                        GS/NS Lectures
-                        {batchCriteria.gsnsLectureMinimum && (
-                          <span className="text-amber-600 ml-1">
-                            (min: {batchCriteria.gsnsLectureMinimum} min)
-                          </span>
-                        )}
-                      </Label>
-                      <Input
-                        id="gsnsLecture"
-                        type="number"
-                        min="0"
-                        value={gsnsLectureMinutes}
-                        onChange={(e) => setGsnsLectureMinutes(e.target.value ? Number(e.target.value) : '')}
-                        className="spiritual-input"
-                        placeholder="0"
-                      />
-                    </div>
+                  {form.formState.errors.spLectureMinutes && (
+                    <p className="text-sm text-red-600">{form.formState.errors.spLectureMinutes.message}</p>
                   )}
                 </div>
-              </div>
+              )}
 
-              {/* Shloka Memorize and Service Section */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <BookCheck className="h-4 w-4 mr-2" />
-                  Additional Practices
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="shlokaMemorize" className="font-medium flex items-center">
-                      <Scroll className="h-4 w-4 mr-1" />
-                      Shlokas Memorized
-                      {minShlokaCount > 0 && (
-                        <span className="text-amber-600 ml-1">
-                          (minimum: {minShlokaCount})
-                        </span>
-                      )}
-                    </Label>
-                    <Input
-                      id="shlokaMemorize"
-                      type="number"
-                      min="0"
-                      value={shlokaMemorized}
-                      onChange={(e) => setShlokaMemorized(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
+              {/* Spiritual Master Lectures */}
+              {batchCriteria.showSmLecture && (
+                <div className="space-y-2">
+                  <Label htmlFor="smLectureMinutes">Spiritual Master Lectures (minutes)</Label>
+                  <Input
+                    id="smLectureMinutes"
+                    type="number"
+                    min="0"
+                    {...form.register("smLectureMinutes", { valueAsNumber: true })}
+                    className="w-full"
+                  />
+                  {form.formState.errors.smLectureMinutes && (
+                    <p className="text-sm text-red-600">{form.formState.errors.smLectureMinutes.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* GS/NS Lectures */}
+              {batchCriteria.showGsnsLecture && (
+                <div className="space-y-2">
+                  <Label htmlFor="gsnsLectureMinutes">GS/NS Lectures (minutes)</Label>
+                  <Input
+                    id="gsnsLectureMinutes"
+                    type="number"
+                    min="0"
+                    {...form.register("gsnsLectureMinutes", { valueAsNumber: true })}
+                    className="w-full"
+                  />
+                  {form.formState.errors.gsnsLectureMinutes && (
+                    <p className="text-sm text-red-600">{form.formState.errors.gsnsLectureMinutes.message}</p>
+                  )}
+                </div>
+              )}
+
+              {/* HGRSP/HGRKP Lectures */}
+              {batchCriteria.showHgrspLecture && (
+                <div className="space-y-2">
+                  <Label htmlFor="hgrspLectureMinutes">HGRSP/HGRKP Lectures (minutes)</Label>
+                  <Input
+                    id="hgrspLectureMinutes"
+                    type="number"
+                    min="0"
+                    {...form.register("hgrspLectureMinutes", { valueAsNumber: true })}
+                    className="w-full"
+                  />
+                  {form.formState.errors.hgrspLectureMinutes && (
+                    <p className="text-sm text-red-600">{form.formState.errors.hgrspLectureMinutes.message}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Service Section */}
+            <div className="space-y-2">
+              <Label htmlFor="serviceMinutes">Service (minutes)</Label>
+              <Input
+                id="serviceMinutes"
+                type="number"
+                min="0"
+                {...form.register("serviceMinutes", { valueAsNumber: true })}
+                className="w-full"
+              />
+              {form.formState.errors.serviceMinutes && (
+                <p className="text-sm text-red-600">{form.formState.errors.serviceMinutes.message}</p>
+              )}
+            </div>
+
+            {/* Shloka Section */}
+            <div className="space-y-2">
+              <Label htmlFor="shlokaCount">Shlokas Memorized</Label>
+              <Input
+                id="shlokaCount"
+                type="number"
+                min="0"
+                {...form.register("shlokaCount", { valueAsNumber: true })}
+                className="w-full"
+              />
+              {form.formState.errors.shlokaCount && (
+                <p className="text-sm text-red-600">{form.formState.errors.shlokaCount.message}</p>
+              )}
+            </div>
+
+            {/* Wake Up Time */}
+            <div className="space-y-2">
+              <Label htmlFor="wakeUpTime">Wake Up Time</Label>
+              <Input
+                id="wakeUpTime"
+                type="time"
+                {...form.register("wakeUpTime")}
+                className="w-full"
+              />
+              {form.formState.errors.wakeUpTime && (
+                <p className="text-sm text-red-600">{form.formState.errors.wakeUpTime.message}</p>
+              )}
+            </div>
+
+            {/* Sleep Time */}
+            <div className="space-y-2">
+              <Label htmlFor="sleepTime">Sleep Time</Label>
+              <Input
+                id="sleepTime"
+                type="time"
+                {...form.register("sleepTime")}
+                className="w-full"
+              />
+              {form.formState.errors.sleepTime && (
+                <p className="text-sm text-red-600">{form.formState.errors.sleepTime.message}</p>
+              )}
+            </div>
+
+            {/* Day Sleep Duration */}
+            <div className="space-y-2">
+              <Label htmlFor="daySleepDuration">Day Sleep Duration (minutes)</Label>
+              <Input
+                id="daySleepDuration"
+                type="number"
+                min="0"
+                {...form.register("daySleepDuration", { valueAsNumber: true })}
+                className="w-full"
+              />
+              {form.formState.errors.daySleepDuration && (
+                <p className="text-sm text-red-600">{form.formState.errors.daySleepDuration.message}</p>
+              )}
+            </div>
+
+            {/* Program Attendance */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-spiritual-purple">Program Attendance</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="mangalaArati" className="flex items-center">
+                    <input
+                      id="mangalaArati"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("mangalaArati")}
                     />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="service" className="font-medium flex items-center">
-                      <HandHeart className="h-4 w-4 mr-1" />
-                      Service (minutes)
-                      {minServiceMinutes > 0 && (
-                        <span className="text-amber-600 ml-1">
-                          (minimum: {minServiceMinutes} min / {minServiceMinutes / 60} hrs)
-                        </span>
-                      )}
-                    </Label>
-                    <Input
-                      id="service"
-                      type="number"
-                      min="0"
-                      value={serviceMinutes}
-                      onChange={(e) => setServiceMinutes(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
+                    Mangala Arati
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="tulsiArati" className="flex items-center">
+                    <input
+                      id="tulsiArati"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("tulsiArati")}
                     />
-                  </div>
+                    Tulsi Arati
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="narsimhaArati" className="flex items-center">
+                    <input
+                      id="narsimhaArati"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("narsimhaArati")}
+                    />
+                    Narsimha Arati
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="guruPuja" className="flex items-center">
+                    <input
+                      id="guruPuja"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("guruPuja")}
+                    />
+                    Guru Puja
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="bhagavatamClass" className="flex items-center">
+                    <input
+                      id="bhagavatamClass"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("bhagavatamClass")}
+                    />
+                    Bhagavatam Class
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="morningProgram" className="flex items-center">
+                    <input
+                      id="morningProgram"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("morningProgram")}
+                    />
+                    Morning Program
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="eveningArati" className="flex items-center">
+                    <input
+                      id="eveningArati"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("eveningArati")}
+                    />
+                    Evening Arati
+                  </Label>
+                </div>
+                <div>
+                  <Label htmlFor="spiritualClass" className="flex items-center">
+                    <input
+                      id="spiritualClass"
+                      type="checkbox"
+                      className="mr-2"
+                      {...form.register("spiritualClass")}
+                    />
+                    Spiritual Class
+                  </Label>
                 </div>
               </div>
+            </div>
 
-              {/* Wake-up and Sleep Time */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Rest Schedule
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="wakeup" className="font-medium flex items-center">
-                      <Sun className="h-4 w-4 mr-1" />
-                      Wake-up Time
-                    </Label>
-                    <Input
-                      id="wakeup"
-                      type="time"
-                      value={wakeUpTime}
-                      onChange={(e) => setWakeUpTime(e.target.value)}
-                      className="spiritual-input"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="sleep" className="font-medium flex items-center">
-                      <Moon className="h-4 w-4 mr-1" />
-                      Sleep Time
-                    </Label>
-                    <Input
-                      id="sleep"
-                      type="time"
-                      value={sleepTime}
-                      onChange={(e) => setSleepTime(e.target.value)}
-                      className="spiritual-input"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="daySleep" className="font-medium flex items-center">
-                      <BedDouble className="h-4 w-4 mr-1" />
-                      Day Sleep (minutes)
-                    </Label>
-                    <Input
-                      id="daySleep"
-                      type="number"
-                      min="0"
-                      value={daySleepDuration}
-                      onChange={(e) => setDaySleepDuration(e.target.value ? Number(e.target.value) : '')}
-                      className="spiritual-input"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Notes Section */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Input
+                id="notes"
+                type="text"
+                {...form.register("notes")}
+                className="w-full"
+              />
+              {form.formState.errors.notes && (
+                <p className="text-sm text-red-600">{form.formState.errors.notes.message}</p>
+              )}
+            </div>
 
-              {/* Morning Program Section */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-spiritual-purple flex items-center">
-                  <Sun className="h-4 w-4 mr-2" />
-                  Morning Program
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="mangala-arati" 
-                      checked={mangalaArati}
-                      onCheckedChange={(checked) => setMangalaArati(checked === true)}
-                    />
-                    <Label htmlFor="mangala-arati">Mangala Arati</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="tulsi-arati" 
-                      checked={tulsiArati}
-                      onCheckedChange={(checked) => setTulsiArati(checked === true)}
-                    />
-                    <Label htmlFor="tulsi-arati">Tulsi Arati</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="narsimha-arati" 
-                      checked={narsimhaArati}
-                      onCheckedChange={(checked) => setNarsimhaArati(checked === true)}
-                    />
-                    <Label htmlFor="narsimha-arati">Narsimha Arati</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="guru-puja" 
-                      checked={guruPuja}
-                      onCheckedChange={(checked) => setGuruPuja(checked === true)}
-                    />
-                    <Label htmlFor="guru-puja">Guru Puja</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="bhagavatam-class" 
-                      checked={bhagavatamClass}
-                      onCheckedChange={(checked) => setBhagavatamClass(checked === true)}
-                    />
-                    <Label htmlFor="bhagavatam-class">Bhagavatam Class</Label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="font-medium">
-                  Notes & Reflections (optional)
-                </Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Record insights, challenges, or reflections from your practice today..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="spiritual-input min-h-[100px]"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <Button 
-                type="submit" 
-                className="w-full bg-spiritual-purple hover:bg-spiritual-purple/90 text-white"
-                disabled={saving}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {existingEntry ? "Updating..." : "Saving..."}
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    {existingEntry ? "Update Sadhana" : "Save Sadhana"}
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        )}
+            {/* Submit Button */}
+            <Button type="submit" className="w-full bg-spiritual-purple hover:bg-spiritual-purple/90" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );
 };
 
-export default SadhanaPage;
+export default Sadhana;

@@ -1,4 +1,3 @@
-
 import { SadhanaEntry } from "./sadhanaService";
 import { UserProfile } from "@/contexts/AuthContext";
 
@@ -9,11 +8,12 @@ export interface BatchCriteria {
   readingMinimum: number; // in minutes
   daySleepScoring: DurationScore[];
   japaCompletionScoring: TimeRangeScore[];
-  hearingMinimum: number; // in minutes
+  hearingMinimum: number; // in minutes (total hearing)
   serviceMinimum: number; // in minutes
   spLectureMinimum?: number; // Srila Prabhupada lectures minimum in minutes
   smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
   gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
+  hgrspLectureMinimum?: number; // HGRSP/HGRKP lectures minimum in minutes
   shlokaMinimum?: number; // Default: no shlokas required
   totalBodyScore: number; // Maximum possible body score
   totalSoulScore: number; // Maximum possible soul score
@@ -21,6 +21,7 @@ export interface BatchCriteria {
   showSpLecture: boolean; // Show Srila Prabhupada lectures
   showSmLecture: boolean; // Show Spiritual Master lectures
   showGsnsLecture: boolean; // Show GS/NS lectures
+  showHgrspLecture: boolean; // Show HGRSP/HGRKP lectures
 }
 
 export interface TimeRangeScore {
@@ -65,7 +66,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     totalSoulScore: 235, // 90 reading + 60 hearing + 30 shloka + 45 program + 10 japa
     showSpLecture: true,
     showSmLecture: false,
-    showGsnsLecture: false
+    showGsnsLecture: false,
+    showHgrspLecture: false
   },
   nakula: {
     name: "Nakula",
@@ -103,7 +105,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     totalSoulScore: 280, // 150 reading + 60 hearing + 30 shloka + 45 program + 25 japa
     showSpLecture: true,
     showSmLecture: false,
-    showGsnsLecture: false
+    showGsnsLecture: false,
+    showHgrspLecture: false
   },
   arjuna: {
     name: "Arjuna",
@@ -140,7 +143,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     totalSoulScore: 375, // 210 reading + 120 hearing + 60 shloka + 45 program + 25 japa
     showSpLecture: true,
     showSmLecture: true,
-    showGsnsLecture: false
+    showGsnsLecture: false,
+    showHgrspLecture: false
   },
   yudhisthira: {
     name: "Yudhisthira",
@@ -175,7 +179,8 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     totalSoulScore: 485, // 300 reading + 180 hearing + 60 shloka + 45 program + 25 japa
     showSpLecture: true,
     showSmLecture: true,
-    showGsnsLecture: true
+    showGsnsLecture: true,
+    showHgrspLecture: false
   }
 };
 
@@ -243,7 +248,7 @@ export const calculateReadingScore = (minutes: number, batchMinimum: number): nu
   return Math.min(Math.max(0, minutes), batchMinimum); // Capped at batch minimum
 };
 
-// Calculate hearing score (capped at batch minimum)
+// Calculate hearing score (sum of all hearing types, capped at batch minimum)
 export const calculateHearingScore = (minutes: number, batchMinimum: number): number => {
   return Math.min(Math.max(0, minutes), batchMinimum); // Capped at batch minimum
 };
@@ -353,7 +358,8 @@ export const calculateSadhanaScore = (
   const spLectureMinutes = entry.spLectureMinutes || 0;
   const smLectureMinutes = entry.smLectureMinutes || 0;
   const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
-  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes;
+  const hgrspLectureMinutes = entry.hgrspLectureMinutes || 0;
+  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes;
   const hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
   
   // Calculate shloka score
@@ -493,6 +499,10 @@ export const getBatchCriteriaDescription = (batchNameOrProfile: string | UserPro
   
   if (batchCriteria.gsnsLectureMinimum) {
     descriptions.hearing.push(`GS/NS Lectures: ${batchCriteria.gsnsLectureMinimum} minutes`);
+  }
+  
+  if (batchCriteria.hgrspLectureMinimum) {
+    descriptions.hearing.push(`HGRSP/HGRKP Lectures: ${batchCriteria.hgrspLectureMinimum} minutes`);
   }
   
   // Sleep time criteria

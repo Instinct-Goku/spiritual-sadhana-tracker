@@ -306,6 +306,51 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
     });
   };
 
+  const updateSpLectureMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      spLectureMinimum: value,
+    });
+  };
+
+  const updateSmLectureMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      smLectureMinimum: value,
+    });
+  };
+
+  const updateGsnsLectureMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      gsnsLectureMinimum: value,
+    });
+  };
+
+  const updateHgrspLectureMinimum = (value: number) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      hgrspLectureMinimum: value,
+    });
+  };
+
+  const updateShowHgrspLecture = (value: boolean) => {
+    if (!batchConfig) return;
+    
+    setBatchConfig({
+      ...batchConfig,
+      showHgrspLecture: value,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -359,15 +404,61 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                       />
                     </div>
                     
-                    {/* Hearing Minimum */}
+                    {/* Total Hearing Minimum */}
                     <div className="space-y-2">
-                      <Label>Hearing Minimum (minutes)</Label>
+                      <Label>Total Hearing Minimum (minutes)</Label>
                       <Input 
                         type="number"
                         value={batchConfig?.hearingMinimum || 0}
                         onChange={(e) => updateHearingMinimum(Number(e.target.value))}
                         className="w-full md:w-1/3"
                       />
+                    </div>
+                    
+                    {/* Individual Hearing Category Minimums */}
+                    <div className="space-y-4">
+                      <Label className="text-base font-medium">Individual Hearing Category Minimums</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
+                        <div className="space-y-2">
+                          <Label>Srila Prabhupada Lectures (minutes)</Label>
+                          <Input 
+                            type="number"
+                            value={batchConfig?.spLectureMinimum || 0}
+                            onChange={(e) => updateSpLectureMinimum(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Spiritual Master Lectures (minutes)</Label>
+                          <Input 
+                            type="number"
+                            value={batchConfig?.smLectureMinimum || 0}
+                            onChange={(e) => updateSmLectureMinimum(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>GS/NS Lectures (minutes)</Label>
+                          <Input 
+                            type="number"
+                            value={batchConfig?.gsnsLectureMinimum || 0}
+                            onChange={(e) => updateGsnsLectureMinimum(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>HGRSP/HGRKP Lectures (minutes)</Label>
+                          <Input 
+                            type="number"
+                            value={batchConfig?.hgrspLectureMinimum || 0}
+                            onChange={(e) => updateHgrspLectureMinimum(Number(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
                     </div>
                     
                     {/* Service Minimum */}
@@ -417,7 +508,7 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                     {/* Hearing Categories Checkboxes */}
                     <div className="space-y-4">
                       <Label className="text-base font-medium">Hearing Categories to Show in Sadhana Entry</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-spiritual-purple/5 rounded-lg">
                         <div className="flex items-center space-x-2">
                           <Checkbox 
                             id="show-sp-lecture" 
@@ -443,6 +534,15 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ onClose }) => {
                             onCheckedChange={(checked) => updateShowGsnsLecture(checked === true)}
                           />
                           <Label htmlFor="show-gsns-lecture">GS/NS Lectures</Label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="show-hgrsp-lecture" 
+                            checked={batchConfig?.showHgrspLecture || false}
+                            onCheckedChange={(checked) => updateShowHgrspLecture(checked === true)}
+                          />
+                          <Label htmlFor="show-hgrsp-lecture">HGRSP/HGRKP Lectures</Label>
                         </div>
                       </div>
                     </div>
