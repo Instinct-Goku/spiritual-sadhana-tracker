@@ -157,6 +157,10 @@ const Sadhana = () => {
         guruPuja: values.guruPuja || false,
         bhagavatamClass: values.bhagavatamClass || false,
         notes: values.notes || "",
+        // Add missing required properties from SadhanaEntry interface
+        morningProgram: values.mangalaArati || values.tulsiArati || values.narsimhaArati || values.guruPuja || values.bhagavatamClass || false,
+        eveningArati: false, // Not used in current form but required by interface
+        spiritualClass: values.bhagavatamClass || false, // Map bhagavatamClass to spiritualClass
       };
 
       if (existingEntry) {
