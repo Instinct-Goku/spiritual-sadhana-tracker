@@ -305,8 +305,8 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
     batchName = userProfile.batchName.toLowerCase();
   }
   
-  // Handle the old spelling for backwards compatibility
-  if (batchName === "yudhisthir") {
+  // Handle different spellings for backwards compatibility
+  if (batchName === "yudhisthir" || batchName === "yudhishthira") {
     batchName = "yudhisthira";
   }
   
