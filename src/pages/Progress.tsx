@@ -225,7 +225,7 @@ const PointsProgress = () => {
         }
         
         setChartData(weeksData);
-        setWeeklyBreakdowns(weeklyBreakdowns);
+        setWeeklyBreakdowns(weeklyBreakdownData);
         
       } catch (error) {
         console.error("Error fetching points data:", error);
@@ -345,6 +345,69 @@ const PointsProgress = () => {
                           {dailyScore?.totalScore || 0} points
                         </Badge>
                       </div>
+
+                      {/* Daily Score Breakdown */}
+                      {dailyScore && (
+                        <div className="bg-gradient-to-r from-spiritual-purple/10 to-spiritual-gold/10 rounded-lg p-4">
+                          <h4 className="font-semibold text-spiritual-purple mb-3">Score Breakdown</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Body Scores */}
+                            <div className="space-y-2">
+                              <h5 className="font-medium text-sm text-muted-foreground">Body (Physical Discipline)</h5>
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Sleep Time:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.sleepTimeScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Wake Up Time:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.wakeUpTimeScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Day Sleep:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.daySleepScore} pts</span>
+                                </div>
+                                <div className="flex justify-between font-medium border-t pt-1">
+                                  <span>Body Total:</span>
+                                  <span>{dailyScore.breakdowns.sleepTimeScore + dailyScore.breakdowns.wakeUpTimeScore + dailyScore.breakdowns.daySleepScore} pts</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Soul Scores */}
+                            <div className="space-y-2">
+                              <h5 className="font-medium text-sm text-muted-foreground">Soul (Spiritual Practice)</h5>
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Reading:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.readingScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Hearing:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.hearingScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Japa Completion:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.japaCompletionScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Shlokas:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.shlokaScore} pts</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Program Attendance:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.programScore} pts</span>
+                                </div>
+                                <div className="flex justify-between font-medium border-t pt-1">
+                                  <span>Soul Total:</span>
+                                  <span>{dailyScore.breakdowns.readingScore + dailyScore.breakdowns.hearingScore + dailyScore.breakdowns.japaCompletionScore + dailyScore.breakdowns.shlokaScore + dailyScore.breakdowns.programScore} pts</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Basic Info */}

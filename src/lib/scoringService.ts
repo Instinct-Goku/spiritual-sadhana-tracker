@@ -181,6 +181,42 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showSmLecture: true,
     showGsnsLecture: true,
     showHgrspLecture: false
+  },
+  "nakula-working": {
+    name: "Nakula - Working",
+    sleepTimeScoring: [
+      { startTime: "00:00", endTime: "21:30", points: 25 },
+      { startTime: "21:30", endTime: "22:00", points: 15 },
+      { startTime: "22:00", endTime: "23:59", points: 0 }
+    ],
+    wakeUpTimeScoring: [
+      { startTime: "00:00", endTime: "04:00", points: 25 },
+      { startTime: "04:00", endTime: "23:59", points: 0 }
+    ],
+    readingMinimum: 240, // 4 hours (slightly less than Yudhisthira)
+    daySleepScoring: [
+      { maxDuration: 45, points: 25 }, // less than 45min (more flexible for working)
+      { maxDuration: Number.MAX_SAFE_INTEGER, points: 0 } // greater than 45min
+    ],
+    japaCompletionScoring: [
+      { startTime: "00:00", endTime: "07:00", points: 25 },
+      { startTime: "07:00", endTime: "10:00", points: 20 },
+      { startTime: "10:00", endTime: "15:00", points: 15 },
+      { startTime: "15:00", endTime: "20:00", points: 10 },
+      { startTime: "20:00", endTime: "23:59", points: 0 }
+    ],
+    hearingMinimum: 120, // 2 hours (less than Yudhisthira)
+    serviceMinimum: 90, // 1.5 hours (more flexible for working)
+    spLectureMinimum: 60, // 1 hour
+    smLectureMinimum: 60, // 1 hour
+    gsnsLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 2, // 2 shlokas
+    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
+    totalSoulScore: 445, // 240 reading + 120 hearing + 60 shloka + 45 program + 25 japa
+    showSpLecture: true,
+    showSmLecture: true,
+    showGsnsLecture: true,
+    showHgrspLecture: false
   }
 };
 
@@ -198,7 +234,8 @@ export const SHLOKA_SCORING = {
   sahadev: 30,
   nakula: 30,
   arjuna: 30,
-  yudhisthira: 30
+  yudhisthira: 30,
+  "nakula-working": 30
 };
 
 // Parse time string (HH:MM) to minutes since midnight
