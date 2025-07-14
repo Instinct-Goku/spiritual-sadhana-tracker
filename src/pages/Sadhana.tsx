@@ -267,14 +267,19 @@ const Sadhana = () => {
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-3 text-spiritual-purple">
                     <BookOpen className="h-6 w-6" />
-                    Reading
+                    SP Book Reading
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div>
                     <Label htmlFor="readingMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
-                      Reading (minutes)
+                      SP Book Reading (minutes)
                     </Label>
+                    {batchCriteria.readingMinimum && (
+                      <p className="text-xs text-gray-500 mb-2">
+                        Minimum: {batchCriteria.readingMinimum} minutes
+                      </p>
+                    )}
                     <Input
                       id="readingMinutes"
                       type="number"
@@ -303,6 +308,11 @@ const Sadhana = () => {
                       <Label htmlFor="spLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Srila Prabhupada Lectures (minutes)
                       </Label>
+                      {batchCriteria.spLectureMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Minimum: {batchCriteria.spLectureMinimum} minutes
+                        </p>
+                      )}
                       <Input
                         id="spLectureMinutes"
                         type="number"
@@ -321,6 +331,11 @@ const Sadhana = () => {
                       <Label htmlFor="smLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Spiritual Master Lectures (minutes)
                       </Label>
+                      {batchCriteria.smLectureMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Minimum: {batchCriteria.smLectureMinimum} minutes
+                        </p>
+                      )}
                       <Input
                         id="smLectureMinutes"
                         type="number"
@@ -339,6 +354,11 @@ const Sadhana = () => {
                       <Label htmlFor="gsnsLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         GS/NS Lectures (minutes)
                       </Label>
+                      {batchCriteria.gsnsLectureMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Minimum: {batchCriteria.gsnsLectureMinimum} minutes
+                        </p>
+                      )}
                       <Input
                         id="gsnsLectureMinutes"
                         type="number"
@@ -357,6 +377,11 @@ const Sadhana = () => {
                       <Label htmlFor="hgrspLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         HGRSP/HGRKP Lectures (minutes)
                       </Label>
+                      {batchCriteria.hgrspLectureMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Minimum: {batchCriteria.hgrspLectureMinimum} minutes
+                        </p>
+                      )}
                       <Input
                         id="hgrspLectureMinutes"
                         type="number"
@@ -388,6 +413,11 @@ const Sadhana = () => {
                     <Label htmlFor="serviceMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                       Service (minutes)
                     </Label>
+                    {batchCriteria.serviceMinimum && (
+                      <p className="text-xs text-gray-500 mb-2">
+                        Minimum: {batchCriteria.serviceMinimum} minutes
+                      </p>
+                    )}
                     <Input
                       id="serviceMinutes"
                       type="number"
@@ -415,6 +445,11 @@ const Sadhana = () => {
                     <Label htmlFor="shlokaCount" className="text-sm font-medium text-gray-700 mb-2 block">
                       Shlokas Memorized
                     </Label>
+                    {batchCriteria.shlokaMinimum && (
+                      <p className="text-xs text-gray-500 mb-2">
+                        Minimum: {batchCriteria.shlokaMinimum} shlokas
+                      </p>
+                    )}
                     <Input
                       id="shlokaCount"
                       type="number"
