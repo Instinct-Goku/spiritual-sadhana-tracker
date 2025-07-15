@@ -15,7 +15,8 @@ import { format } from "date-fns"
 import { toast } from "@/lib/toast"
 import { addSadhanaEntry, getDailySadhana, updateSadhanaEntry, SadhanaEntry } from "@/lib/sadhanaService"
 import { useAuth } from "@/contexts/AuthContext"
-import { getBatchCriteriaFromUserProfile } from '@/lib/scoringService';
+import { getBatchCriteriaFromUserProfile, getBatchCriteria } from '@/lib/scoringService';
+import { getUserGroups } from "../lib/adminService";
 
 const formSchema = z.object({
   date: z.date({
@@ -71,7 +72,44 @@ const Sadhana = () => {
   })
 
   // Get batch criteria to determine which hearing categories to show
-  const batchCriteria = getBatchCriteriaFromUserProfile(userProfile);
+  const [batchCriteria, setBatchCriteria] = useState<any>({});
+
+  useEffect(() => {
+    const fetchBatchCriteria = async () => {
+      if (userProfile?.batchName) {
+        try {
+          // First try to get criteria from user's groups
+          const userGroups = await getUserGroups(userProfile.uid);
+          let groupCriteria = {};
+          
+          if (userGroups.length > 0) {
+            // Use the first group's criteria or merge them
+            const firstGroup = userGroups[0];
+            if (firstGroup.batchCriteria) {
+              groupCriteria = firstGroup.batchCriteria;
+            }
+          }
+          
+          // If no group criteria found, use default batch criteria
+          if (Object.keys(groupCriteria).length === 0) {
+            groupCriteria = getBatchCriteria(userProfile.batchName);
+          }
+          
+          setBatchCriteria(groupCriteria);
+        } catch (error) {
+          console.error("Error fetching batch criteria:", error);
+          // Fallback to default criteria
+          const criteria = getBatchCriteria(userProfile.batchName);
+          setBatchCriteria(criteria);
+        }
+      }
+    };
+
+    fetchBatchCriteria();
+  }, [userProfile?.batchName, userProfile?.uid]);
+
+  // Get batch criteria for display logic (using existing function)
+  const displayCriteria = getBatchCriteriaFromUserProfile(userProfile);
 
   useEffect(() => {
     form.reset({
@@ -303,7 +341,7 @@ const Sadhana = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {batchCriteria.showSpLecture && (
+                  {displayCriteria.showSpLecture && (
                     <div>
                       <Label htmlFor="spLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Srila Prabhupada Lectures (minutes)
@@ -326,7 +364,7 @@ const Sadhana = () => {
                     </div>
                   )}
 
-                  {batchCriteria.showSmLecture && (
+                  {displayCriteria.showSmLecture && (
                     <div>
                       <Label htmlFor="smLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Spiritual Master Lectures (minutes)
@@ -349,7 +387,7 @@ const Sadhana = () => {
                     </div>
                   )}
 
-                  {batchCriteria.showGsnsLecture && (
+                  {displayCriteria.showGsnsLecture && (
                     <div>
                       <Label htmlFor="gsnsLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         GS/NS Lectures (minutes)
@@ -372,7 +410,7 @@ const Sadhana = () => {
                     </div>
                   )}
 
-                  {batchCriteria.showHgrspLecture && (
+                  {displayCriteria.showHgrspLecture && (
                     <div>
                       <Label htmlFor="hgrspLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         HGRSP/HGRKP Lectures (minutes)

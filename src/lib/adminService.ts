@@ -38,6 +38,43 @@ export interface DevoteeSadhanaProgress {
   };
 }
 
+export interface BatchCriteria {
+  chantingRoundsMinimum?: number;
+  readingMinimum?: number;
+  spLectureMinimum?: number;
+  smLectureMinimum?: number;
+  gsnsLectureMinimum?: number;
+  hgrspLectureMinimum?: number;
+  serviceMinimum?: number;
+  shlokaMinimum?: number;
+  maxSleepHours?: number;
+  maxDayTimeHours?: number;
+  maxWakeUpTime?: string;
+  maxSleepTime?: string;
+  mangalaAratiMandatory?: boolean;
+  morningProgramMandatory?: boolean;
+  eveningProgramMandatory?: boolean;
+  bookDistributionMandatory?: boolean;
+  chantingRoundsPoints?: number;
+  readingPoints?: number;
+  spLecturePoints?: number;
+  smLecturePoints?: number;
+  gsnsLecturePoints?: number;
+  hgrspLecturePoints?: number;
+  servicePoints?: number;
+  shlokaPoints?: number;
+  mangalaAratiPoints?: number;
+  morningProgramPoints?: number;
+  eveningProgramPoints?: number;
+  bookDistributionPoints?: number;
+  sleepScorePoints?: number;
+  wakeUpScorePoints?: number;
+  earlyToSleepBonus?: number;
+  onTimeWakeUpBonus?: number;
+  lateToSleepPenalty?: number;
+  lateWakeUpPenalty?: number;
+}
+
 export interface DevoteeGroup {
   id: string;
   name: string;
@@ -46,6 +83,7 @@ export interface DevoteeGroup {
   createdAt: Date;
   devoteeIds: string[];
   devoteeCount?: number; // Added missing property
+  batchCriteria?: BatchCriteria;
 }
 
 export interface DevoteeWithProfile {
@@ -189,6 +227,7 @@ export const getAvailableGroups = async (): Promise<DevoteeGroup[]> => {
         createdAt: data.createdAt.toDate(),
         devoteeIds: data.devoteeIds || [],
         devoteeCount: (data.devoteeIds || []).length, // Calculate devotee count
+        batchCriteria: data.batchCriteria || {},
       });
     });
     
@@ -304,6 +343,7 @@ export const createDevoteeGroup = async (groupData: {
   description?: string;
   adminId: string;
   createdAt: Date;
+  batchCriteria?: BatchCriteria;
 }): Promise<string> => {
   try {
     const newGroup = {
@@ -312,6 +352,7 @@ export const createDevoteeGroup = async (groupData: {
       createdBy: groupData.adminId,
       createdAt: Timestamp.now(),
       devoteeIds: [],
+      batchCriteria: groupData.batchCriteria || {},
     };
     
     const docRef = await addDoc(collection(db, "devoteeGroups"), newGroup);
@@ -343,6 +384,7 @@ export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]>
         createdAt: data.createdAt.toDate(),
         devoteeIds,
         devoteeCount: devoteeIds.length, // Calculate devotee count
+        batchCriteria: data.batchCriteria || {},
       });
     });
     

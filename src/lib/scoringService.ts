@@ -1,5 +1,6 @@
 import { SadhanaEntry } from "./sadhanaService";
 import { UserProfile } from "@/contexts/AuthContext";
+import { BatchCriteria as DBBatchCriteria } from "./adminService";
 
 export interface BatchCriteria {
   name: string;
@@ -349,6 +350,23 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
   
   // Return the batch criteria or default to sahadev if not found
   return batchConfigs[batchName] || batchConfigs.sahadev;
+};
+
+// Get batch criteria for legacy use (simple interface)
+export const getBatchCriteria = (batchName: string): DBBatchCriteria => {
+  const fullCriteria = getBatchConfigurations()[batchName.toLowerCase()] || DEFAULT_BATCHES.sahadev;
+  
+  // Convert to simple format for backward compatibility
+  return {
+    chantingRoundsMinimum: 16,
+    readingMinimum: fullCriteria.readingMinimum,
+    spLectureMinimum: fullCriteria.spLectureMinimum,
+    smLectureMinimum: fullCriteria.smLectureMinimum,
+    gsnsLectureMinimum: fullCriteria.gsnsLectureMinimum,
+    hgrspLectureMinimum: fullCriteria.hgrspLectureMinimum,
+    serviceMinimum: fullCriteria.serviceMinimum,
+    shlokaMinimum: fullCriteria.shlokaMinimum,
+  };
 };
 
 // Calculate total score for a sadhana entry based on batch criteria
