@@ -619,9 +619,15 @@ const PointsProgress = () => {
                 <div key={index} className="border rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-spiritual-purple">{weekData.week}</h3>
-                    <Badge variant="secondary" className="text-lg px-3 py-1">
-                      {weekData.totalScore} points
-                    </Badge>
+                    <div className="flex gap-2 items-center">
+                      <Badge variant="secondary" className="text-lg px-3 py-1">
+                        {weekData.totalScore} points
+                      </Badge>
+                      <div className="text-sm text-muted-foreground">
+                        Body: {Math.round(((weekData.breakdowns.sleepTimeScore + weekData.breakdowns.wakeUpTimeScore + weekData.breakdowns.daySleepScore) / (batchCriteria.totalBodyScore || 1)) * 100)}%
+                        | Soul: {Math.round(((weekData.breakdowns.readingScore + weekData.breakdowns.japaCompletionScore + weekData.breakdowns.programScore + weekData.breakdowns.hearingScore + weekData.breakdowns.shlokaScore) / (batchCriteria.totalSoulScore || 1)) * 100)}%
+                      </div>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
