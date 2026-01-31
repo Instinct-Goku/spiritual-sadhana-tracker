@@ -16,6 +16,7 @@ export interface BatchCriteria {
   gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
   hgrspLectureMinimum?: number; // HGRSP/HGRKP lectures minimum in minutes
   shlokaMinimum?: number; // Default: no shlokas required
+  shlokaRecitationMinimum?: number; // Minimum recitation time in minutes (alternative to shloka count)
   totalBodyScore: number; // Maximum possible body score
   totalSoulScore: number; // Maximum possible soul score
   // New checkbox flags for hearing categories
@@ -218,6 +219,42 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showSmLecture: true,
     showGsnsLecture: true,
     showHgrspLecture: false
+  },
+  brahmacharis: {
+    name: "Brahmacharis",
+    sleepTimeScoring: [
+      { startTime: "00:00", endTime: "21:30", points: 25 },
+      { startTime: "21:30", endTime: "23:59", points: 0 }
+    ],
+    wakeUpTimeScoring: [
+      { startTime: "00:00", endTime: "04:00", points: 25 },
+      { startTime: "04:00", endTime: "23:59", points: 0 }
+    ],
+    readingMinimum: 600, // 10 hours
+    daySleepScoring: [
+      { maxDuration: 30, points: 25 }, // less than 30min
+      { maxDuration: Number.MAX_SAFE_INTEGER, points: 0 } // greater than 30min
+    ],
+    japaCompletionScoring: [
+      { startTime: "00:00", endTime: "07:00", points: 25 },
+      { startTime: "07:00", endTime: "10:00", points: 20 },
+      { startTime: "10:00", endTime: "15:00", points: 15 },
+      { startTime: "15:00", endTime: "20:00", points: 10 },
+      { startTime: "20:00", endTime: "23:59", points: 0 }
+    ],
+    hearingMinimum: 180, // 3 hours (modifiable later)
+    serviceMinimum: 150, // 2.5 hours (modifiable later)
+    spLectureMinimum: 90, // 1.5 hours
+    smLectureMinimum: 90, // 1.5 hours
+    gsnsLectureMinimum: 360, // 6 hours
+    shlokaMinimum: 3, // 3 shlokas
+    shlokaRecitationMinimum: 30, // OR 30 minutes recitation
+    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
+    totalSoulScore: 765, // Calculated based on reading minimum
+    showSpLecture: true,
+    showSmLecture: true,
+    showGsnsLecture: true,
+    showHgrspLecture: false
   }
 };
 
@@ -231,12 +268,13 @@ export const PROGRAM_SCORING: ProgramScoring = {
 };
 
 // Shloka scoring for all batches
-export const SHLOKA_SCORING = {
+export const SHLOKA_SCORING: Record<string, number> = {
   sahadev: 30,
   nakula: 30,
   arjuna: 30,
   yudhisthira: 30,
-  "nakula-working": 30
+  "nakula-working": 30,
+  brahmacharis: 30
 };
 
 // Parse time string (HH:MM) to minutes since midnight
@@ -291,11 +329,22 @@ export const calculateHearingScore = (minutes: number, batchMinimum: number): nu
   return Math.min(Math.max(0, minutes), batchMinimum); // Capped at batch minimum
 };
 
-// Calculate shloka score
-export const calculateShlokaScore = (shlokaCount: number, batchCriteria: BatchCriteria, batchName: string): number => {
+// Calculate shloka score (supports dual criteria: count OR recitation time)
+export const calculateShlokaScore = (
+  shlokaCount: number, 
+  shlokaRecitationMinutes: number,
+  batchCriteria: BatchCriteria, 
+  batchName: string
+): number => {
   const minimumShlokas = batchCriteria.shlokaMinimum || 0;
-  if (shlokaCount >= minimumShlokas && minimumShlokas > 0) {
-    return SHLOKA_SCORING[batchName.toLowerCase() as keyof typeof SHLOKA_SCORING] || 0;
+  const minimumRecitation = batchCriteria.shlokaRecitationMinimum || 0;
+  
+  // Check if either criteria is met
+  const countMet = shlokaCount >= minimumShlokas && minimumShlokas > 0;
+  const recitationMet = shlokaRecitationMinutes >= minimumRecitation && minimumRecitation > 0;
+  
+  if (countMet || recitationMet) {
+    return SHLOKA_SCORING[batchName.toLowerCase()] || 0;
   }
   return 0;
 };
@@ -417,8 +466,13 @@ export const calculateSadhanaScore = (
   const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes;
   const hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
   
-  // Calculate shloka score
-  const shlokaScore = calculateShlokaScore(entry.shlokaCount || 0, batchCriteria, batchName);
+  // Calculate shloka score (with dual criteria support)
+  const shlokaScore = calculateShlokaScore(
+    entry.shlokaCount || 0, 
+    (entry as any).shlokaRecitationMinutes || 0,
+    batchCriteria, 
+    batchName
+  );
   
   // Calculate total score (excluding service)
   const totalScore = 

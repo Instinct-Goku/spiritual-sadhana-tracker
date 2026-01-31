@@ -30,6 +30,7 @@ const formSchema = z.object({
   hgrspLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   serviceMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   shlokaCount: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  shlokaRecitationMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   wakeUpTime: z.string().optional(),
   sleepTime: z.string().optional(),
   daySleepDuration: z.number().min(0, { message: "Must be 0 or more" }).optional(),
@@ -59,6 +60,7 @@ const Sadhana = () => {
       hgrspLectureMinutes: 0,
       serviceMinutes: 0,
       shlokaCount: 0,
+      shlokaRecitationMinutes: 0,
       wakeUpTime: "",
       sleepTime: "",
       daySleepDuration: 0,
@@ -122,6 +124,7 @@ const Sadhana = () => {
       hgrspLectureMinutes: 0,
       serviceMinutes: 0,
       shlokaCount: 0,
+      shlokaRecitationMinutes: 0,
       wakeUpTime: "",
       sleepTime: "",
       daySleepDuration: 0,
@@ -150,6 +153,7 @@ const Sadhana = () => {
             form.setValue("hgrspLectureMinutes", entry.hgrspLectureMinutes || 0);
             form.setValue("serviceMinutes", entry.serviceMinutes || 0);
             form.setValue("shlokaCount", entry.shlokaCount || entry.shlokaMemorized || 0);
+            form.setValue("shlokaRecitationMinutes", entry.shlokaRecitationMinutes || 0);
             form.setValue("wakeUpTime", entry.wakeUpTime || "");
             form.setValue("sleepTime", entry.sleepTime || "");
             form.setValue("daySleepDuration", entry.daySleepDuration || 0);
@@ -188,6 +192,7 @@ const Sadhana = () => {
         hgrspLectureMinutes: values.hgrspLectureMinutes || 0,
         serviceMinutes: values.serviceMinutes || 0,
         shlokaCount: values.shlokaCount || 0,
+        shlokaRecitationMinutes: values.shlokaRecitationMinutes || 0,
         daySleepDuration: values.daySleepDuration || 0,
         mangalaArati: values.mangalaArati || false,
         tulsiArati: values.tulsiArati || false,
@@ -478,14 +483,17 @@ const Sadhana = () => {
                     Shloka Memorization
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="shlokaCount" className="text-sm font-medium text-gray-700 mb-2 block">
                       Shlokas Memorized
                     </Label>
-                    {batchCriteria.shlokaMinimum && (
+                    {displayCriteria.shlokaMinimum && (
                       <p className="text-xs text-gray-500 mb-2">
-                        Minimum: {batchCriteria.shlokaMinimum} shlokas
+                        Minimum: {displayCriteria.shlokaMinimum} shlokas
+                        {displayCriteria.shlokaRecitationMinimum && (
+                          <> OR {displayCriteria.shlokaRecitationMinimum} minutes recitation</>
+                        )}
                       </p>
                     )}
                     <Input
@@ -499,6 +507,27 @@ const Sadhana = () => {
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.shlokaCount.message}</p>
                     )}
                   </div>
+                  
+                  {displayCriteria.shlokaRecitationMinimum && (
+                    <div>
+                      <Label htmlFor="shlokaRecitationMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Shloka Recitation Time (minutes)
+                      </Label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        OR minimum: {displayCriteria.shlokaRecitationMinimum} minutes of recitation
+                      </p>
+                      <Input
+                        id="shlokaRecitationMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("shlokaRecitationMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.shlokaRecitationMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.shlokaRecitationMinutes.message}</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

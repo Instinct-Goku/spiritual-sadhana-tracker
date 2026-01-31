@@ -79,6 +79,7 @@ const batchOptions = [
   { value: "arjuna", label: "Arjuna" },
   { value: "yudhisthira", label: "Yudhisthira" },
   { value: "nakula-working", label: "Nakula - Working" },
+  { value: "brahmacharis", label: "Brahmacharis" },
 ];
 
 const Profile = () => {
