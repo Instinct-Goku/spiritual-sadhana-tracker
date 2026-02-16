@@ -29,6 +29,7 @@ const formSchema = z.object({
   gsnsLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   hgrspLectureMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   serviceMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  studyMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   shlokaCount: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   shlokaRecitationMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   wakeUpTime: z.string().optional(),
@@ -39,6 +40,7 @@ const formSchema = z.object({
   narsimhaArati: z.boolean().optional(),
   guruPuja: z.boolean().optional(),
   bhagavatamClass: z.boolean().optional(),
+  shikshashtakamAttendance: z.boolean().optional(),
   notes: z.string().optional(),
 })
 
@@ -59,6 +61,7 @@ const Sadhana = () => {
       gsnsLectureMinutes: 0,
       hgrspLectureMinutes: 0,
       serviceMinutes: 0,
+      studyMinutes: 0,
       shlokaCount: 0,
       shlokaRecitationMinutes: 0,
       wakeUpTime: "",
@@ -69,6 +72,7 @@ const Sadhana = () => {
       narsimhaArati: false,
       guruPuja: false,
       bhagavatamClass: false,
+      shikshashtakamAttendance: false,
       notes: "",
     },
   })
@@ -123,6 +127,7 @@ const Sadhana = () => {
       gsnsLectureMinutes: 0,
       hgrspLectureMinutes: 0,
       serviceMinutes: 0,
+      studyMinutes: 0,
       shlokaCount: 0,
       shlokaRecitationMinutes: 0,
       wakeUpTime: "",
@@ -133,6 +138,7 @@ const Sadhana = () => {
       narsimhaArati: false,
       guruPuja: false,
       bhagavatamClass: false,
+      shikshashtakamAttendance: false,
       notes: "",
     });
   }, [selectedDate, form]);
@@ -154,6 +160,7 @@ const Sadhana = () => {
             form.setValue("serviceMinutes", entry.serviceMinutes || 0);
             form.setValue("shlokaCount", entry.shlokaCount || entry.shlokaMemorized || 0);
             form.setValue("shlokaRecitationMinutes", entry.shlokaRecitationMinutes || 0);
+            form.setValue("studyMinutes", (entry as any).studyMinutes || 0);
             form.setValue("wakeUpTime", entry.wakeUpTime || "");
             form.setValue("sleepTime", entry.sleepTime || "");
             form.setValue("daySleepDuration", entry.daySleepDuration || 0);
@@ -162,6 +169,7 @@ const Sadhana = () => {
             form.setValue("narsimhaArati", entry.narsimhaArati || false);
             form.setValue("guruPuja", entry.guruPuja || false);
             form.setValue("bhagavatamClass", entry.bhagavatamClass || false);
+            form.setValue("shikshashtakamAttendance", (entry as any).shikshashtakamAttendance || false);
             form.setValue("notes", entry.notes || "");
           }
         } catch (error) {
@@ -191,6 +199,7 @@ const Sadhana = () => {
         gsnsLectureMinutes: values.gsnsLectureMinutes || 0,
         hgrspLectureMinutes: values.hgrspLectureMinutes || 0,
         serviceMinutes: values.serviceMinutes || 0,
+        studyMinutes: values.studyMinutes || 0,
         shlokaCount: values.shlokaCount || 0,
         shlokaRecitationMinutes: values.shlokaRecitationMinutes || 0,
         daySleepDuration: values.daySleepDuration || 0,
@@ -199,6 +208,7 @@ const Sadhana = () => {
         narsimhaArati: values.narsimhaArati || false,
         guruPuja: values.guruPuja || false,
         bhagavatamClass: values.bhagavatamClass || false,
+        shikshashtakamAttendance: values.shikshashtakamAttendance || false,
         notes: values.notes || "",
         // Add missing required properties from SadhanaEntry interface
         morningProgram: values.mangalaArati || values.tulsiArati || values.narsimhaArati || values.guruPuja || values.bhagavatamClass || false,
@@ -475,6 +485,40 @@ const Sadhana = () => {
                 </CardContent>
               </Card>
 
+              {/* Study Card - only for sahadev-working */}
+              {displayCriteria.studyMinimum && (
+                <Card className="spiritual-card animate-fade-in">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-spiritual-purple">
+                      <BookOpen className="h-6 w-6" />
+                      Study
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div>
+                      <Label htmlFor="studyMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Study (minutes)
+                      </Label>
+                      {batchCriteria.studyMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Minimum: {batchCriteria.studyMinimum} minutes
+                        </p>
+                      )}
+                      <Input
+                        id="studyMinutes"
+                        type="number"
+                        min="0"
+                        {...form.register("studyMinutes", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                      {form.formState.errors.studyMinutes && (
+                        <p className="text-sm text-red-600 mt-1">{form.formState.errors.studyMinutes.message}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Shloka Card */}
               <Card className="spiritual-card animate-fade-in">
                 <CardHeader className="pb-4">
@@ -658,6 +702,21 @@ const Sadhana = () => {
                     <span className="text-xs text-spiritual-sage">20 points</span>
                   </Label>
                 </div>
+
+                {displayCriteria.showShikshashtakam && (
+                  <div className="flex items-center space-x-3 p-3 rounded-lg bg-spiritual-cream/30 hover:bg-spiritual-cream/50 transition-colors">
+                    <input
+                      id="shikshashtakamAttendance"
+                      type="checkbox"
+                      className="w-4 h-4 text-spiritual-purple bg-gray-100 border-gray-300 rounded focus:ring-spiritual-purple focus:ring-2"
+                      {...form.register("shikshashtakamAttendance")}
+                    />
+                    <Label htmlFor="shikshashtakamAttendance" className="flex-1 cursor-pointer">
+                      <span className="block font-medium text-gray-800">Shikshashtakam</span>
+                      <span className="text-xs text-spiritual-sage">5 points</span>
+                    </Label>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
