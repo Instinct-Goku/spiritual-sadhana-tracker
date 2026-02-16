@@ -75,6 +75,7 @@ const maritalStatusOptions = [
 
 const batchOptions = [
   { value: "sahadev", label: "Sahadev" },
+  { value: "sahadev-working", label: "Sahadev - Working" },
   { value: "nakula", label: "Nakula" },
   { value: "arjuna", label: "Arjuna" },
   { value: "yudhisthira", label: "Yudhisthira" },

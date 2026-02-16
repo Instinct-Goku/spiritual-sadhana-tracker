@@ -35,6 +35,8 @@ export interface SadhanaEntry {
   shlokaMemorized?: number; // Number of shlokas memorized
   shlokaCount?: number; // Number of shlokas memorized (alternative property name)
   shlokaRecitationMinutes?: number; // Time spent on shloka recitation (alternative to count)
+  studyMinutes?: number; // Study minutes
+  shikshashtakamAttendance?: boolean; // Shikshashtakam attendance in morning program
   wakeUpTime: string;
   sleepTime: string;
   daySleepDuration: number;

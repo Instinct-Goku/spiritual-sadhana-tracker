@@ -17,6 +17,8 @@ export interface BatchCriteria {
   hgrspLectureMinimum?: number; // HGRSP/HGRKP lectures minimum in minutes
   shlokaMinimum?: number; // Default: no shlokas required
   shlokaRecitationMinimum?: number; // Minimum recitation time in minutes (alternative to shloka count)
+  studyMinimum?: number; // Study minutes minimum
+  showShikshashtakam?: boolean; // Show Shikshashtakam attendance in morning program
   totalBodyScore: number; // Maximum possible body score
   totalSoulScore: number; // Maximum possible soul score
   // New checkbox flags for hearing categories
@@ -70,6 +72,32 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showSmLecture: false,
     showGsnsLecture: false,
     showHgrspLecture: false
+  },
+  "sahadev-working": {
+    name: "Sahadev - Working",
+    sleepTimeScoring: [
+      { startTime: "00:00", endTime: "22:00", points: 25 },
+      { startTime: "22:00", endTime: "22:30", points: 20 },
+      { startTime: "22:30", endTime: "23:00", points: 15 },
+      { startTime: "23:00", endTime: "23:30", points: 10 },
+      { startTime: "23:30", endTime: "23:59", points: 0 }
+    ],
+    wakeUpTimeScoring: [], // No points allotted
+    readingMinimum: 90, // 1.5 hours
+    daySleepScoring: [], // No points allotted
+    japaCompletionScoring: [], // No points allotted
+    hearingMinimum: 60, // 1 hour
+    serviceMinimum: 60, // 1 hour
+    studyMinimum: 60, // 1 hour study
+    spLectureMinimum: 60, // 1 hour
+    shlokaMinimum: 1, // 1 shloka
+    totalBodyScore: 25, // 25 for sleep time
+    totalSoulScore: 295, // 90 reading + 60 hearing + 60 study + 30 shloka + 45 program + 10 japa
+    showSpLecture: true,
+    showSmLecture: false,
+    showGsnsLecture: false,
+    showHgrspLecture: false,
+    showShikshashtakam: true
   },
   nakula: {
     name: "Nakula",
@@ -270,6 +298,7 @@ export const PROGRAM_SCORING: ProgramScoring = {
 // Shloka scoring for all batches
 export const SHLOKA_SCORING: Record<string, number> = {
   sahadev: 30,
+  "sahadev-working": 30,
   nakula: 30,
   arjuna: 30,
   yudhisthira: 30,
