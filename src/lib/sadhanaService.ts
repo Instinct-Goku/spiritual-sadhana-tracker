@@ -37,6 +37,10 @@ export interface SadhanaEntry {
   shlokaRecitationMinutes?: number; // Time spent on shloka recitation (alternative to count)
   studyMinutes?: number; // Study minutes
   shikshashtakamAttendance?: boolean; // Shikshashtakam attendance in morning program
+  bcClassMinutes?: number; // BC class/Common Reading minutes
+  harinaamCount?: number; // Harinaam count
+  preachingMinutes?: number; // Preaching/Dept Seva/meeting minutes
+  slokaVaishnavSongMinutes?: number; // Sloka/Vaishnav song minutes
   wakeUpTime: string;
   sleepTime: string;
   daySleepDuration: number;
@@ -59,6 +63,7 @@ export interface SadhanaEntry {
     programScore: number;
     hearingScore: number;
     shlokaScore: number;
+    sevaScore?: number;
   };
 }
 
@@ -85,6 +90,7 @@ export interface WeeklyStats {
   sleepTimePoints: number;
   daySleepPoints: number;
   japaCompletionPoints: number;
+  sevaPoints: number;
 }
 
 export const safeConvertToDate = (input: any): Date | null => {
@@ -302,7 +308,8 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, userProf
       wakeUpPoints: 0,
       sleepTimePoints: 0,
       daySleepPoints: 0,
-      japaCompletionPoints: 0
+      japaCompletionPoints: 0,
+      sevaPoints: 0
     };
     
     if (entries.length === 0) {
@@ -388,6 +395,7 @@ export const getWeeklySadhana = async (userId: string, startDate: Date, userProf
     stats.sleepTimePoints = totalSleepTimePoints;
     stats.daySleepPoints = totalDaySleepPoints;
     stats.japaCompletionPoints = totalJapaCompletionPoints;
+    stats.sevaPoints = 0;
     
     if (isWeeklyScoringEnabled() && userProfile) {
       const weeklyScore = calculateWeeklySadhanaScore(entries, userProfile);
