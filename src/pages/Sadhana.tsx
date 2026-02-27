@@ -32,6 +32,10 @@ const formSchema = z.object({
   studyMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   shlokaCount: z.number().min(0, { message: "Must be 0 or more" }).optional(),
   shlokaRecitationMinutes: z.number().min(0, { message: "Must be 0 or more" }).optional(),
+  bcClassHours: z.number().min(0).optional(),
+  harinaamCount: z.number().min(0).optional(),
+  preachingHours: z.number().min(0).optional(),
+  slokaVaishnavSongHours: z.number().min(0).optional(),
   wakeUpTime: z.string().optional(),
   sleepTime: z.string().optional(),
   daySleepDuration: z.number().min(0, { message: "Must be 0 or more" }).optional(),
@@ -64,6 +68,10 @@ const Sadhana = () => {
       studyMinutes: 0,
       shlokaCount: 0,
       shlokaRecitationMinutes: 0,
+      bcClassHours: 0,
+      harinaamCount: 0,
+      preachingHours: 0,
+      slokaVaishnavSongHours: 0,
       wakeUpTime: "",
       sleepTime: "",
       daySleepDuration: 0,
@@ -130,6 +138,10 @@ const Sadhana = () => {
       studyMinutes: 0,
       shlokaCount: 0,
       shlokaRecitationMinutes: 0,
+      bcClassHours: 0,
+      harinaamCount: 0,
+      preachingHours: 0,
+      slokaVaishnavSongHours: 0,
       wakeUpTime: "",
       sleepTime: "",
       daySleepDuration: 0,
@@ -161,6 +173,10 @@ const Sadhana = () => {
             form.setValue("shlokaCount", entry.shlokaCount || entry.shlokaMemorized || 0);
             form.setValue("shlokaRecitationMinutes", entry.shlokaRecitationMinutes || 0);
             form.setValue("studyMinutes", (entry as any).studyMinutes || 0);
+            form.setValue("bcClassHours", ((entry as any).bcClassMinutes || 0) / 60);
+            form.setValue("harinaamCount", (entry as any).harinaamCount || 0);
+            form.setValue("preachingHours", ((entry as any).preachingMinutes || 0) / 60);
+            form.setValue("slokaVaishnavSongHours", ((entry as any).slokaVaishnavSongMinutes || 0) / 60);
             form.setValue("wakeUpTime", entry.wakeUpTime || "");
             form.setValue("sleepTime", entry.sleepTime || "");
             form.setValue("daySleepDuration", entry.daySleepDuration || 0);
@@ -202,6 +218,10 @@ const Sadhana = () => {
         studyMinutes: values.studyMinutes || 0,
         shlokaCount: values.shlokaCount || 0,
         shlokaRecitationMinutes: values.shlokaRecitationMinutes || 0,
+        bcClassMinutes: (values.bcClassHours || 0) * 60,
+        harinaamCount: values.harinaamCount || 0,
+        preachingMinutes: (values.preachingHours || 0) * 60,
+        slokaVaishnavSongMinutes: (values.slokaVaishnavSongHours || 0) * 60,
         daySleepDuration: values.daySleepDuration || 0,
         mangalaArati: values.mangalaArati || false,
         tulsiArati: values.tulsiArati || false,
@@ -447,6 +467,27 @@ const Sadhana = () => {
                       )}
                     </div>
                   )}
+
+                  {displayCriteria.showBcClass && (
+                    <div>
+                      <Label htmlFor="bcClassHours" className="text-sm font-medium text-gray-700 mb-2 block">
+                        BC Class / Common Reading (hours)
+                      </Label>
+                      {displayCriteria.bcClassMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Weekly minimum: {displayCriteria.bcClassMinimum / 60} hours
+                        </p>
+                      )}
+                      <Input
+                        id="bcClassHours"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        {...form.register("bcClassHours", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -482,6 +523,47 @@ const Sadhana = () => {
                       <p className="text-sm text-red-600 mt-1">{form.formState.errors.serviceMinutes.message}</p>
                     )}
                   </div>
+
+                  {displayCriteria.showHarinaam && (
+                    <div className="mt-4">
+                      <Label htmlFor="harinaamCount" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Harinaam (count)
+                      </Label>
+                      {displayCriteria.harinaamMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Weekly minimum count: {displayCriteria.harinaamMinimum}
+                        </p>
+                      )}
+                      <Input
+                        id="harinaamCount"
+                        type="number"
+                        min="0"
+                        {...form.register("harinaamCount", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                    </div>
+                  )}
+
+                  {displayCriteria.showPreaching && (
+                    <div className="mt-4">
+                      <Label htmlFor="preachingHours" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Preaching / Dept Seva / Meeting (hours)
+                      </Label>
+                      {displayCriteria.preachingMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Daily minimum: {displayCriteria.preachingMinimum / 60} hours
+                        </p>
+                      )}
+                      <Input
+                        id="preachingHours"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        {...form.register("preachingHours", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -572,6 +654,27 @@ const Sadhana = () => {
                       )}
                     </div>
                   )}
+
+                  {displayCriteria.showSlokaVaishnavSong && (
+                    <div>
+                      <Label htmlFor="slokaVaishnavSongHours" className="text-sm font-medium text-gray-700 mb-2 block">
+                        Sloka / Vaishnav Song (hours)
+                      </Label>
+                      {displayCriteria.slokaVaishnavSongMinimum && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Weekly minimum: {displayCriteria.slokaVaishnavSongMinimum / 60} hours
+                        </p>
+                      )}
+                      <Input
+                        id="slokaVaishnavSongHours"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        {...form.register("slokaVaishnavSongHours", { valueAsNumber: true })}
+                        className="spiritual-input"
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -647,7 +750,7 @@ const Sadhana = () => {
                   />
                   <Label htmlFor="mangalaArati" className="flex-1 cursor-pointer">
                     <span className="block font-medium text-gray-800">Mangala Arati</span>
-                    <span className="text-xs text-spiritual-sage">10 points</span>
+                    <span className="text-xs text-spiritual-sage">{displayCriteria.isBrahmacharisBatch ? "1 mark (all 4 needed)" : "10 points"}</span>
                   </Label>
                 </div>
 
@@ -660,7 +763,7 @@ const Sadhana = () => {
                   />
                   <Label htmlFor="tulsiArati" className="flex-1 cursor-pointer">
                     <span className="block font-medium text-gray-800">Tulsi Arati</span>
-                    <span className="text-xs text-spiritual-sage">5 points</span>
+                    <span className="text-xs text-spiritual-sage">{displayCriteria.isBrahmacharisBatch ? "1 mark (all 4 needed)" : "5 points"}</span>
                   </Label>
                 </div>
 
@@ -673,7 +776,7 @@ const Sadhana = () => {
                   />
                   <Label htmlFor="narsimhaArati" className="flex-1 cursor-pointer">
                     <span className="block font-medium text-gray-800">Narsimha Arati</span>
-                    <span className="text-xs text-spiritual-sage">5 points</span>
+                    <span className="text-xs text-spiritual-sage">{displayCriteria.isBrahmacharisBatch ? "1 mark (all 4 needed)" : "5 points"}</span>
                   </Label>
                 </div>
 
@@ -686,7 +789,7 @@ const Sadhana = () => {
                   />
                   <Label htmlFor="guruPuja" className="flex-1 cursor-pointer">
                     <span className="block font-medium text-gray-800">Guru Puja</span>
-                    <span className="text-xs text-spiritual-sage">5 points</span>
+                    <span className="text-xs text-spiritual-sage">{displayCriteria.isBrahmacharisBatch ? "1 mark (all 4 needed)" : "5 points"}</span>
                   </Label>
                 </div>
 
@@ -699,7 +802,7 @@ const Sadhana = () => {
                   />
                   <Label htmlFor="bhagavatamClass" className="flex-1 cursor-pointer">
                     <span className="block font-medium text-gray-800">Bhagavatam Class</span>
-                    <span className="text-xs text-spiritual-sage">20 points</span>
+                    <span className="text-xs text-spiritual-sage">{displayCriteria.isBrahmacharisBatch ? "1 mark" : "20 points"}</span>
                   </Label>
                 </div>
 

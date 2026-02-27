@@ -4,28 +4,37 @@ import { BatchCriteria as DBBatchCriteria } from "./adminService";
 
 export interface BatchCriteria {
   name: string;
+  isBrahmacharisBatch?: boolean;
   sleepTimeScoring: TimeRangeScore[];
   wakeUpTimeScoring: TimeRangeScore[];
-  readingMinimum: number; // in minutes
+  readingMinimum: number;
   daySleepScoring: DurationScore[];
   japaCompletionScoring: TimeRangeScore[];
-  hearingMinimum: number; // in minutes (total hearing)
-  serviceMinimum: number; // in minutes
-  spLectureMinimum?: number; // Srila Prabhupada lectures minimum in minutes
-  smLectureMinimum?: number; // Spiritual Master lectures minimum in minutes
-  gsnsLectureMinimum?: number; // GS/NS lectures minimum in minutes
-  hgrspLectureMinimum?: number; // HGRSP/HGRKP lectures minimum in minutes
-  shlokaMinimum?: number; // Default: no shlokas required
-  shlokaRecitationMinimum?: number; // Minimum recitation time in minutes (alternative to shloka count)
-  studyMinimum?: number; // Study minutes minimum
-  showShikshashtakam?: boolean; // Show Shikshashtakam attendance in morning program
-  totalBodyScore: number; // Maximum possible body score
-  totalSoulScore: number; // Maximum possible soul score
-  // New checkbox flags for hearing categories
-  showSpLecture: boolean; // Show Srila Prabhupada lectures
-  showSmLecture: boolean; // Show Spiritual Master lectures
-  showGsnsLecture: boolean; // Show GS/NS lectures
-  showHgrspLecture: boolean; // Show HGRSP/HGRKP lectures
+  hearingMinimum: number;
+  serviceMinimum: number;
+  spLectureMinimum?: number;
+  smLectureMinimum?: number;
+  gsnsLectureMinimum?: number;
+  hgrspLectureMinimum?: number;
+  shlokaMinimum?: number;
+  shlokaRecitationMinimum?: number;
+  studyMinimum?: number;
+  showShikshashtakam?: boolean;
+  bcClassMinimum?: number;
+  harinaamMinimum?: number;
+  preachingMinimum?: number;
+  slokaVaishnavSongMinimum?: number;
+  totalBodyScore: number;
+  totalSoulScore: number;
+  totalSevaScore?: number;
+  showSpLecture: boolean;
+  showSmLecture: boolean;
+  showGsnsLecture: boolean;
+  showHgrspLecture: boolean;
+  showBcClass?: boolean;
+  showHarinaam?: boolean;
+  showPreaching?: boolean;
+  showSlokaVaishnavSong?: boolean;
 }
 
 export interface TimeRangeScore {
@@ -250,39 +259,44 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
   },
   brahmacharis: {
     name: "Brahmacharis",
+    isBrahmacharisBatch: true,
     sleepTimeScoring: [
-      { startTime: "00:00", endTime: "21:30", points: 25 },
-      { startTime: "21:30", endTime: "23:59", points: 0 }
+      { startTime: "00:00", endTime: "22:01", points: 1 },
+      { startTime: "22:01", endTime: "23:59", points: 0 }
     ],
     wakeUpTimeScoring: [
-      { startTime: "00:00", endTime: "04:00", points: 25 },
-      { startTime: "04:00", endTime: "23:59", points: 0 }
+      { startTime: "00:00", endTime: "04:01", points: 1 },
+      { startTime: "04:01", endTime: "23:59", points: 0 }
     ],
-    readingMinimum: 600, // 10 hours
+    readingMinimum: 270, // 4.5 hours weekly
     daySleepScoring: [
-      { maxDuration: 30, points: 25 }, // less than 30min
-      { maxDuration: Number.MAX_SAFE_INTEGER, points: 0 } // greater than 30min
+      { maxDuration: 30, points: 1 },
+      { maxDuration: Number.MAX_SAFE_INTEGER, points: 0 }
     ],
     japaCompletionScoring: [
-      { startTime: "00:00", endTime: "07:00", points: 25 },
-      { startTime: "07:00", endTime: "10:00", points: 20 },
-      { startTime: "10:00", endTime: "15:00", points: 15 },
-      { startTime: "15:00", endTime: "20:00", points: 10 },
-      { startTime: "20:00", endTime: "23:59", points: 0 }
+      { startTime: "00:00", endTime: "10:00", points: 1 },
+      { startTime: "10:00", endTime: "23:59", points: 0 }
     ],
-    hearingMinimum: 180, // 3 hours (modifiable later)
-    serviceMinimum: 150, // 2.5 hours (modifiable later)
-    spLectureMinimum: 90, // 1.5 hours
-    smLectureMinimum: 90, // 1.5 hours
-    gsnsLectureMinimum: 360, // 6 hours
-    shlokaMinimum: 3, // 3 shlokas
-    shlokaRecitationMinimum: 30, // OR 30 minutes recitation
-    totalBodyScore: 75, // 25 sleep + 25 wake + 25 day sleep
-    totalSoulScore: 765, // Calculated based on reading minimum
+    hearingMinimum: 0,
+    serviceMinimum: 210, // 3.5 hours weekly
+    spLectureMinimum: 90, // 1.5 hours weekly
+    smLectureMinimum: 90, // 1.5 hours weekly
+    bcClassMinimum: 270, // 4.5 hours weekly
+    harinaamMinimum: 2, // weekly count >= 2
+    preachingMinimum: 360, // 6 hours daily (in minutes)
+    slokaVaishnavSongMinimum: 90, // 1.5 hours weekly
+    shlokaMinimum: 0,
+    totalBodyScore: 21, // 3 marks/day × 7
+    totalSoulScore: 26, // morning(14) + chanting(7) + reading(1) + hearing(3) + shloka(1)
+    totalSevaScore: 9, // preaching(7) + service(1) + harinaam(1)
     showSpLecture: true,
     showSmLecture: true,
-    showGsnsLecture: true,
-    showHgrspLecture: false
+    showGsnsLecture: false,
+    showHgrspLecture: false,
+    showBcClass: true,
+    showHarinaam: true,
+    showPreaching: true,
+    showSlokaVaishnavSong: true,
   }
 };
 
@@ -379,7 +393,14 @@ export const calculateShlokaScore = (
 };
 
 // Calculate program attendance score
-export const calculateProgramScore = (entry: SadhanaEntry): number => {
+export const calculateProgramScore = (entry: SadhanaEntry, batchCriteria?: BatchCriteria): number => {
+  if (batchCriteria?.isBrahmacharisBatch) {
+    let score = 0;
+    const allExceptBhagavatam = entry.mangalaArati && entry.tulsiArati && entry.narsimhaArati && entry.guruPuja;
+    if (allExceptBhagavatam) score += 1;
+    if (entry.bhagavatamClass) score += 1;
+    return score;
+  }
   let score = 0;
   if (entry.mangalaArati) score += PROGRAM_SCORING.mangalaArati;
   if (entry.tulsiArati) score += PROGRAM_SCORING.tulsiArati;
@@ -462,69 +483,66 @@ export const calculateSadhanaScore = (
     programScore: number;
     hearingScore: number;
     shlokaScore: number;
+    sevaScore: number;
   }
 } => {
   let batchCriteria: BatchCriteria;
   let batchName: string;
   
-  // Handle different types of input for batch information
   if (typeof batchNameOrProfile === 'string') {
-    // If it's a string, treat it as a batch name
     const batchConfigs = getBatchConfigurations();
     batchName = batchNameOrProfile.toLowerCase();
     batchCriteria = batchConfigs[batchName] || batchConfigs.sahadev;
   } else {
-    // If it's a UserProfile or null, get criteria from profile
     batchCriteria = getBatchCriteriaFromUserProfile(batchNameOrProfile);
     batchName = batchNameOrProfile?.batch?.toLowerCase() || batchNameOrProfile?.batchName?.toLowerCase() || "sahadev";
   }
   
-  // Calculate individual scores
   const sleepTimeScore = calculateTimeScore(entry.sleepTime, batchCriteria.sleepTimeScoring);
   const wakeUpTimeScore = calculateTimeScore(entry.wakeUpTime, batchCriteria.wakeUpTimeScoring);
-  const readingScore = calculateReadingScore(entry.readingMinutes, batchCriteria.readingMinimum);
   const daySleepScore = calculateDurationScore(entry.daySleepDuration, batchCriteria.daySleepScoring);
   const japaCompletionScore = calculateTimeScore(entry.chantingCompletionTime, batchCriteria.japaCompletionScoring);
-  const programScore = calculateProgramScore(entry);
+  const programScore = calculateProgramScore(entry, batchCriteria);
   
-  // Calculate hearing score (sum of all hearing types, capped at batch minimum)
-  const spLectureMinutes = entry.spLectureMinutes || 0;
-  const smLectureMinutes = entry.smLectureMinutes || 0;
-  const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
-  const hgrspLectureMinutes = entry.hgrspLectureMinutes || 0;
-  const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes;
-  const hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
+  let readingScore = 0;
+  let hearingScore = 0;
+  let shlokaScore = 0;
+  let sevaScore = 0;
   
-  // Calculate shloka score (with dual criteria support)
-  const shlokaScore = calculateShlokaScore(
-    entry.shlokaCount || 0, 
-    (entry as any).shlokaRecitationMinutes || 0,
-    batchCriteria, 
-    batchName
-  );
+  if (batchCriteria.isBrahmacharisBatch) {
+    // Brahmacharis: reading, hearing, shloka scored weekly (0 daily)
+    // Seva: only preaching is daily
+    const preachingMinutes = (entry as any).preachingMinutes || 0;
+    if (batchCriteria.preachingMinimum && preachingMinutes >= batchCriteria.preachingMinimum) {
+      sevaScore = 1;
+    }
+  } else {
+    readingScore = calculateReadingScore(entry.readingMinutes, batchCriteria.readingMinimum);
+    
+    const spLectureMinutes = entry.spLectureMinutes || 0;
+    const smLectureMinutes = entry.smLectureMinutes || 0;
+    const gsnsLectureMinutes = entry.gsnsLectureMinutes || 0;
+    const hgrspLectureMinutes = entry.hgrspLectureMinutes || 0;
+    const totalHearingMinutes = spLectureMinutes + smLectureMinutes + gsnsLectureMinutes + hgrspLectureMinutes;
+    hearingScore = calculateHearingScore(totalHearingMinutes, batchCriteria.hearingMinimum);
+    
+    shlokaScore = calculateShlokaScore(
+      entry.shlokaCount || 0, 
+      (entry as any).shlokaRecitationMinutes || 0,
+      batchCriteria, 
+      batchName
+    );
+  }
   
-  // Calculate total score (excluding service)
   const totalScore = 
-    sleepTimeScore + 
-    wakeUpTimeScore + 
-    readingScore + 
-    daySleepScore + 
-    japaCompletionScore + 
-    programScore +
-    hearingScore +
-    shlokaScore;
+    sleepTimeScore + wakeUpTimeScore + readingScore + daySleepScore + 
+    japaCompletionScore + programScore + hearingScore + shlokaScore + sevaScore;
   
   return {
     totalScore,
     breakdowns: {
-      sleepTimeScore,
-      wakeUpTimeScore,
-      readingScore,
-      daySleepScore,
-      japaCompletionScore,
-      programScore,
-      hearingScore,
-      shlokaScore
+      sleepTimeScore, wakeUpTimeScore, readingScore, daySleepScore,
+      japaCompletionScore, programScore, hearingScore, shlokaScore, sevaScore
     }
   };
 };
@@ -545,6 +563,7 @@ export const calculateWeeklySadhanaScore = (
     programScore: number;
     hearingScore: number;
     shlokaScore: number;
+    sevaScore: number;
   }
 } => {
   if (!entries || entries.length === 0) {
@@ -552,24 +571,24 @@ export const calculateWeeklySadhanaScore = (
       totalScore: 0,
       averageScore: 0,
       breakdowns: {
-        sleepTimeScore: 0,
-        wakeUpTimeScore: 0,
-        readingScore: 0,
-        daySleepScore: 0,
-        japaCompletionScore: 0,
-        programScore: 0,
-        hearingScore: 0,
-        shlokaScore: 0
+        sleepTimeScore: 0, wakeUpTimeScore: 0, readingScore: 0,
+        daySleepScore: 0, japaCompletionScore: 0, programScore: 0,
+        hearingScore: 0, shlokaScore: 0, sevaScore: 0
       }
     };
   }
   
-  // Calculate individual scores for each entry
+  let batchCriteria: BatchCriteria;
+  if (typeof batchNameOrProfile === 'string') {
+    const batchConfigs = getBatchConfigurations();
+    batchCriteria = batchConfigs[batchNameOrProfile.toLowerCase()] || batchConfigs.sahadev;
+  } else {
+    batchCriteria = getBatchCriteriaFromUserProfile(batchNameOrProfile);
+  }
+  
   const scores = entries.map(entry => calculateSadhanaScore(entry, batchNameOrProfile));
   
-  // Sum up all scores and breakdowns
-  const totalScore = scores.reduce((sum, score) => sum + score.totalScore, 0);
-  const avgScore = totalScore / entries.length;
+  let totalScore = scores.reduce((sum, score) => sum + score.totalScore, 0);
   
   const totalBreakdowns = {
     sleepTimeScore: scores.reduce((sum, score) => sum + score.breakdowns.sleepTimeScore, 0),
@@ -579,8 +598,54 @@ export const calculateWeeklySadhanaScore = (
     japaCompletionScore: scores.reduce((sum, score) => sum + score.breakdowns.japaCompletionScore, 0),
     programScore: scores.reduce((sum, score) => sum + score.breakdowns.programScore, 0),
     hearingScore: scores.reduce((sum, score) => sum + score.breakdowns.hearingScore, 0),
-    shlokaScore: scores.reduce((sum, score) => sum + score.breakdowns.shlokaScore, 0)
+    shlokaScore: scores.reduce((sum, score) => sum + score.breakdowns.shlokaScore, 0),
+    sevaScore: scores.reduce((sum, score) => sum + score.breakdowns.sevaScore, 0),
   };
+  
+  // For brahmacharis, add weekly-based marks
+  if (batchCriteria.isBrahmacharisBatch) {
+    // Reading: weekly total >= minimum → 1 mark
+    const totalReading = entries.reduce((sum, e) => sum + (e.readingMinutes || 0), 0);
+    if (batchCriteria.readingMinimum && totalReading >= batchCriteria.readingMinimum) {
+      totalBreakdowns.readingScore = 1;
+      totalScore += 1;
+    }
+    
+    // Hearing: check each category weekly
+    const totalSpLecture = entries.reduce((sum, e) => sum + (e.spLectureMinutes || 0), 0);
+    const totalSmLecture = entries.reduce((sum, e) => sum + (e.smLectureMinutes || 0), 0);
+    const totalBcClass = entries.reduce((sum, e) => sum + ((e as any).bcClassMinutes || 0), 0);
+    
+    let weeklyHearingMarks = 0;
+    if (batchCriteria.bcClassMinimum && totalBcClass >= batchCriteria.bcClassMinimum) weeklyHearingMarks += 1;
+    if (batchCriteria.spLectureMinimum && totalSpLecture >= batchCriteria.spLectureMinimum) weeklyHearingMarks += 1;
+    if (batchCriteria.smLectureMinimum && totalSmLecture >= batchCriteria.smLectureMinimum) weeklyHearingMarks += 1;
+    totalBreakdowns.hearingScore = weeklyHearingMarks;
+    totalScore += weeklyHearingMarks;
+    
+    // Shloka/vaishnav song: weekly total >= minimum → 1 mark
+    const totalSlokaVaishnav = entries.reduce((sum, e) => sum + ((e as any).slokaVaishnavSongMinutes || 0), 0);
+    if (batchCriteria.slokaVaishnavSongMinimum && totalSlokaVaishnav >= batchCriteria.slokaVaishnavSongMinimum) {
+      totalBreakdowns.shlokaScore = 1;
+      totalScore += 1;
+    }
+    
+    // Service: weekly total >= minimum → 1 mark
+    const totalService = entries.reduce((sum, e) => sum + (e.serviceMinutes || 0), 0);
+    if (batchCriteria.serviceMinimum && totalService >= batchCriteria.serviceMinimum) {
+      totalBreakdowns.sevaScore += 1;
+      totalScore += 1;
+    }
+    
+    // Harinaam: weekly count >= minimum → 1 mark
+    const totalHarinaam = entries.reduce((sum, e) => sum + ((e as any).harinaamCount || 0), 0);
+    if (batchCriteria.harinaamMinimum && totalHarinaam >= batchCriteria.harinaamMinimum) {
+      totalBreakdowns.sevaScore += 1;
+      totalScore += 1;
+    }
+  }
+  
+  const avgScore = totalScore / entries.length;
   
   return {
     totalScore,

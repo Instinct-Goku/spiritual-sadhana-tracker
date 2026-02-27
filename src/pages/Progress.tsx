@@ -43,6 +43,10 @@ const chartConfig = {
   soul: {
     label: "Soul (Spiritual Practice)", 
     color: "#fde047"
+  },
+  seva: {
+    label: "Seva (Service)",
+    color: "#4ade80"
   }
 };
 
@@ -65,6 +69,7 @@ const PointsProgress = () => {
     programScore: 0,
     hearingScore: 0,
     shlokaScore: 0,
+    sevaScore: 0,
   });
   const [selectedDevoteeForView, setSelectedDevoteeForView] = useState<UserProfile | null>(null);
   
@@ -91,9 +96,11 @@ const PointsProgress = () => {
                    breakdowns.hearingScore +
                    breakdowns.shlokaScore;
 
+  const sevaScore = breakdowns.sevaScore || 0;
+
   // Calculate percentage using batch configuration
-  const totalPossibleScore = (batchCriteria.totalBodyScore || 0) + (batchCriteria.totalSoulScore || 0);
-  const currentTotalScore = bodyScore + soulScore;
+  const totalPossibleScore = (batchCriteria.totalBodyScore || 0) + (batchCriteria.totalSoulScore || 0) + (batchCriteria.totalSevaScore || 0);
+  const currentTotalScore = bodyScore + soulScore + sevaScore;
   const percentage = totalPossibleScore > 0 ? Math.round((currentTotalScore / totalPossibleScore) * 100) : 0;
 
   // Function to get the start of the week (Sunday)
@@ -177,11 +184,14 @@ const PointsProgress = () => {
               weeklyScoreData.breakdowns.programScore + 
               weeklyScoreData.breakdowns.hearingScore +
               weeklyScoreData.breakdowns.shlokaScore;
+
+            const weekSevaScore = weeklyScoreData.breakdowns.sevaScore || 0;
             
             weeksData.push({
               week: formatWeekRange(actualWeekStart),
               body: weekBodyScore,
               soul: weekSoulScore,
+              seva: weekSevaScore,
               total: weeklyScoreData.totalScore
             });
 
@@ -204,6 +214,7 @@ const PointsProgress = () => {
               week: formatWeekRange(actualWeekStart),
               body: 0,
               soul: 0,
+              seva: 0,
               total: 0
             });
 
@@ -218,7 +229,8 @@ const PointsProgress = () => {
                 japaCompletionScore: 0,
                 programScore: 0,
                 hearingScore: 0,
-                shlokaScore: 0
+                shlokaScore: 0,
+                sevaScore: 0
               }
             });
           }
@@ -406,6 +418,17 @@ const PointsProgress = () => {
                               </div>
                             </div>
                           </div>
+                          {batchCriteria.totalSevaScore ? (
+                            <div className="mt-4 space-y-2">
+                              <h5 className="font-medium text-sm text-muted-foreground">Seva (Service)</h5>
+                              <div className="space-y-1 text-sm">
+                                <div className="flex justify-between">
+                                  <span>Seva Score:</span>
+                                  <span className="font-medium">{dailyScore.breakdowns.sevaScore || 0} pts</span>
+                                </div>
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       )}
 
@@ -550,6 +573,19 @@ const PointsProgress = () => {
                       className="h-2 bg-slate-200" 
                     />
                   </div>
+
+                  {batchCriteria.totalSevaScore ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <Label>Seva (Service)</Label>
+                        <span className="font-medium">{sevaScore}/{batchCriteria.totalSevaScore || 0} points</span>
+                      </div>
+                      <Progress 
+                        value={batchCriteria.totalSevaScore ? (sevaScore / batchCriteria.totalSevaScore) * 100 : 0} 
+                        className="h-2 bg-slate-200" 
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -602,6 +638,12 @@ const PointsProgress = () => {
                       name="Soul"
                       radius={[2, 2, 0, 0]}
                     />
+                    <Bar 
+                      dataKey="seva" 
+                      fill="var(--color-seva)" 
+                      name="Seva"
+                      radius={[2, 2, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
@@ -626,6 +668,7 @@ const PointsProgress = () => {
                       <div className="text-sm text-muted-foreground">
                         Body: {Math.round(((weekData.breakdowns.sleepTimeScore + weekData.breakdowns.wakeUpTimeScore + weekData.breakdowns.daySleepScore) / (batchCriteria.totalBodyScore || 1)) * 100)}%
                         | Soul: {Math.round(((weekData.breakdowns.readingScore + weekData.breakdowns.japaCompletionScore + weekData.breakdowns.programScore + weekData.breakdowns.hearingScore + weekData.breakdowns.shlokaScore) / (batchCriteria.totalSoulScore || 1)) * 100)}%
+                        {batchCriteria.totalSevaScore ? ` | Seva: ${Math.round(((weekData.breakdowns.sevaScore || 0) / (batchCriteria.totalSevaScore || 1)) * 100)}%` : ''}
                       </div>
                     </div>
                   </div>
@@ -684,6 +727,23 @@ const PointsProgress = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Seva Scores */}
+                    {batchCriteria.totalSevaScore ? (
+                      <div className="space-y-2">
+                        <h4 className="font-medium text-sm text-muted-foreground">Seva (Service)</h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Seva Score:</span>
+                            <span>{weekData.breakdowns.sevaScore || 0} pts</span>
+                          </div>
+                          <div className="flex justify-between font-medium border-t pt-1">
+                            <span>Seva Total:</span>
+                            <span>{weekData.breakdowns.sevaScore || 0} pts</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ))}
