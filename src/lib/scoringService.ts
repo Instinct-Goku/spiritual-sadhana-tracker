@@ -396,8 +396,10 @@ export const calculateShlokaScore = (
 export const calculateProgramScore = (entry: SadhanaEntry, batchCriteria?: BatchCriteria): number => {
   if (batchCriteria?.isBrahmacharisBatch) {
     let score = 0;
-    const allExceptBhagavatam = entry.mangalaArati && entry.tulsiArati && entry.narsimhaArati && entry.guruPuja;
-    if (allExceptBhagavatam) score += 1;
+    if (entry.mangalaArati) score += 0.25;
+    if (entry.tulsiArati) score += 0.25;
+    if (entry.narsimhaArati) score += 0.25;
+    if (entry.guruPuja) score += 0.25;
     if (entry.bhagavatamClass) score += 1;
     return score;
   }
