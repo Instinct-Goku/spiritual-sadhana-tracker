@@ -223,6 +223,47 @@ export const getDefaultBatchCriteria = (batchName: string): BatchCriteria => {
       lateToSleepPenalty: -10,
       lateWakeUpPenalty: -10,
     },
+    "brahmacharis": {
+      chantingRoundsMinimum: 16,
+      readingMinimum: 270, // 4.5 hours weekly
+      spLectureMinimum: 90, // 1.5 hours weekly
+      smLectureMinimum: 90, // 1.5 hours weekly
+      gsnsLectureMinimum: 0,
+      hgrspLectureMinimum: 0,
+      serviceMinimum: 210, // 3.5 hours weekly
+      shlokaMinimum: 0,
+      maxSleepHours: 7,
+      maxDayTimeHours: 0.5,
+      maxWakeUpTime: "04:00",
+      maxSleepTime: "22:00",
+      mangalaAratiMandatory: true,
+      morningProgramMandatory: true,
+      eveningProgramMandatory: true,
+      bookDistributionMandatory: false,
+      chantingRoundsPoints: 1,
+      readingPoints: 1,
+      spLecturePoints: 1,
+      smLecturePoints: 1,
+      gsnsLecturePoints: 0,
+      hgrspLecturePoints: 0,
+      servicePoints: 1,
+      shlokaPoints: 1,
+      mangalaAratiPoints: 0.25,
+      morningProgramPoints: 0.25,
+      eveningProgramPoints: 1,
+      bookDistributionPoints: 0,
+      sleepScorePoints: 1,
+      wakeUpScorePoints: 1,
+      earlyToSleepBonus: 0,
+      onTimeWakeUpBonus: 0,
+      lateToSleepPenalty: 0,
+      lateWakeUpPenalty: 0,
+      bcClassMinimum: 270, // 4.5 hours weekly
+      harinaamMinimum: 2, // weekly count
+      preachingMinimum: 360, // 6 hours daily
+      slokaVaishnavSongMinimum: 90, // 1.5 hours weekly
+      isBrahmacharisBatch: true,
+    },
   };
   
   return configs[batchName] || configs["sahadev"];

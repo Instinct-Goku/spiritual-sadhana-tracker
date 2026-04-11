@@ -73,6 +73,11 @@ export interface BatchCriteria {
   onTimeWakeUpBonus?: number;
   lateToSleepPenalty?: number;
   lateWakeUpPenalty?: number;
+  bcClassMinimum?: number;
+  harinaamMinimum?: number;
+  preachingMinimum?: number;
+  slokaVaishnavSongMinimum?: number;
+  isBrahmacharisBatch?: boolean;
 }
 
 export interface DevoteeGroup {
