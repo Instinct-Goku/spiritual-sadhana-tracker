@@ -348,11 +348,11 @@ const Sadhana = () => {
                     <Label htmlFor="readingMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                       SP Book Reading (minutes)
                     </Label>
-                    {batchCriteria.readingMinimum > 0 && (
+                    {displayCriteria.readingMinimum > 0 && (
                       <p className="text-xs text-muted-foreground mb-2">
                         {displayCriteria.isBrahmacharisBatch 
-                          ? `Weekly minimum: ${batchCriteria.readingMinimum / 60} hours`
-                          : `Minimum: ${batchCriteria.readingMinimum} minutes`}
+                          ? `Weekly minimum: ${displayCriteria.readingMinimum / 60} hours`
+                          : `Minimum: ${displayCriteria.readingMinimum} minutes`}
                       </p>
                     )}
                     <Input
@@ -383,11 +383,11 @@ const Sadhana = () => {
                       <Label htmlFor="spLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Srila Prabhupada Lectures (minutes)
                       </Label>
-                      {batchCriteria.spLectureMinimum > 0 && (
+                      {displayCriteria.spLectureMinimum && displayCriteria.spLectureMinimum > 0 && (
                         <p className="text-xs text-muted-foreground mb-2">
                           {displayCriteria.isBrahmacharisBatch 
-                            ? `Weekly minimum: ${batchCriteria.spLectureMinimum / 60} hours`
-                            : `Minimum: ${batchCriteria.spLectureMinimum} minutes`}
+                            ? `Weekly minimum: ${displayCriteria.spLectureMinimum / 60} hours`
+                            : `Minimum: ${displayCriteria.spLectureMinimum} minutes`}
                         </p>
                       )}
                       <Input
@@ -408,11 +408,11 @@ const Sadhana = () => {
                       <Label htmlFor="smLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Spiritual Master Lectures (minutes)
                       </Label>
-                      {batchCriteria.smLectureMinimum > 0 && (
+                      {displayCriteria.smLectureMinimum && displayCriteria.smLectureMinimum > 0 && (
                         <p className="text-xs text-muted-foreground mb-2">
                           {displayCriteria.isBrahmacharisBatch 
-                            ? `Weekly minimum: ${batchCriteria.smLectureMinimum / 60} hours`
-                            : `Minimum: ${batchCriteria.smLectureMinimum} minutes`}
+                            ? `Weekly minimum: ${displayCriteria.smLectureMinimum / 60} hours`
+                            : `Minimum: ${displayCriteria.smLectureMinimum} minutes`}
                         </p>
                       )}
                       <Input
@@ -433,11 +433,11 @@ const Sadhana = () => {
                       <Label htmlFor="gsnsLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         GS/NS Lectures (minutes)
                       </Label>
-                      {batchCriteria.gsnsLectureMinimum > 0 && (
+                      {displayCriteria.gsnsLectureMinimum && displayCriteria.gsnsLectureMinimum > 0 && (
                         <p className="text-xs text-muted-foreground mb-2">
                           {displayCriteria.isBrahmacharisBatch 
-                            ? `Weekly minimum: ${batchCriteria.gsnsLectureMinimum / 60} hours`
-                            : `Minimum: ${batchCriteria.gsnsLectureMinimum} minutes`}
+                            ? `Weekly minimum: ${displayCriteria.gsnsLectureMinimum / 60} hours`
+                            : `Minimum: ${displayCriteria.gsnsLectureMinimum} minutes`}
                         </p>
                       )}
                       <Input
@@ -458,11 +458,11 @@ const Sadhana = () => {
                       <Label htmlFor="hgrspLectureMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         HGRSP/HGRKP Lectures (minutes)
                       </Label>
-                      {batchCriteria.hgrspLectureMinimum > 0 && (
+                      {displayCriteria.hgrspLectureMinimum && displayCriteria.hgrspLectureMinimum > 0 && (
                         <p className="text-xs text-muted-foreground mb-2">
                           {displayCriteria.isBrahmacharisBatch 
-                            ? `Weekly minimum: ${batchCriteria.hgrspLectureMinimum / 60} hours`
-                            : `Minimum: ${batchCriteria.hgrspLectureMinimum} minutes`}
+                            ? `Weekly minimum: ${displayCriteria.hgrspLectureMinimum / 60} hours`
+                            : `Minimum: ${displayCriteria.hgrspLectureMinimum} minutes`}
                         </p>
                       )}
                       <Input
@@ -517,11 +517,11 @@ const Sadhana = () => {
                     <Label htmlFor="serviceMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                       Service (minutes)
                     </Label>
-                    {batchCriteria.serviceMinimum > 0 && (
+                    {displayCriteria.serviceMinimum > 0 && (
                       <p className="text-xs text-muted-foreground mb-2">
                         {displayCriteria.isBrahmacharisBatch 
-                          ? `Weekly minimum: ${batchCriteria.serviceMinimum / 60} hours`
-                          : `Minimum: ${batchCriteria.serviceMinimum} minutes`}
+                          ? `Weekly minimum: ${displayCriteria.serviceMinimum / 60} hours`
+                          : `Minimum: ${displayCriteria.serviceMinimum} minutes`}
                       </p>
                     )}
                     <Input
