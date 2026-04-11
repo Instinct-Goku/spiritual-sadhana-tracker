@@ -509,9 +509,11 @@ const Sadhana = () => {
                     <Label htmlFor="serviceMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                       Service (minutes)
                     </Label>
-                    {batchCriteria.serviceMinimum && (
-                      <p className="text-xs text-gray-500 mb-2">
-                        Minimum: {batchCriteria.serviceMinimum} minutes
+                    {batchCriteria.serviceMinimum > 0 && (
+                      <p className="text-xs text-muted-foreground mb-2">
+                        {displayCriteria.isBrahmacharisBatch 
+                          ? `Weekly minimum: ${batchCriteria.serviceMinimum / 60} hours`
+                          : `Minimum: ${batchCriteria.serviceMinimum} minutes`}
                       </p>
                     )}
                     <Input
