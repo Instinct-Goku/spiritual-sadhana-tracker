@@ -593,9 +593,9 @@ const Sadhana = () => {
                       <Label htmlFor="studyMinutes" className="text-sm font-medium text-gray-700 mb-2 block">
                         Study (minutes)
                       </Label>
-                      {batchCriteria.studyMinimum && (
-                        <p className="text-xs text-gray-500 mb-2">
-                          Minimum: {batchCriteria.studyMinimum} minutes
+                      {displayCriteria.studyMinimum && displayCriteria.studyMinimum > 0 && (
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Minimum: {displayCriteria.studyMinimum} minutes
                         </p>
                       )}
                       <Input
