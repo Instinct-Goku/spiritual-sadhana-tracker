@@ -3,31 +3,46 @@ import {
   query, 
   where, 
   getDocs,
+  getDoc,
   updateDoc,
   doc
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { BatchCriteria } from "./adminService";
+import { DEFAULT_BATCHES, BatchCriteria as ScoringBatchCriteria } from "./scoringService";
 
 // Get batch criteria from a devotee group
-export const getBatchCriteriaFromGroup = async (groupId: string): Promise<BatchCriteria> => {
+export const getBatchCriteriaFromGroup = async (groupId: string): Promise<ScoringBatchCriteria | null> => {
   try {
     const groupRef = doc(db, "devoteeGroups", groupId);
-    const groupDoc = await getDocs(query(collection(db, "devoteeGroups"), where("__name__", "==", groupId)));
+    const groupDoc = await getDoc(groupRef);
     
-    if (!groupDoc.empty) {
-      const data = groupDoc.docs[0].data();
-      return data.batchCriteria || {};
+    if (groupDoc.exists()) {
+      const data = groupDoc.data();
+      return data.batchCriteria || null;
     }
     
-    return {};
+    return null;
   } catch (error) {
     console.error("Error fetching batch criteria:", error);
-    return {};
+    return null;
   }
 };
 
-// Update batch criteria for a devotee group
+// Save batch criteria to a devotee group in Firebase
+export const saveBatchCriteriaToGroup = async (groupId: string, criteria: ScoringBatchCriteria): Promise<void> => {
+  try {
+    const groupRef = doc(db, "devoteeGroups", groupId);
+    await updateDoc(groupRef, {
+      batchCriteria: criteria
+    });
+  } catch (error) {
+    console.error("Error saving batch criteria to group:", error);
+    throw error;
+  }
+};
+
+// Update batch criteria for a devotee group (legacy)
 export const updateBatchCriteria = async (groupId: string, criteria: BatchCriteria): Promise<void> => {
   try {
     const groupRef = doc(db, "devoteeGroups", groupId);
@@ -40,231 +55,33 @@ export const updateBatchCriteria = async (groupId: string, criteria: BatchCriter
   }
 };
 
-// Default batch configurations
+// Get all available batch template names
+export const getAvailableBatchTemplates = (): string[] => {
+  return Object.keys(DEFAULT_BATCHES);
+};
+
+// Get default batch template by name
+export const getDefaultBatchTemplate = (templateName: string): ScoringBatchCriteria => {
+  return DEFAULT_BATCHES[templateName.toLowerCase()] || DEFAULT_BATCHES["sahadev"];
+};
+
+// Default batch configurations (legacy - kept for backward compatibility)
 export const getDefaultBatchCriteria = (batchName: string): BatchCriteria => {
-  const configs: Record<string, BatchCriteria> = {
-    "sahadev": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 30,
-      spLectureMinimum: 15,
-      smLectureMinimum: 0,
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 60,
-      shlokaMinimum: 0,
-      maxSleepHours: 7,
-      maxDayTimeHours: 1,
-      maxWakeUpTime: "04:30",
-      maxSleepTime: "21:30",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: false,
-      chantingRoundsPoints: 25,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 1,
-      hgrspLecturePoints: 1,
-      servicePoints: 0.5,
-      shlokaPoints: 5,
-      mangalaAratiPoints: 10,
-      morningProgramPoints: 5,
-      eveningProgramPoints: 5,
-      bookDistributionPoints: 10,
-      sleepScorePoints: 10,
-      wakeUpScorePoints: 10,
-      earlyToSleepBonus: 5,
-      onTimeWakeUpBonus: 5,
-      lateToSleepPenalty: -5,
-      lateWakeUpPenalty: -5,
-    },
-    "nakula": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 30,
-      spLectureMinimum: 15,
-      smLectureMinimum: 0,
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 60,
-      shlokaMinimum: 0,
-      maxSleepHours: 7,
-      maxDayTimeHours: 1,
-      maxWakeUpTime: "04:30",
-      maxSleepTime: "21:30",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: false,
-      chantingRoundsPoints: 25,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 1,
-      hgrspLecturePoints: 1,
-      servicePoints: 0.5,
-      shlokaPoints: 5,
-      mangalaAratiPoints: 10,
-      morningProgramPoints: 5,
-      eveningProgramPoints: 5,
-      bookDistributionPoints: 10,
-      sleepScorePoints: 10,
-      wakeUpScorePoints: 10,
-      earlyToSleepBonus: 5,
-      onTimeWakeUpBonus: 5,
-      lateToSleepPenalty: -5,
-      lateWakeUpPenalty: -5,
-    },
-    "arjuna": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 30,
-      spLectureMinimum: 15,
-      smLectureMinimum: 0,
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 60,
-      shlokaMinimum: 0,
-      maxSleepHours: 7,
-      maxDayTimeHours: 1,
-      maxWakeUpTime: "04:30",
-      maxSleepTime: "21:30",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: false,
-      chantingRoundsPoints: 25,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 1,
-      hgrspLecturePoints: 1,
-      servicePoints: 0.5,
-      shlokaPoints: 5,
-      mangalaAratiPoints: 10,
-      morningProgramPoints: 5,
-      eveningProgramPoints: 5,
-      bookDistributionPoints: 10,
-      sleepScorePoints: 10,
-      wakeUpScorePoints: 10,
-      earlyToSleepBonus: 5,
-      onTimeWakeUpBonus: 5,
-      lateToSleepPenalty: -5,
-      lateWakeUpPenalty: -5,
-    },
-    "yudhisthira": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 45,
-      spLectureMinimum: 30,
-      smLectureMinimum: 15,
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 120,
-      shlokaMinimum: 1,
-      maxSleepHours: 6,
-      maxDayTimeHours: 0,
-      maxWakeUpTime: "04:00",
-      maxSleepTime: "21:00",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: true,
-      chantingRoundsPoints: 25,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 1,
-      hgrspLecturePoints: 1,
-      servicePoints: 0.5,
-      shlokaPoints: 5,
-      mangalaAratiPoints: 10,
-      morningProgramPoints: 5,
-      eveningProgramPoints: 5,
-      bookDistributionPoints: 10,
-      sleepScorePoints: 15,
-      wakeUpScorePoints: 15,
-      earlyToSleepBonus: 10,
-      onTimeWakeUpBonus: 10,
-      lateToSleepPenalty: -10,
-      lateWakeUpPenalty: -10,
-    },
-    "nakula - working": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 30,
-      spLectureMinimum: 30,
-      smLectureMinimum: 15,
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 60,
-      shlokaMinimum: 1,
-      maxSleepHours: 7,
-      maxDayTimeHours: 1,
-      maxWakeUpTime: "04:00",
-      maxSleepTime: "21:00",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: true,
-      chantingRoundsPoints: 25,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 1,
-      hgrspLecturePoints: 1,
-      servicePoints: 0.5,
-      shlokaPoints: 5,
-      mangalaAratiPoints: 10,
-      morningProgramPoints: 5,
-      eveningProgramPoints: 5,
-      bookDistributionPoints: 10,
-      sleepScorePoints: 15,
-      wakeUpScorePoints: 15,
-      earlyToSleepBonus: 10,
-      onTimeWakeUpBonus: 10,
-      lateToSleepPenalty: -10,
-      lateWakeUpPenalty: -10,
-    },
-    "brahmacharis": {
-      chantingRoundsMinimum: 16,
-      readingMinimum: 270, // 4.5 hours weekly
-      spLectureMinimum: 90, // 1.5 hours weekly
-      smLectureMinimum: 90, // 1.5 hours weekly
-      gsnsLectureMinimum: 0,
-      hgrspLectureMinimum: 0,
-      serviceMinimum: 210, // 3.5 hours weekly
-      shlokaMinimum: 0,
-      maxSleepHours: 7,
-      maxDayTimeHours: 0.5,
-      maxWakeUpTime: "04:00",
-      maxSleepTime: "22:00",
-      mangalaAratiMandatory: true,
-      morningProgramMandatory: true,
-      eveningProgramMandatory: true,
-      bookDistributionMandatory: false,
-      chantingRoundsPoints: 1,
-      readingPoints: 1,
-      spLecturePoints: 1,
-      smLecturePoints: 1,
-      gsnsLecturePoints: 0,
-      hgrspLecturePoints: 0,
-      servicePoints: 1,
-      shlokaPoints: 1,
-      mangalaAratiPoints: 0.25,
-      morningProgramPoints: 0.25,
-      eveningProgramPoints: 1,
-      bookDistributionPoints: 0,
-      sleepScorePoints: 1,
-      wakeUpScorePoints: 1,
-      earlyToSleepBonus: 0,
-      onTimeWakeUpBonus: 0,
-      lateToSleepPenalty: 0,
-      lateWakeUpPenalty: 0,
-      bcClassMinimum: 270, // 4.5 hours weekly
-      harinaamMinimum: 2, // weekly count
-      preachingMinimum: 360, // 6 hours daily
-      slokaVaishnavSongMinimum: 90, // 1.5 hours weekly
-      isBrahmacharisBatch: true,
-    },
-  };
+  const fullCriteria = DEFAULT_BATCHES[batchName.toLowerCase()] || DEFAULT_BATCHES["sahadev"];
   
-  return configs[batchName] || configs["sahadev"];
+  return {
+    chantingRoundsMinimum: 16,
+    readingMinimum: fullCriteria.readingMinimum,
+    spLectureMinimum: fullCriteria.spLectureMinimum,
+    smLectureMinimum: fullCriteria.smLectureMinimum,
+    gsnsLectureMinimum: fullCriteria.gsnsLectureMinimum,
+    hgrspLectureMinimum: fullCriteria.hgrspLectureMinimum,
+    serviceMinimum: fullCriteria.serviceMinimum,
+    shlokaMinimum: fullCriteria.shlokaMinimum,
+    bcClassMinimum: fullCriteria.bcClassMinimum,
+    harinaamMinimum: fullCriteria.harinaamMinimum,
+    preachingMinimum: fullCriteria.preachingMinimum,
+    slokaVaishnavSongMinimum: fullCriteria.slokaVaishnavSongMinimum,
+    isBrahmacharisBatch: fullCriteria.isBrahmacharisBatch,
+  };
 };
