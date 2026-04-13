@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/lib/toast";
 import { Loader2, Search, UserCheck, UserX, Users, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getDevoteeGroups, getDevoteesInGroup } from "@/lib/adminService";
+import { getDevoteeGroups, getDevoteesInGroup, DevoteeGroup as AdminDevoteeGroup } from "@/lib/adminService";
 import BatchScoreConfig from "@/components/BatchScoreConfig";
 import CreateGroupDialog from "@/components/CreateGroupDialog";
 
@@ -467,7 +467,7 @@ const AdminPage = () => {
               <Settings className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <BatchScoreConfig />
+              <BatchScoreConfig groups={groups} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -420,14 +420,6 @@ export const isWeeklyScoringEnabled = (): boolean => {
 
 // Get batch configurations from storage or use defaults
 export const getBatchConfigurations = (): Record<string, BatchCriteria> => {
-  try {
-    const storedConfigs = localStorage.getItem("batchConfigurations");
-    if (storedConfigs) {
-      return JSON.parse(storedConfigs);
-    }
-  } catch (error) {
-    console.error("Error loading batch configurations:", error);
-  }
   return DEFAULT_BATCHES;
 };
 
