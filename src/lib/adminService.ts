@@ -373,8 +373,7 @@ export const createDevoteeGroup = async (groupData: {
 export const getDevoteeGroups = async (adminId: string): Promise<DevoteeGroup[]> => {
   try {
     const groupsRef = collection(db, "devoteeGroups");
-    const q = query(groupsRef, where("createdBy", "==", adminId));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(groupsRef);
     
     const groups: DevoteeGroup[] = [];
     
