@@ -289,9 +289,14 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
         <Card>
           <CardHeader>
             <CardTitle>
-              {groups.find(g => g.id === selectedGroup)?.name || "Group"} - Batch Configuration
+              {groups.find(g => g.id === selectedGroup)?.name || "Group"}
+              {" — "}
+              <span className="capitalize">{selectedBatch.replace(/-/g, " ")}</span>
             </CardTitle>
-            <CardDescription>Configure scoring criteria for this group</CardDescription>
+            <CardDescription>
+              Configure scoring criteria for this batch within this group. Other
+              groups and other batches are not affected.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[60vh] pr-4">
