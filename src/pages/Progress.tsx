@@ -265,7 +265,7 @@ const PointsProgress = () => {
     };
     
     fetchPoints();
-  }, [targetUserId, targetUser]);
+  }, [targetUserId, targetUser, criteriaReady]);
 
   // Fetch daily sadhana when selected date changes
   useEffect(() => {
