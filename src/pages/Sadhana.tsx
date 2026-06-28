@@ -17,7 +17,7 @@ import { addSadhanaEntry, getDailySadhana, updateSadhanaEntry, SadhanaEntry } fr
 import { useAuth } from "@/contexts/AuthContext"
 import { getBatchCriteriaFromUserProfile, getBatchCriteria } from '@/lib/scoringService';
 import { getUserGroups } from "../lib/adminService";
-import { getAllBatchCriteriaForGroup } from "../lib/batchService";
+import { getAllBatchCriteriaForGroup, primeUserBatchCriteriaCache } from "../lib/batchService";
 
 const formSchema = z.object({
   date: z.date({
@@ -88,24 +88,20 @@ const Sadhana = () => {
 
   // Get batch criteria to determine which hearing categories to show
   const [batchCriteria, setBatchCriteria] = useState<any>({});
+  // Bump on cache prime so `displayCriteria` (sync) re-resolves with the
+  // group-scoped batchCriteriaByTemplate override after Firestore returns.
+  const [criteriaVersion, setCriteriaVersion] = useState(0);
 
   useEffect(() => {
     const fetchBatchCriteria = async () => {
       if (userProfile?.batchName) {
         try {
-          // Resolve criteria scoped to (user's group, user's batch template).
-          // Each group stores an independent copy of every batch template.
-          const userGroups = await getUserGroups(userProfile.uid);
-          const templateKey = String(userProfile.batchName).toLowerCase();
-          let resolved: any = null;
-          if (userGroups.length > 0) {
-            const all = await getAllBatchCriteriaForGroup(userGroups[0].id);
-            resolved = all[templateKey] || null;
-          }
-          if (!resolved) {
-            resolved = getBatchCriteria(userProfile.batchName);
-          }
-          setBatchCriteria(resolved);
+          // Resolve + cache criteria scoped to (user's group, user's batch
+          // template). Each group stores an independent copy of every batch
+          // template under batchCriteriaByTemplate.
+          const resolved = await primeUserBatchCriteriaCache(userProfile);
+          setBatchCriteria(resolved || getBatchCriteria(userProfile.batchName));
+          setCriteriaVersion(v => v + 1);
         } catch (error) {
           console.error("Error fetching batch criteria:", error);
           // Fallback to default criteria
@@ -116,10 +112,15 @@ const Sadhana = () => {
     };
 
     fetchBatchCriteria();
-  }, [userProfile?.batchName, userProfile?.uid]);
+  }, [userProfile?.batchName, userProfile?.uid, userProfile?.batch]);
 
-  // Get batch criteria for display logic (using existing function)
-  const displayCriteria = getBatchCriteriaFromUserProfile(userProfile);
+  // Get batch criteria for display logic. Re-evaluated whenever the cache
+  // is primed (criteriaVersion bump) so the group override wins over defaults.
+  const displayCriteria = React.useMemo(
+    () => getBatchCriteriaFromUserProfile(userProfile),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userProfile, criteriaVersion]
+  );
 
   useEffect(() => {
     form.reset({
