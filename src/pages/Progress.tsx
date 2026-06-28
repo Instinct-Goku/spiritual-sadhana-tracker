@@ -290,7 +290,7 @@ const PointsProgress = () => {
     };
     
     fetchDailySadhana(selectedDate);
-  }, [selectedDate, targetUserId, targetUser]);
+  }, [selectedDate, targetUserId, targetUser, criteriaReady]);
   
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
