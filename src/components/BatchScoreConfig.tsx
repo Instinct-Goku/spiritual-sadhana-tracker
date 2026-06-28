@@ -11,7 +11,12 @@ import { toast } from "@/lib/toast";
 import { DEFAULT_BATCHES, BatchCriteria, TimeRangeScore, DurationScore } from "@/lib/scoringService";
 import { ScrollArea } from "./ui/scroll-area";
 import { DevoteeGroup } from "@/lib/adminService";
-import { saveBatchCriteriaToGroup, getBatchCriteriaFromGroup, getAvailableBatchTemplates, getDefaultBatchTemplate } from "@/lib/batchService";
+import {
+  saveBatchCriteriaForGroupTemplate,
+  getAllBatchCriteriaForGroup,
+  getAvailableBatchTemplates,
+  getDefaultBatchTemplate,
+} from "@/lib/batchService";
 
 interface BatchScoreConfigProps {
   groups?: DevoteeGroup[];
@@ -21,26 +26,32 @@ interface BatchScoreConfigProps {
 const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClose }) => {
   const [selectedGroup, setSelectedGroup] = useState<string>("");
   const [selectedBatch, setSelectedBatch] = useState<string>("sahadev");
-  const [batchConfig, setBatchConfig] = useState<BatchCriteria>(DEFAULT_BATCHES.sahadev);
+  // All batch configs for the currently selected group, keyed by template id.
+  // Editing always happens through this map so different templates within the
+  // same group cannot share state, and switching groups fully resets it.
+  const [groupBatchConfigs, setGroupBatchConfigs] = useState<Record<string, BatchCriteria>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // When a group is selected, load its batch criteria from Firebase
+  // When a group is selected, load ALL of its per-template criteria so each
+  // template stays isolated within that group.
   useEffect(() => {
     if (selectedGroup) {
       loadGroupBatchCriteria(selectedGroup);
+    } else {
+      setGroupBatchConfigs({});
     }
   }, [selectedGroup]);
 
   const loadGroupBatchCriteria = async (groupId: string) => {
     setIsLoading(true);
     try {
-      const criteria = await getBatchCriteriaFromGroup(groupId);
-      if (criteria && Object.keys(criteria).length > 0) {
-        setBatchConfig(criteria);
-      } else {
-        // No config stored yet, use default
-        setBatchConfig(DEFAULT_BATCHES.sahadev);
+      const all = await getAllBatchCriteriaForGroup(groupId);
+      setGroupBatchConfigs(all);
+      // Ensure the active tab is valid for this group
+      if (!all[selectedBatch]) {
+        const firstKey = Object.keys(all)[0] || "sahadev";
+        setSelectedBatch(firstKey);
       }
     } catch (error) {
       console.error("Error loading group batch criteria:", error);
@@ -50,10 +61,35 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
     }
   };
 
-  const handleApplyTemplate = (templateName: string) => {
-    const template = getDefaultBatchTemplate(templateName);
-    setBatchConfig(template);
-    toast.success(`Applied "${templateName}" template`);
+  const batchConfig: BatchCriteria =
+    groupBatchConfigs[selectedBatch] ||
+    getDefaultBatchTemplate(selectedBatch) ||
+    DEFAULT_BATCHES.sahadev;
+
+  // All mutations go through this — it updates only the currently selected
+  // template within the currently selected group, leaving every other
+  // (group, template) pair untouched.
+  const setBatchConfig = (
+    updater: BatchCriteria | ((prev: BatchCriteria) => BatchCriteria)
+  ) => {
+    setGroupBatchConfigs((prev) => {
+      const current = prev[selectedBatch] || batchConfig;
+      const next =
+        typeof updater === "function"
+          ? (updater as (p: BatchCriteria) => BatchCriteria)(current)
+          : updater;
+      return { ...prev, [selectedBatch]: next };
+    });
+  };
+
+  const handleResetTemplateToDefault = () => {
+    const fresh = getDefaultBatchTemplate(selectedBatch);
+    if (!fresh) return;
+    setGroupBatchConfigs((prev) => ({
+      ...prev,
+      [selectedBatch]: JSON.parse(JSON.stringify(fresh)),
+    }));
+    toast.success(`Reset "${selectedBatch}" to default values for this group`);
   };
 
   const handleSaveConfig = async () => {
@@ -61,11 +97,16 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
       toast.error("Please select a group first");
       return;
     }
-
     try {
       setIsSaving(true);
-      await saveBatchCriteriaToGroup(selectedGroup, batchConfig);
-      toast.success("Batch configuration saved to group successfully");
+      await saveBatchCriteriaForGroupTemplate(
+        selectedGroup,
+        selectedBatch,
+        batchConfig
+      );
+      toast.success(
+        `Saved "${selectedBatch}" configuration for this group`
+      );
     } catch (error) {
       console.error("Error saving batch configuration:", error);
       toast.error("Failed to save batch configuration");
@@ -155,7 +196,24 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h3 className="text-lg font-semibold">Batch Score Configuration</h3>
+        <div>
+          <h3 className="text-lg font-semibold">Batch Score Configuration</h3>
+          <p className="text-xs text-muted-foreground">
+            Each group has its own independent copy of every batch template.
+            Changes here only affect the selected group.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedGroup && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResetTemplateToDefault}
+              disabled={isSaving}
+            >
+              Reset to Default
+            </Button>
+          )}
         <Button 
           onClick={handleSaveConfig} 
           disabled={isSaving || !selectedGroup}
@@ -169,10 +227,11 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
           ) : (
             <>
               <Save className="mr-2 h-4 w-4" />
-              Save to Group
+              Save Batch
             </>
           )}
         </Button>
+        </div>
       </div>
 
       {/* Group Selection */}
@@ -194,10 +253,14 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
         </div>
 
         <div className="space-y-2">
-          <Label>Apply Batch Template</Label>
-          <Select value="" onValueChange={handleApplyTemplate}>
+          <Label>Select Batch Template</Label>
+          <Select
+            value={selectedBatch}
+            onValueChange={setSelectedBatch}
+            disabled={!selectedGroup}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Apply a template..." />
+              <SelectValue placeholder="Choose a batch template" />
             </SelectTrigger>
             <SelectContent>
               {batchTemplates.map((template) => (
@@ -226,9 +289,14 @@ const BatchScoreConfig: React.FC<BatchScoreConfigProps> = ({ groups = [], onClos
         <Card>
           <CardHeader>
             <CardTitle>
-              {groups.find(g => g.id === selectedGroup)?.name || "Group"} - Batch Configuration
+              {groups.find(g => g.id === selectedGroup)?.name || "Group"}
+              {" — "}
+              <span className="capitalize">{selectedBatch.replace(/-/g, " ")}</span>
             </CardTitle>
-            <CardDescription>Configure scoring criteria for this group</CardDescription>
+            <CardDescription>
+              Configure scoring criteria for this batch within this group. Other
+              groups and other batches are not affected.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[60vh] pr-4">

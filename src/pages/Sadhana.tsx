@@ -17,6 +17,7 @@ import { addSadhanaEntry, getDailySadhana, updateSadhanaEntry, SadhanaEntry } fr
 import { useAuth } from "@/contexts/AuthContext"
 import { getBatchCriteriaFromUserProfile, getBatchCriteria } from '@/lib/scoringService';
 import { getUserGroups } from "../lib/adminService";
+import { getAllBatchCriteriaForGroup } from "../lib/batchService";
 
 const formSchema = z.object({
   date: z.date({
@@ -92,24 +93,19 @@ const Sadhana = () => {
     const fetchBatchCriteria = async () => {
       if (userProfile?.batchName) {
         try {
-          // First try to get criteria from user's groups
+          // Resolve criteria scoped to (user's group, user's batch template).
+          // Each group stores an independent copy of every batch template.
           const userGroups = await getUserGroups(userProfile.uid);
-          let groupCriteria = {};
-          
+          const templateKey = String(userProfile.batchName).toLowerCase();
+          let resolved: any = null;
           if (userGroups.length > 0) {
-            // Use the first group's criteria or merge them
-            const firstGroup = userGroups[0];
-            if (firstGroup.batchCriteria) {
-              groupCriteria = firstGroup.batchCriteria;
-            }
+            const all = await getAllBatchCriteriaForGroup(userGroups[0].id);
+            resolved = all[templateKey] || null;
           }
-          
-          // If no group criteria found, use default batch criteria
-          if (Object.keys(groupCriteria).length === 0) {
-            groupCriteria = getBatchCriteria(userProfile.batchName);
+          if (!resolved) {
+            resolved = getBatchCriteria(userProfile.batchName);
           }
-          
-          setBatchCriteria(groupCriteria);
+          setBatchCriteria(resolved);
         } catch (error) {
           console.error("Error fetching batch criteria:", error);
           // Fallback to default criteria
