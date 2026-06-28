@@ -1,6 +1,7 @@
 import { SadhanaEntry } from "./sadhanaService";
 import { UserProfile } from "@/contexts/AuthContext";
 import { BatchCriteria as DBBatchCriteria } from "./adminService";
+import { getCachedBatchCriteria } from "./batchCriteriaCache";
 
 export interface BatchCriteria {
   name: string;
@@ -440,7 +441,14 @@ export const getBatchCriteriaFromUserProfile = (userProfile: UserProfile | null)
   if (batchName === "yudhisthir" || batchName === "yudhishthira") {
     batchName = "yudhisthira";
   }
-  
+
+  // Prefer group-scoped override from the cache (Firestore-backed via
+  // primeUserBatchCriteriaCache). Each group stores an independent copy of
+  // every batch template under batchCriteriaByTemplate, so two users in
+  // different groups but the same batch can have different criteria.
+  const cached = getCachedBatchCriteria(userProfile?.uid, batchName);
+  if (cached) return cached;
+
   // Return the batch criteria or default to sahadev if not found
   return batchConfigs[batchName] || batchConfigs.sahadev;
 };
