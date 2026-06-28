@@ -10,6 +10,8 @@ import {
 import { db } from "./firebase";
 import { BatchCriteria } from "./adminService";
 import { DEFAULT_BATCHES, BatchCriteria as ScoringBatchCriteria } from "./scoringService";
+import { setCachedBatchCriteria } from "./batchCriteriaCache";
+import { getUserGroups } from "./adminService";
 
 // Deep-clone helper to ensure no shared object references between groups/templates.
 const cloneCriteria = (criteria: ScoringBatchCriteria): ScoringBatchCriteria =>
@@ -114,6 +116,40 @@ export const updateBatchCriteria = async (groupId: string, criteria: BatchCriter
 // Get all available batch template names
 export const getAvailableBatchTemplates = (): string[] => {
   return Object.keys(DEFAULT_BATCHES);
+};
+
+// Resolve and cache the batch criteria for a user, scoped to their group's
+// batchCriteriaByTemplate entry for the user's batch template. Falls back to
+// DEFAULT_BATCHES when no group / template override exists. The resolved
+// value is stored in a sync cache so that scoring code can use it without
+// awaiting Firestore on every call.
+export const primeUserBatchCriteriaCache = async (userProfile: {
+  uid?: string;
+  batch?: string;
+  batchName?: string;
+} | null): Promise<ScoringBatchCriteria | null> => {
+  if (!userProfile?.uid) return null;
+  const templateKey = String(
+    userProfile.batch || userProfile.batchName || "sahadev"
+  ).toLowerCase();
+  try {
+    const groups = await getUserGroups(userProfile.uid);
+    let resolved: ScoringBatchCriteria | null = null;
+    if (groups.length > 0) {
+      const all = await getAllBatchCriteriaForGroup(groups[0].id);
+      resolved = all[templateKey] || null;
+    }
+    if (!resolved) {
+      resolved = cloneCriteria(
+        DEFAULT_BATCHES[templateKey] || DEFAULT_BATCHES.sahadev
+      );
+    }
+    setCachedBatchCriteria(userProfile.uid, templateKey, resolved);
+    return resolved;
+  } catch (error) {
+    console.error("Error priming batch criteria cache:", error);
+    return null;
+  }
 };
 
 // Get default batch template by name
