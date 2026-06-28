@@ -14,6 +14,7 @@ import {
   calculateSadhanaScore
 } from "@/lib/scoringService";
 import { getDailySadhana, getWeeklySadhana } from "@/lib/sadhanaService";
+import { primeUserBatchCriteriaCache } from "@/lib/batchService";
 import { Loader2, BarChartBig, Calendar as CalendarIcon, Clock, Book, Headphones, Scroll } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -72,6 +73,23 @@ const PointsProgress = () => {
     sevaScore: 0,
   });
   const [selectedDevoteeForView, setSelectedDevoteeForView] = useState<UserProfile | null>(null);
+  // Bumped after we prime the group-scoped batch criteria cache so derived
+  // values like batchCriteria/minimums re-evaluate with the override.
+  const [criteriaReady, setCriteriaReady] = useState(0);
+
+  // Prime the cache for both the viewer and (when an admin is viewing
+  // another devotee) the target user so their group's batchCriteriaByTemplate
+  // override is used during scoring.
+  useEffect(() => {
+    let cancelled = false;
+    const prime = async () => {
+      const targets = [userProfile, selectedDevoteeForView].filter(Boolean);
+      await Promise.all(targets.map(p => primeUserBatchCriteriaCache(p as any)));
+      if (!cancelled) setCriteriaReady(v => v + 1);
+    };
+    prime();
+    return () => { cancelled = true; };
+  }, [userProfile?.uid, userProfile?.batch, userProfile?.batchName, selectedDevoteeForView?.uid]);
   
   // Get user's batch
   const userBatch = userProfile?.batch || "sahadev";
