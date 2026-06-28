@@ -5,10 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 import { createDevoteeGroup } from "@/lib/adminService";
-import { getAvailableBatchTemplates, getDefaultBatchTemplate } from "@/lib/batchService";
 import { toast } from "@/lib/toast";
 
 interface CreateGroupDialogProps {
@@ -21,9 +19,6 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ adminId, onGroupC
   const [loading, setLoading] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-
-  const batchTemplates = getAvailableBatchTemplates();
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
@@ -33,24 +28,19 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ adminId, onGroupC
 
     try {
       setLoading(true);
-      
-      // Get batch criteria from selected template
-      const batchCriteria = selectedTemplate 
-        ? getDefaultBatchTemplate(selectedTemplate)
-        : undefined;
-
+      // All batch templates are automatically available for the new group with
+      // their default values; they can be customised independently later from
+      // the Batch Score Configuration tab.
       await createDevoteeGroup({
         name: groupName.trim(),
         description: groupDescription.trim(),
         adminId,
         createdAt: new Date(),
-        batchCriteria: batchCriteria as any,
       });
       
       toast.success("Group created successfully!");
       setGroupName("");
       setGroupDescription("");
-      setSelectedTemplate("");
       setOpen(false);
       onGroupCreated();
     } catch (error) {
@@ -102,23 +92,11 @@ const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({ adminId, onGroupC
               rows={3}
             />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="template" className="text-right">
-              Batch Template
-            </Label>
-            <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a batch template (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {batchTemplates.map((template) => (
-                  <SelectItem key={template} value={template} className="capitalize">
-                    {template.replace(/-/g, " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <p className="col-span-4 text-xs text-muted-foreground">
+            All batch templates are automatically created for this group with
+            their default scoring. You can customise each batch independently
+            from the Batch Score Configuration tab.
+          </p>
         </div>
         <DialogFooter>
           <Button 
