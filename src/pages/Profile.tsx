@@ -78,6 +78,7 @@ const batchOptions = [
   { value: "sahadev-working", label: "Sahadev - Working" },
   { value: "nakula", label: "Nakula" },
   { value: "arjuna", label: "Arjuna" },
+  { value: "arjuna-working", label: "Arjuna Working" },
   { value: "yudhisthira", label: "Yudhisthira" },
   { value: "nakula-working", label: "Nakula - Working" },
   { value: "brahmacharis", label: "Brahmacharis" },
