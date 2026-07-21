@@ -186,8 +186,6 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showGsnsLecture: false,
     showHgrspLecture: false
   },
-  yudhisthira: {
-  } as any,
   "arjuna-working": {
     name: "Arjuna Working",
     sleepTimeScoring: [
@@ -226,7 +224,7 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showGsnsLecture: false,
     showHgrspLecture: false
   },
-  _yudhisthira_placeholder: {
+  yudhisthira: {
     name: "Yudhisthira",
     sleepTimeScoring: [
       { startTime: "00:00", endTime: "21:30", points: 25 },
