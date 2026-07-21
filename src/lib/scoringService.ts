@@ -318,6 +318,7 @@ export const SHLOKA_SCORING: Record<string, number> = {
   arjuna: 30,
   yudhisthira: 30,
   "nakula-working": 30,
+  "arjuna-working": 30,
   brahmacharis: 30
 };
 
