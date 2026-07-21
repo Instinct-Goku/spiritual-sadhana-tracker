@@ -186,6 +186,44 @@ export const DEFAULT_BATCHES: Record<string, BatchCriteria> = {
     showGsnsLecture: false,
     showHgrspLecture: false
   },
+  "arjuna-working": {
+    name: "Arjuna Working",
+    sleepTimeScoring: [
+      { startTime: "00:00", endTime: "21:30", points: 25 },
+      { startTime: "21:30", endTime: "22:00", points: 15 },
+      { startTime: "22:00", endTime: "22:30", points: 10 },
+      { startTime: "22:30", endTime: "23:59", points: 0 }
+    ],
+    wakeUpTimeScoring: [
+      { startTime: "00:00", endTime: "03:45", points: 25 },
+      { startTime: "03:45", endTime: "04:00", points: 20 },
+      { startTime: "04:00", endTime: "04:15", points: 15 },
+      { startTime: "04:15", endTime: "23:59", points: 0 }
+    ],
+    readingMinimum: 210,
+    daySleepScoring: [
+      { maxDuration: 45, points: 25 },
+      { maxDuration: Number.MAX_SAFE_INTEGER, points: 0 }
+    ],
+    japaCompletionScoring: [
+      { startTime: "00:00", endTime: "07:00", points: 25 },
+      { startTime: "07:00", endTime: "10:00", points: 20 },
+      { startTime: "10:00", endTime: "15:00", points: 15 },
+      { startTime: "15:00", endTime: "20:00", points: 10 },
+      { startTime: "20:00", endTime: "23:59", points: 0 }
+    ],
+    hearingMinimum: 120,
+    serviceMinimum: 120,
+    spLectureMinimum: 60,
+    smLectureMinimum: 60,
+    shlokaMinimum: 2,
+    totalBodyScore: 75,
+    totalSoulScore: 375,
+    showSpLecture: true,
+    showSmLecture: true,
+    showGsnsLecture: false,
+    showHgrspLecture: false
+  },
   yudhisthira: {
     name: "Yudhisthira",
     sleepTimeScoring: [
@@ -318,6 +356,7 @@ export const SHLOKA_SCORING: Record<string, number> = {
   arjuna: 30,
   yudhisthira: 30,
   "nakula-working": 30,
+  "arjuna-working": 30,
   brahmacharis: 30
 };
 
