@@ -1,69 +1,154 @@
-# Welcome to your Lovable project
+# 🕉️ Spiritual Sadhana Tracker
 
-## Project info
+A modern web application designed to help devotees **track, manage, and improve their daily spiritual practices (Sadhana)** through a simple and intuitive digital platform.
 
-**URL**: https://lovable.dev/projects/449390cc-dc22-4cf8-a52d-cfdf4626e46e
+🌐 **Live Application:** https://spiritual-sadhana-tracker.lovable.app
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+* 🔐 **User Authentication** — Secure login and user access management.
+* 📿 **Daily Sadhana Tracking** — Record and monitor daily spiritual practices.
+* 📊 **Progress Dashboard** — Visualize consistency and track progress over time.
+* 🗓️ **Practice History** — Review previous Sadhana records and activity.
+* 👤 **User Management** — Manage devotee/user profiles and associated information.
+* 🔄 **REST API Integration** — Backend communication through RESTful APIs.
+* 🔥 **Firebase Integration** — Authentication and application data services.
+* 📱 **Responsive UI** — Optimized for desktop, tablet, and mobile devices.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/449390cc-dc22-4cf8-a52d-cfdf4626e46e) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Tech Stack
 
-**Use your preferred IDE**
+### Frontend
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+* shadcn/ui
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend & Services
 
-Follow these steps:
+* REST APIs
+* Firebase
+* Firestore
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Development Tools
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+* Git
+* GitHub
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 Getting Started
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Prerequisites
+
+Make sure you have the following installed:
+
+* Node.js 18+
+* npm
+* Git
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Instinct-Goku/spiritual-sadhana-tracker.git
+
+cd spiritual-sadhana-tracker
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory and configure the required Firebase, API, and application environment variables.
+
+Example:
+
+```env
+VITE_API_BASE_URL=your_api_url
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+```
+
+> ⚠️ Never commit `.env` files or private credentials to GitHub.
+
+### Run Locally
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```text
+http://localhost:5173
+```
 
-**Use GitHub Codespaces**
+### Production Build
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+npm run build
+```
 
-## What technologies are used for this project?
+To preview the production build:
 
-This project is built with .
+```bash
+npm run preview
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## 📊 Key Capabilities
 
-Simply open [Lovable](https://lovable.dev/projects/449390cc-dc22-4cf8-a52d-cfdf4626e46e) and click on Share -> Publish.
+| Capability        | Description                                 |
+| ----------------- | ------------------------------------------- |
+| Authentication    | Secure user login and access management     |
+| Sadhana Tracking  | Record daily spiritual practices            |
+| Progress Tracking | Monitor consistency and historical progress |
+| User Management   | Manage user/devotee information             |
+| REST APIs         | Backend communication and data exchange     |
+| Firebase          | Authentication and cloud services           |
+| Database          | Persistent application data                 |
+| AWS               | Cloud deployment and hosting                |
+| Responsive UI     | Desktop and mobile-friendly experience      |
 
-## I want to use a custom domain - is that possible?
+---
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## 🎯 Project Goals
+
+The primary goal of Spiritual Sadhana Tracker is to provide a **digital platform for cultivating consistency in spiritual practices**.
+
+Instead of relying on manual records, users can digitally maintain their Sadhana history, monitor progress, and build greater consistency in their daily practices.
+
+---
+
+## 🔮 Future Enhancements
+
+* 📈 Advanced analytics and Sadhana insights
+* 🔔 Daily practice reminders and notifications
+* 🏆 Streaks and achievement system
+* 👥 Group-based Sadhana tracking
+* 📱 Progressive Web App (PWA) support
+* 📊 Advanced admin analytics
+* 🌐 Multi-language support
+
+---
+
+## 👨‍💻 Author
+
+**Siddharth Kanojiya**
+
+Software Engineer | Java | Spring Boot | React | AWS | Microservices
+
+---
+
+## 📄 License
+
+This project is intended for educational and community use. Add an appropriate open-source license if you plan to distribute the source code publicly.
